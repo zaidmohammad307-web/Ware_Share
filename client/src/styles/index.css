@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------------------------------
+   🌟 WareShare Brand Color System
+   ------------------------------------------- */
+@layer base {
+  :root {
+    /* Brand backgrounds */
+    --background: 0 0% 100%;          /* White */
+    --foreground: 0 0% 13%;           /* #333333 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+
+    /* 🌟 Primary Brand Blue (#1976D2) */
+    --primary: 207 72% 47%;           /* hsl(207,72%,47%) */
+    --primary-foreground: 0 0% 100%;  /* white */
+
+    /* Accent Light Blue (#E3F2FD) */
+    --secondary: 207 76% 92%;         /* hsl(#E3F2FD) */
+    --secondary-foreground: 207 80% 20%;
+
+    /* Muted / gray system */
+    --muted: 0 0% 96%;                /* #F5F5F5 */
+    --muted-foreground: 0 0% 40%;     /* #666666 */
+
+    /* Highlight accent */
+    --accent: 207 76% 92%;
+    --accent-foreground: 207 80% 20%;
+
+    /* Red destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders & inputs */
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 207 72% 47%; /* brand blue */
+
+    --radius: 0.75rem;
+  }
+}
+
+/* -------------------------------------------
+   🌟 Base Layout
+   ------------------------------------------- */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground;
+  }
+}
+
+/* -------------------------------------------
+   🌟 Inputs
+   ------------------------------------------- */
+input[type='text'],
+input[type='password'],
+input[type='email'],
+input[type='number'],
+input[type='tel'],
+textarea {
+  @apply my-2 w-full rounded-[10px] border bg-white 
+         py-2 px-3 text-[14px]
+         focus:outline-none focus:ring-2 focus:ring-primary;
+}
+
+textarea {
+  height: 140px;
+}
+
+/* -------------------------------------------
+   🌟 Buttons
+   ------------------------------------------- */
+button {
+  @apply bg-secondary text-foreground rounded-md px-4 py-2;
+}
+
+/* Primary Blue Action Button */
+button.primary {
+  @apply w-full rounded-[10px] bg-primary text-white 
+         font-semibold p-2
+         hover:bg-blue-600 transition;
+}
+
+/* Social Login Button */
+button.social {
+  @apply w-full rounded-[10px] border border-gray-300 bg-white 
+         p-2 font-semibold text-gray-800 
+         hover:bg-gray-50 transition;
+}
+
+/* -------------------------------------------
+   🌟 Cards
+   ------------------------------------------- */
+.card {
+  @apply bg-white border border-gray-200 rounded-xl shadow-sm 
+         hover:shadow-md transition
+         h-[410px] w-[327px]
+         sm:h-[500px] sm:w-[435px]
+         md:h-[400px] md:w-[350px]
+         lg:h-[400px] lg:w-[330px]
+         xl:h-[350px] xl:w-[300px];
+}
