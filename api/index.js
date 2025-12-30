@@ -16,6 +16,30 @@ const Message = require('./models/Message');
 
 connectWithDB();
 
+const isProd = process.env.NODE_ENV === 'production';
+
+// Allow a single origin or a comma-separated list via CLIENT_URL.
+// In development, also allow Vite default localhost.
+const allowedOrigins = (() => {
+  const raw = String(process.env.CLIENT_URL || '').trim();
+  const list = raw
+    ? raw
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+  if (!isProd) list.push('http://localhost:5173');
+  return Array.from(new Set(list));
+})();
+
+const corsOrigin = (origin, cb) => {
+  // Non-browser clients / same-origin calls may send no origin.
+  if (!origin) return cb(null, true);
+  if (allowedOrigins.length === 0) return cb(null, true);
+  if (allowedOrigins.includes(origin)) return cb(null, true);
+  return cb(new Error('Not allowed by CORS'));
+};
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -28,10 +52,10 @@ app.use(cookieParser());
 app.use(
   cookieSession({
     name: 'session',
-    maxAge: process.env.COOKIE_TIME * 24 * 60 * 60 * 1000,
+    maxAge: (Number(process.env.COOKIE_TIME) || 7) * 24 * 60 * 60 * 1000,
     keys: [process.env.SESSION_SECRET],
-    secure: true,
-    sameSite: 'none',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     httpOnly: true,
   })
 );
@@ -40,7 +64,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: corsOrigin,
     credentials: true,
   })
 );
@@ -54,7 +78,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: corsOrigin,
     credentials: true,
   },
 });
@@ -201,9 +225,11 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(process.env.PORT || 8000, (err) => {
+const PORT = Number(process.env.PORT) || 8000;
+
+server.listen(PORT, (err) => {
   if (err) console.log('Error in connecting to server: ', err);
-  console.log(`Server is running on port no. ${process.env.PORT}`);
+  console.log(`Server is running on port no. ${PORT}`);
 });
 
 module.exports = app;
