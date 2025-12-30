@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
 import axiosInstance from '@/utils/axios';
-import { getItemFromLocalStorage } from '@/utils';
+import { getSocket } from '@/utils/socket';
 
 const PlaceChatBox = ({ placeId }) => {
   const [messages, setMessages] = useState([]);
@@ -9,17 +8,7 @@ const PlaceChatBox = ({ placeId }) => {
   const [text, setText] = useState('');
   const bottomRef = useRef(null);
 
-  const socket = useMemo(() => {
-    const token = getItemFromLocalStorage('token');
-    return io(import.meta.env.VITE_BASE_URL || 'http://localhost:4000', {
-      withCredentials: true,
-      auth: token ? { token } : {},
-      transports: ['polling', 'websocket'],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 500,
-    });
-  }, []);
+  const socket = useMemo(() => getSocket(), []);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -43,11 +32,10 @@ const PlaceChatBox = ({ placeId }) => {
     socket.emit('join_place', { placeId });
 
     const onNew = (msg) => setMessages((prev) => [...prev, msg]);
-    socket.on('new_place_message', onNew);
+    socket.on('new_message', onNew);
 
     return () => {
-      socket.off('new_place_message', onNew);
-      socket.disconnect();
+      socket.off('new_message', onNew);
     };
   }, [socket, placeId]);
 
