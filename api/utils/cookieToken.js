@@ -9,15 +9,15 @@ const cookieToken = (user, res) => {
       name: user.name,
     },
     process.env.JWT_SECRET || 'your_jwt_secret',
-    {
-      expiresIn: '7d',
-    }
+    { expiresIn: '7d' }
   );
+
+  const isProd = process.env.NODE_ENV === 'production';
 
   res.cookie('token', token, {
     httpOnly: true,
-    secure: false,   // true in production with HTTPS
-    sameSite: 'lax', // 'none' if cross-site with HTTPS
+    secure: isProd,              // MUST be true for SameSite=None in production (HTTPS)
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
