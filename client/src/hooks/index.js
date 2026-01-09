@@ -23,9 +23,17 @@ export const useProvideAuth = () => {
 
   useEffect(() => {
     const storedUser = getItemFromLocalStorage('user');
+    const storedToken = getItemFromLocalStorage('token');
+
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+
+    // IMPORTANT: restore Authorization after refresh/new tab
+    if (storedToken) {
+      axiosInstance.defaults.headers.common.Authorization = `Bearer ${storedToken}`;
+    }
+
     setLoading(false);
   }, []);
 
@@ -38,16 +46,21 @@ export const useProvideAuth = () => {
         email,
         password,
       });
+
       if (data.user && data.token) {
         setUser(data.user);
+
         // save user and token in local storage
         setItemsInLocalStorage('user', data.user);
         setItemsInLocalStorage('token', data.token);
+
+        // IMPORTANT: set axios default immediately after register too
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.token}`;
       }
+
       return { success: true, message: 'Registration successfull' };
     } catch (error) {
-      const message =
-        error?.response?.data?.message || 'Registration failed';
+      const message = error?.response?.data?.message || 'Registration failed';
       return { success: false, message };
     }
   };
@@ -60,40 +73,44 @@ export const useProvideAuth = () => {
         email,
         password,
       });
+
       if (data.user && data.token) {
         setUser(data.user);
+
         // save user and token in local storage
         setItemsInLocalStorage('user', data.user);
         setItemsInLocalStorage('token', data.token);
+
         // also update axios default
-        axiosInstance.defaults.headers.common[
-          'Authorization'
-        ] = `Bearer ${data.token}`;
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.token}`;
       }
+
       return { success: true, message: 'Login successfull' };
     } catch (error) {
-      const message =
-        error?.response?.data?.message || 'Login failed';
+      const message = error?.response?.data?.message || 'Login failed';
       return { success: false, message };
     }
   };
 
   const googleLogin = async (credential) => {
     const decoded = jwt_decode(credential);
+
     try {
       const { data } = await axiosInstance.post('/users/google/login', {
         name: `${decoded.given_name} ${decoded.family_name}`,
         email: decoded.email,
       });
+
       if (data.user && data.token) {
         setUser(data.user);
+
         // save user and token in local storage
         setItemsInLocalStorage('user', data.user);
         setItemsInLocalStorage('token', data.token);
-        axiosInstance.defaults.headers.common[
-          'Authorization'
-        ] = `Bearer ${data.token}`;
+
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.token}`;
       }
+
       return { success: true, message: 'Login successfull' };
     } catch (error) {
       const message = error?.message || 'Google login failed';
@@ -112,8 +129,9 @@ export const useProvideAuth = () => {
         removeItemFromLocalStorage('user');
         removeItemFromLocalStorage('token');
 
-        delete axiosInstance.defaults.headers.common['Authorization'];
+        delete axiosInstance.defaults.headers.common.Authorization;
       }
+
       return { success: true, message: 'Logout successfull' };
     } catch (error) {
       console.log(error);
@@ -125,13 +143,11 @@ export const useProvideAuth = () => {
     try {
       const formData = new FormData();
       formData.append('picture', picture);
-      const { data } = await axiosInstance.post(
-        '/users/upload-picture',
-        formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
-      );
+
+      const { data } = await axiosInstance.post('/users/upload-picture', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
       return data;
     } catch (error) {
       console.log(error);
@@ -141,6 +157,7 @@ export const useProvideAuth = () => {
   const updateUser = async (userDetails) => {
     const { name, password, picture } = userDetails;
     const email = JSON.parse(getItemFromLocalStorage('user')).email;
+
     try {
       const { data } = await axiosInstance.put('/users/update-user', {
         name,
@@ -148,6 +165,7 @@ export const useProvideAuth = () => {
         email,
         picture,
       });
+
       return data;
     } catch (error) {
       console.log(error);
