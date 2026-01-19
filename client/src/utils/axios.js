@@ -1,3 +1,4 @@
+// client/src/utils/axios.js
 import axios from 'axios';
 
 const baseURL =
@@ -39,10 +40,16 @@ axiosInstance.interceptors.response.use(
       const looksExpired =
         code === 'TOKEN_EXPIRED' || /token\s+expired/i.test(msg);
 
-      if (status === 401 && looksExpired) {
+      const looksInvalid =
+        code === 'TOKEN_INVALID' || /invalid\s+token/i.test(msg);
+
+      if (status === 401 && (looksExpired || looksInvalid)) {
         if (typeof window !== 'undefined') {
           window.localStorage.removeItem('token');
+          window.localStorage.removeItem('user');
+          window.dispatchEvent(new Event('auth:logout'));
         }
+
         delete axiosInstance.defaults.headers.common.Authorization;
 
         if (
