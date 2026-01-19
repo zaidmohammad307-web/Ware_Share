@@ -10,14 +10,13 @@ export const getSocket = () => {
   const baseURL =
     import.meta.env.VITE_BASE_URL ||
     import.meta.env.VITE_API_URL ||
-    'http://localhost:4000';
+    'http://localhost:8000';
 
   const token = getItemFromLocalStorage('token');
 
   socket = io(baseURL, {
     withCredentials: true,
     auth: token ? { token } : {},
-    // Polling first (stable), then websocket upgrade if possible:
     transports: ['polling', 'websocket'],
     autoConnect: true,
     reconnection: true,
