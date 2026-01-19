@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const Place = require('../models/Place');
 const HostReview = require('../models/HostReview');
+const User = require('../models/User');
 
 const isValidLatLng = (lat, lng) =>
   typeof lat === 'number' &&
@@ -52,6 +53,50 @@ const parseGpsFlexible = (input) => {
 const formatGps = ({ lat, lng }) =>
   `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
 
+const sanitizePlaceInput = (input) => {
+  const out = { ...(input || {}) };
+
+  // Prevent privilege/ownership tampering + immutable fields
+  delete out.owner;
+  delete out._id;
+  delete out.__v;
+  delete out.createdAt;
+  delete out.updatedAt;
+
+  return out;
+};
+
+const getHostFlags = async (userId, reqUser) => {
+  // Prefer DB truth; use req.user as fallback if DB read fails
+  try {
+    const u = await User.findById(userId).select(
+      'wantsToHost isHostVerified hostVerificationStatus'
+    );
+
+    if (!u) {
+      return {
+        wantsToHost: !!reqUser?.wantsToHost,
+        isHostVerified:
+          !!reqUser?.isHostVerified || reqUser?.hostVerificationStatus === 'approved',
+        hostVerificationStatus: reqUser?.hostVerificationStatus || 'not_submitted',
+      };
+    }
+
+    const wantsToHost = !!u.wantsToHost;
+    const hostVerificationStatus = u.hostVerificationStatus || 'not_submitted';
+    const isHostVerified = !!u.isHostVerified || hostVerificationStatus === 'approved';
+
+    return { wantsToHost, isHostVerified, hostVerificationStatus };
+  } catch (_) {
+    return {
+      wantsToHost: !!reqUser?.wantsToHost,
+      isHostVerified:
+        !!reqUser?.isHostVerified || reqUser?.hostVerificationStatus === 'approved',
+      hostVerificationStatus: reqUser?.hostVerificationStatus || 'not_submitted',
+    };
+  }
+};
+
 /* ----------------------------------------
    ➕ ADD PLACE
 ---------------------------------------- */
@@ -59,8 +104,29 @@ exports.addPlace = async (req, res) => {
   try {
     const userData = req.user;
 
+    if (!userData || !userData.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authenticated',
+      });
+    }
+
+    const { wantsToHost, isHostVerified } = await getHostFlags(
+      userData.id,
+      userData
+    );
+
+    if (!wantsToHost) {
+      return res.status(403).json({
+        success: false,
+        code: 'HOSTING_NOT_ENABLED',
+        message: 'Enable hosting in your profile before creating a listing.',
+      });
+    }
+
     // We expect addedPhotos + all other fields from formData
-    const { addedPhotos, ...rest } = req.body;
+    const { addedPhotos, ...rawRest } = req.body;
+    const rest = sanitizePlaceInput(rawRest);
 
     // Canonicalize GPS if possible (prevents swapped lat/lng and URL-only inputs)
     if (typeof rest.gps === 'string' && rest.gps.trim()) {
@@ -68,16 +134,25 @@ exports.addPlace = async (req, res) => {
       if (parsed) rest.gps = formatGps(parsed);
     }
 
+    // Enforce publishing policy:
+    // - Unverified hosts can create listing but it will always be hidden
+    // - Verified hosts can choose live/hidden; if omitted, schema default applies
+    if (!isHostVerified) {
+      rest.status = 'hidden';
+    } else if (rest.status && rest.status !== 'live' && rest.status !== 'hidden') {
+      delete rest.status;
+    }
+
     const place = await Place.create({
+      ...rest,
       owner: userData.id,
       photos: addedPhotos || [],
-      ...rest,
     });
 
-    res.status(200).json({ place });
+    return res.status(200).json({ place });
   } catch (err) {
     console.error('addPlace error:', err);
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Internal server error',
       error: err,
     });
@@ -92,10 +167,10 @@ exports.userPlaces = async (req, res) => {
     const userData = req.user;
     const id = userData.id;
     const places = await Place.find({ owner: id });
-    res.status(200).json(places);
+    return res.status(200).json(places);
   } catch (err) {
     console.error('userPlaces error:', err);
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Internal serever error',
     });
   }
@@ -109,7 +184,8 @@ exports.updatePlace = async (req, res) => {
     const userData = req.user;
     const userId = userData.id;
 
-    const { id, addedPhotos, ...rest } = req.body;
+    const { id, addedPhotos, ...rawRest } = req.body;
+    const rest = sanitizePlaceInput(rawRest);
 
     // Canonicalize GPS if possible (prevents swapped lat/lng and URL-only inputs)
     if (typeof rest.gps === 'string' && rest.gps.trim()) {
@@ -128,18 +204,32 @@ exports.updatePlace = async (req, res) => {
       });
     }
 
+    // Prevent publishing bypass through update-place
+    if (rest.status === 'live') {
+      const { wantsToHost, isHostVerified } = await getHostFlags(userId, userData);
+
+      if (!wantsToHost) {
+        rest.status = 'hidden';
+      } else if (!isHostVerified) {
+        rest.status = 'hidden';
+      }
+    } else if (rest.status && rest.status !== 'hidden') {
+      // Only allow explicit 'hidden' here; 'live' handled above; anything else removed
+      delete rest.status;
+    }
+
     place.set({
       ...rest,
       photos: addedPhotos || place.photos,
     });
 
     await place.save();
-    res.status(200).json({
+    return res.status(200).json({
       message: 'place updated!',
     });
   } catch (err) {
     console.error('updatePlace error:', err);
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Internal server error',
       error: err,
     });
@@ -203,12 +293,12 @@ exports.getPlaces = async (req, res) => {
       };
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       places,
     });
   } catch (err) {
     console.error('getPlaces error:', err);
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Internal server error',
     });
   }
@@ -254,12 +344,12 @@ exports.singlePlace = async (req, res) => {
     placeObj.hostRating = hostRating;
     placeObj.hostRatingCount = hostRatingCount;
 
-    res.status(200).json({
+    return res.status(200).json({
       place: placeObj,
     });
   } catch (err) {
     console.error('singlePlace error:', err);
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Internal serever error',
     });
   }
@@ -287,33 +377,39 @@ exports.searchPlaces = async (req, res) => {
       address: { $regex: searchword, $options: 'i' },
     });
 
-    res.status(200).json(searchMatches);
+    return res.status(200).json(searchMatches);
   } catch (err) {
     console.log(err);
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Internal serever error 1',
     });
   }
 };
 
 /* ----------------------------------------
-   🧑‍💼 PLACES BY HOST (all statuses)
+   🧑‍💼 PLACES BY HOST (PUBLIC: only LIVE / no-status)
 ---------------------------------------- */
 exports.getPlacesByHost = async (req, res) => {
   try {
     const { hostId } = req.params;
 
-    const places = await Place.find({ owner: hostId }).sort({
-      createdAt: -1,
-    });
+    const places = await Place.find({
+      owner: hostId,
+      $or: [{ status: 'live' }, { status: { $exists: false } }],
+    })
+      .populate(
+        'owner',
+        'name picture hostProfile hostVerificationStatus isHostVerified role createdAt'
+      )
+      .sort({ createdAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       places,
     });
   } catch (err) {
     console.error('getPlacesByHost error:', err);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal server error while fetching host's places",
       error: err.message,
@@ -343,6 +439,28 @@ exports.updatePlaceStatus = async (req, res) => {
     // Toggle status on the server – ignore body for simplicity
     const current = place.status || 'live';
     const next = current === 'hidden' ? 'live' : 'hidden';
+
+    // Publishing gate: only verified hosts can set listings live
+    if (next === 'live') {
+      const { wantsToHost, isHostVerified } = await getHostFlags(userId, req.user);
+
+      if (!wantsToHost) {
+        return res.status(403).json({
+          success: false,
+          code: 'HOSTING_NOT_ENABLED',
+          message: 'Enable hosting in your profile before publishing listings.',
+        });
+      }
+
+      if (!isHostVerified) {
+        return res.status(403).json({
+          success: false,
+          code: 'HOST_NOT_VERIFIED',
+          message:
+            'Your host verification must be approved before you can publish a live listing.',
+        });
+      }
+    }
 
     place.status = next;
     await place.save();
