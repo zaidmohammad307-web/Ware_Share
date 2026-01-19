@@ -51,16 +51,39 @@ exports.isLoggedIn = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error('isLoggedIn error:', err);
+    // Token expiry is a normal event; avoid noisy stack traces in production logs.
+    if (err && err.name === 'TokenExpiredError') {
+      const isProd = process.env.NODE_ENV === 'production';
+
+      // Clear cookie token so the browser stops re-sending an expired token.
+      res.cookie('token', null, {
+        expires: new Date(0),
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'lax',
+      });
+
+      return res.status(401).json({
+        success: false,
+        code: 'TOKEN_EXPIRED',
+        message: 'Token expired. Please login again.',
+        expiredAt: err.expiredAt,
+      });
+    }
+
+    // Invalid token / signature / malformed
+    const reason = err?.name || err?.message || 'UnknownError';
+    console.warn(`isLoggedIn rejected request (${reason})`);
+
     return res.status(401).json({
       success: false,
-      message: 'Invalid or expired token.',
+      code: 'TOKEN_INVALID',
+      message: 'Invalid token. Please login again.',
     });
   }
 };
 
 // ✅ Admin-only middleware (identified ONLY by email)
-// Admin user is identified ONLY by email: "admin@123456"
 exports.isAdmin = (req, res, next) => {
   try {
     const email = (req.user?.email || '').toLowerCase();
