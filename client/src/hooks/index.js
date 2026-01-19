@@ -1,5 +1,5 @@
 // client/src/hooks/index.js
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import jwt_decode from 'jwt-decode';
 
 import { UserContext } from '@/providers/UserProvider';
@@ -18,23 +18,137 @@ export const useAuth = () => {
 };
 
 export const useProvideAuth = () => {
-  const [user, setUser] = useState(null);
+  const [user, setUserState] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const persistUser = useCallback((nextUser) => {
+    if (nextUser) {
+      setItemsInLocalStorage('user', nextUser);
+    } else {
+      removeItemFromLocalStorage('user');
+    }
+  }, []);
+
+  const persistToken = useCallback((nextToken) => {
+    if (nextToken) {
+      setItemsInLocalStorage('token', nextToken);
+      axiosInstance.defaults.headers.common.Authorization = `Bearer ${nextToken}`;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('auth:token', { detail: { token: nextToken } })
+        );
+      }
+    } else {
+      removeItemFromLocalStorage('token');
+      delete axiosInstance.defaults.headers.common.Authorization;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('auth:logout'));
+      }
+    }
+  }, []);
+
+  // Public setUser used across the app: ALWAYS persist to localStorage.
+  const setUser = useCallback(
+    (nextUser) => {
+      setUserState(nextUser);
+      persistUser(nextUser);
+    },
+    [persistUser]
+  );
+
+  const applyAuthPayload = useCallback(
+    (data) => {
+      if (!data?.user || !data?.token) return;
+      setUserState(data.user);
+      persistUser(data.user);
+      persistToken(data.token);
+    },
+    [persistUser, persistToken]
+  );
+
+  const clearAuth = useCallback(() => {
+    setUserState(null);
+    persistUser(null);
+    persistToken(null);
+  }, [persistUser, persistToken]);
 
   useEffect(() => {
     const storedUser = getItemFromLocalStorage('user');
     const storedToken = getItemFromLocalStorage('token');
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    // If token missing -> treat session as logged out
+    if (!storedToken) {
+      removeItemFromLocalStorage('user');
+      delete axiosInstance.defaults.headers.common.Authorization;
+      setUserState(null);
+      setLoading(false);
+      return;
     }
 
-    // IMPORTANT: restore Authorization after refresh/new tab
-    if (storedToken) {
-      axiosInstance.defaults.headers.common.Authorization = `Bearer ${storedToken}`;
+    // Restore token to axios (always)
+    axiosInstance.defaults.headers.common.Authorization = `Bearer ${storedToken}`;
+
+    // Restore user if present
+    if (storedUser) {
+      try {
+        setUserState(JSON.parse(storedUser));
+      } catch (_) {
+        removeItemFromLocalStorage('user');
+        setUserState(null);
+      }
     }
 
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const onLogout = () => {
+      setUserState(null);
+      removeItemFromLocalStorage('user');
+      removeItemFromLocalStorage('token');
+      delete axiosInstance.defaults.headers.common.Authorization;
+    };
+
+    const onStorage = (e) => {
+      if (!e?.key) return;
+
+      // Cross-tab sync
+      if (e.key === 'token') {
+        const token = getItemFromLocalStorage('token');
+        if (!token) {
+          onLogout();
+          return;
+        }
+
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${token}`;
+      }
+
+      if (e.key === 'user') {
+        const next = getItemFromLocalStorage('user');
+        if (!next) {
+          setUserState(null);
+          return;
+        }
+        try {
+          setUserState(JSON.parse(next));
+        } catch (_) {
+          setUserState(null);
+          removeItemFromLocalStorage('user');
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:logout', onLogout);
+      window.addEventListener('storage', onStorage);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('auth:logout', onLogout);
+        window.removeEventListener('storage', onStorage);
+      }
+    };
   }, []);
 
   const register = async (formData) => {
@@ -47,17 +161,7 @@ export const useProvideAuth = () => {
         password,
       });
 
-      if (data.user && data.token) {
-        setUser(data.user);
-
-        // save user and token in local storage
-        setItemsInLocalStorage('user', data.user);
-        setItemsInLocalStorage('token', data.token);
-
-        // IMPORTANT: set axios default immediately after register too
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.token}`;
-      }
-
+      applyAuthPayload(data);
       return { success: true, message: 'Registration successfull' };
     } catch (error) {
       const message = error?.response?.data?.message || 'Registration failed';
@@ -74,17 +178,7 @@ export const useProvideAuth = () => {
         password,
       });
 
-      if (data.user && data.token) {
-        setUser(data.user);
-
-        // save user and token in local storage
-        setItemsInLocalStorage('user', data.user);
-        setItemsInLocalStorage('token', data.token);
-
-        // also update axios default
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.token}`;
-      }
-
+      applyAuthPayload(data);
       return { success: true, message: 'Login successfull' };
     } catch (error) {
       const message = error?.response?.data?.message || 'Login failed';
@@ -101,16 +195,7 @@ export const useProvideAuth = () => {
         email: decoded.email,
       });
 
-      if (data.user && data.token) {
-        setUser(data.user);
-
-        // save user and token in local storage
-        setItemsInLocalStorage('user', data.user);
-        setItemsInLocalStorage('token', data.token);
-
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${data.token}`;
-      }
-
+      applyAuthPayload(data);
       return { success: true, message: 'Login successfull' };
     } catch (error) {
       const message = error?.message || 'Google login failed';
@@ -123,13 +208,7 @@ export const useProvideAuth = () => {
       const { data } = await axiosInstance.get('/users/logout');
 
       if (data.success) {
-        setUser(null);
-
-        // Clear user data and token from localStorage when logging out
-        removeItemFromLocalStorage('user');
-        removeItemFromLocalStorage('token');
-
-        delete axiosInstance.defaults.headers.common.Authorization;
+        clearAuth();
       }
 
       return { success: true, message: 'Logout successfull' };
@@ -156,16 +235,16 @@ export const useProvideAuth = () => {
 
   const updateUser = async (userDetails) => {
     const { name, password, picture } = userDetails;
-    const email = JSON.parse(getItemFromLocalStorage('user')).email;
 
     try {
       const { data } = await axiosInstance.put('/users/update-user', {
         name,
         password,
-        email,
         picture,
       });
 
+      // Backend responds with { success, token, user }
+      applyAuthPayload(data);
       return data;
     } catch (error) {
       console.log(error);
