@@ -10,7 +10,6 @@ const { isLoggedIn, isAdmin } = require('../middlewares/user');
 const {
   register,
   login,
-  logout,
   googleLogin,
   uploadPicture,
   updateUserDetails,
@@ -26,9 +25,9 @@ router.post('/login', login);
 router.post('/google/login', googleLogin);
 
 // PROFILE PICTURE
-router.post('/upload-picture', upload.single('picture', 1), uploadPicture);
+router.post('/upload-picture', upload.single('picture'), uploadPicture);
 
-// UPDATE USER PROFILE (FIX: now requires auth)
+// UPDATE USER PROFILE (requires auth)
 router.put('/update-user', isLoggedIn, updateUserDetails);
 
 // HOST SETTINGS
@@ -45,13 +44,27 @@ router.post(
   submitHostVerification
 );
 
-// ADMIN: GET PENDING HOSTS (FIX: enforce admin)
+// ADMIN: GET PENDING HOSTS (admin enforced)
 router.get('/admin/hosts/pending', isLoggedIn, isAdmin, getPendingHosts);
 
-// ADMIN: APPROVE / REJECT HOST (FIX: enforce admin)
+// ADMIN: APPROVE / REJECT HOST (admin enforced)
 router.put('/admin/hosts/:userId/verify', isLoggedIn, isAdmin, adminVerifyHost);
 
-// LOGOUT
-router.get('/logout', logout);
+// LOGOUT (inline handler to avoid undefined controller export issues)
+router.get('/logout', (req, res) => {
+  const isProd = process.env.NODE_ENV === 'production';
+
+  res.cookie('token', null, {
+    expires: new Date(0),
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: 'Logged out',
+  });
+});
 
 module.exports = router;
