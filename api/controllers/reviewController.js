@@ -22,7 +22,9 @@ exports.createPlaceReview = async (req, res) => {
 
     const booking = await Booking.findById(bookingId).populate('place');
     if (!booking || !booking.place) {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: 'Booking not found' });
     }
 
     if (String(booking.user) !== String(userId)) {
@@ -125,7 +127,9 @@ exports.createHostReview = async (req, res) => {
 
     const booking = await Booking.findById(bookingId).populate('place');
     if (!booking || !booking.place) {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: 'Booking not found' });
     }
 
     if (String(booking.user) !== String(reviewerId)) {
@@ -162,7 +166,11 @@ exports.createHostReview = async (req, res) => {
 
     await review.populate([
       { path: 'reviewer', select: 'name' },
-      { path: 'host', select: 'name createdAt' },
+      {
+        path: 'host',
+        select:
+          'name picture hostProfile hostVerificationStatus isHostVerified createdAt',
+      },
     ]);
 
     return res.status(201).json({ success: true, review });
@@ -181,7 +189,10 @@ exports.getHostReviews = async (req, res) => {
     const { hostId } = req.params;
     const reviews = await HostReview.find({ host: hostId })
       .populate('reviewer', 'name')
-      .populate('host', 'name createdAt')
+      .populate(
+        'host',
+        'name picture hostProfile hostVerificationStatus isHostVerified createdAt'
+      )
       .sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, reviews });
@@ -213,7 +224,9 @@ exports.createRenterReview = async (req, res) => {
 
     const booking = await Booking.findById(bookingId).populate('place');
     if (!booking || !booking.place) {
-      return res.status(404).json({ success: false, message: 'Booking not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: 'Booking not found' });
     }
 
     if (String(booking.place.owner) !== String(hostId)) {
@@ -250,7 +263,6 @@ exports.createRenterReview = async (req, res) => {
       comment,
     });
 
-    // ✅ Correct populate
     await review.populate([
       { path: 'host', select: 'name' },
       { path: 'renter', select: 'name' },
@@ -274,7 +286,6 @@ exports.getRenterReviews = async (req, res) => {
   try {
     const { renterId } = req.params;
 
-    // ✅ Prevent CastError when renterId is "undefined"
     if (!renterId || renterId === 'undefined') {
       return res.status(400).json({
         success: false,
@@ -289,8 +300,6 @@ exports.getRenterReviews = async (req, res) => {
         message: 'Invalid renterId',
       });
     }
-
-    const RenterReview = require('../models/RenterReview');
 
     const reviews = await RenterReview.find({ renter: renterId })
       .populate('host', 'name')
@@ -307,4 +316,3 @@ exports.getRenterReviews = async (req, res) => {
     });
   }
 };
-
