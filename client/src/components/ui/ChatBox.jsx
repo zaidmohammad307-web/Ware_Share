@@ -1,32 +1,10 @@
+// client/src/components/ui/ChatBox.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { io } from 'socket.io-client';
 
 import axiosInstance from '@/utils/axios';
-import { getItemFromLocalStorage } from '@/utils';
+import { getSocket } from '@/utils/socket';
 import { useAuth } from '@/hooks';
-
-// Singleton socket across the whole app.
-let _socketSingleton = null;
-
-function getSocketSingleton() {
-  if (_socketSingleton) return _socketSingleton;
-
-  const token = getItemFromLocalStorage('token');
-  const base =
-    import.meta.env.VITE_BASE_URL ||
-    import.meta.env.VITE_API_URL ||
-    'http://localhost:4000';
-
-  _socketSingleton = io(base, {
-    withCredentials: true,
-    auth: token ? { token } : {},
-    transports: ['websocket', 'polling'],
-    autoConnect: true,
-  });
-
-  return _socketSingleton;
-}
 
 const normalizeId = (v) => {
   if (v === null || v === undefined) return null;
@@ -78,7 +56,7 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
     return null;
   }, [bookingId, placeId]);
 
-  const socket = useMemo(() => getSocketSingleton(), []);
+  const socket = useMemo(() => getSocket(), []);
 
   // Load history + IDs for profile links
   useEffect(() => {
@@ -245,7 +223,10 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
         <div className="space-y-3">
           {messages.map((m) => {
             const senderId = normalizeId(m?.sender?._id || m?.sender);
-            const mine = normalizeId(myId) && senderId && String(senderId) === String(normalizeId(myId));
+            const mine =
+              normalizeId(myId) &&
+              senderId &&
+              String(senderId) === String(normalizeId(myId));
 
             return (
               <div
@@ -259,24 +240,15 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
                     m._pending ? 'opacity-70' : '',
                   ].join(' ')}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span
-                      className={`text-xs font-semibold ${
-                        mine ? 'text-white/90' : 'text-gray-600'
-                      }`}
-                    >
-                      {mine ? 'You' : m?.sender?.name || 'User'}
-                    </span>
-                    <span
-                      className={`text-[11px] ${
-                        mine ? 'text-white/80' : 'text-gray-500'
-                      }`}
-                    >
-                      {m?.createdAt ? new Date(m.createdAt).toLocaleTimeString() : ''}
-                    </span>
+                  <div className="whitespace-pre-line">{m.text}</div>
+                  <div
+                    className={[
+                      'mt-1 text-[10px]',
+                      mine ? 'text-white/80' : 'text-gray-500',
+                    ].join(' ')}
+                  >
+                    {m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}
                   </div>
-
-                  <div className="mt-1 whitespace-pre-line">{m?.text}</div>
                 </div>
               </div>
             );
@@ -285,28 +257,23 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
         </div>
       </div>
 
-      <div className="border-t p-3">
-        <div className="flex gap-2">
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
-            className="w-full rounded-xl border px-3 py-2 text-sm"
-            placeholder="Type a message..."
-          />
-          <button
-            type="button"
-            onClick={send}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
-          >
-            Send
-          </button>
-        </div>
+      <div className="flex gap-2 border-t p-3">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') send();
+          }}
+          className="w-full rounded-xl border px-3 py-2 text-sm"
+          placeholder="Type your message and press Enter"
+        />
+        <button
+          type="button"
+          onClick={send}
+          className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
+        >
+          Send
+        </button>
       </div>
     </div>
   );
