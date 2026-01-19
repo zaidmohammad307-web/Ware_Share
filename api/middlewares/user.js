@@ -8,11 +8,9 @@ exports.isLoggedIn = async (req, res, next) => {
     let token = null;
 
     // 1) From Authorization header: "Bearer xxx"
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer ')
-    ) {
-      token = req.headers.authorization.split(' ')[1];
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (authHeader && String(authHeader).startsWith('Bearer ')) {
+      token = String(authHeader).split(' ')[1];
     }
 
     // 2) Or from cookie "token"
@@ -33,8 +31,11 @@ exports.isLoggedIn = async (req, res, next) => {
       process.env.JWT_SECRET || 'your_jwt_secret'
     );
 
-    // Load user from DB
-    const user = await User.findById(decoded.id);
+    // Load user from DB (always prefer id from token)
+    const user = await User.findById(decoded.id).select(
+      'name email role wantsToHost isHostVerified hostVerificationStatus'
+    );
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -42,14 +43,18 @@ exports.isLoggedIn = async (req, res, next) => {
       });
     }
 
-    // Attach user to request
+    // Attach minimal user to request (plus host flags used across controllers)
     req.user = {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
+      role: user.role || 'user',
+      wantsToHost: !!user.wantsToHost,
+      isHostVerified: !!user.isHostVerified,
+      hostVerificationStatus: user.hostVerificationStatus || 'not_submitted',
     };
 
-    next();
+    return next();
   } catch (err) {
     // Token expiry is a normal event; avoid noisy stack traces in production logs.
     if (err && err.name === 'TokenExpiredError') {
@@ -86,7 +91,7 @@ exports.isLoggedIn = async (req, res, next) => {
 // ✅ Admin-only middleware (identified ONLY by email)
 exports.isAdmin = (req, res, next) => {
   try {
-    const email = (req.user?.email || '').toLowerCase();
+    const email = String(req.user?.email || '').toLowerCase();
     if (email !== 'admin@123456') {
       return res.status(403).json({
         success: false,
