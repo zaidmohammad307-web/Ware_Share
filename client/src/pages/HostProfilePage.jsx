@@ -24,8 +24,8 @@ const HostProfilePage = () => {
           axiosInstance.get(`/places/host/${hostId}`),
         ]);
 
-        const reviews = reviewRes.data.reviews || [];
-        const places = placeRes.data.places || [];
+        const reviews = reviewRes?.data?.reviews || [];
+        const places = placeRes?.data?.places || [];
 
         setHostReviews(reviews);
         setHostPlaces(places);
@@ -67,13 +67,15 @@ const HostProfilePage = () => {
         ).toFixed(1)
       : null;
 
-  const hostCity = host?.hostCity || host?.city;
-  const hostCompany = host?.companyName;
-  const hostVat = host?.companyVat;
-  const hostPhone = host?.phone;
-  const hostAbout = host?.hostAbout;
-  const hostExperienceYears = host?.hostExperienceYears;
-  const hostRole = host?.role;
+  const hostProfile = host?.hostProfile || {};
+
+  const hostCity = hostProfile?.city || host?.city || null;
+  const hostCompany = hostProfile?.companyName || null;
+  const hostTaxId = hostProfile?.taxId || null;
+  const hostBusinessRegNumber = hostProfile?.businessRegNumber || null;
+  const hostPhone = hostProfile?.phone || null;
+  const hostAbout = hostProfile?.about || null;
+  const hostRole = host?.role || null;
 
   const verificationStatus = host?.hostVerificationStatus || 'not_submitted';
 
@@ -108,7 +110,6 @@ const HostProfilePage = () => {
   const totalListings = hostPlaces.length;
   const totalReviews = hostReviews.length;
 
-  // ✅ start inquiry chat about the first listing (simple + works)
   const renterId = user?._id || null;
   const firstPlaceId = hostPlaces?.[0]?._id;
   const canStartInquiryChat = Boolean(renterId && firstPlaceId);
@@ -184,7 +185,6 @@ const HostProfilePage = () => {
               </span>
             </div>
 
-            {/* ✅ FIXED: correct route (no extra segment) */}
             {canStartInquiryChat && (
               <Link
                 to={`/place/${firstPlaceId}/chat`}
@@ -202,7 +202,7 @@ const HostProfilePage = () => {
           </div>
         </div>
 
-        {(hostCompany || hostPhone || hostVat || hostExperienceYears) && (
+        {(hostCompany || hostPhone || hostTaxId || hostBusinessRegNumber) && (
           <div className="mt-4 grid gap-3 text-sm text-gray-700 md:grid-cols-2">
             <div>
               {hostCompany && (
@@ -211,16 +211,18 @@ const HostProfilePage = () => {
                   {hostCompany}
                 </div>
               )}
-              {hostVat && (
+
+              {hostTaxId && (
                 <div>
                   <span className="font-medium">Tax / VAT ID: </span>
-                  {hostVat}
+                  {hostTaxId}
                 </div>
               )}
-              {hostExperienceYears && (
+
+              {hostBusinessRegNumber && (
                 <div>
-                  <span className="font-medium">Warehouse experience: </span>
-                  {hostExperienceYears} year{hostExperienceYears > 1 ? 's' : ''}
+                  <span className="font-medium">Business registration: </span>
+                  {hostBusinessRegNumber}
                 </div>
               )}
             </div>
@@ -277,7 +279,9 @@ const HostProfilePage = () => {
                     </span>
                   )}
                 </div>
+
                 <p className="text-sm text-gray-600 line-clamp-2">{place.address}</p>
+
                 {(place.city || place.zone) && (
                   <p className="mt-1 text-xs text-gray-500">
                     {place.city}
