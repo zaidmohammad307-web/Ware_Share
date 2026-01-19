@@ -1,3 +1,4 @@
+// api/index.js
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -14,30 +15,51 @@ const Booking = require('./models/Booking');
 const Place = require('./models/Place');
 const Message = require('./models/Message');
 
-connectWithDB();
-
 const isProd = process.env.NODE_ENV === 'production';
 
-// Allow a single origin or a comma-separated list via CLIENT_URL.
-// In development, also allow Vite default localhost.
+// -----------------------------
+// CORS
+// -----------------------------
+const normalizeOrigin = (value) =>
+  String(value || '').trim().replace(/\/+$/, '');
+
 const allowedOrigins = (() => {
-  const raw = String(process.env.CLIENT_URL || '').trim();
-  const list = raw
-    ? raw
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
-    : [];
-  if (!isProd) list.push('http://localhost:5173');
+  const raw = process.env.CORS_ORIGINS || process.env.CLIENT_URL || '';
+  const list = String(raw)
+    .split(',')
+    .map(normalizeOrigin)
+    .filter(Boolean);
+
+  const renderExternalUrl = normalizeOrigin(process.env.RENDER_EXTERNAL_URL);
+  if (renderExternalUrl) list.push(renderExternalUrl);
+
+  if (!isProd) {
+    list.push('http://localhost:5173', 'http://127.0.0.1:5173');
+  }
+
   return Array.from(new Set(list));
 })();
 
 const corsOrigin = (origin, cb) => {
-  // Non-browser clients / same-origin calls may send no origin.
   if (!origin) return cb(null, true);
   if (allowedOrigins.length === 0) return cb(null, true);
-  if (allowedOrigins.includes(origin)) return cb(null, true);
-  return cb(new Error('Not allowed by CORS'));
+
+  const norm = normalizeOrigin(origin);
+  const ok = allowedOrigins.includes(norm);
+
+  if (!ok && process.env.CORS_DEBUG === 'true') {
+    console.warn('Blocked CORS origin:', norm);
+    console.warn('Allowed origins:', allowedOrigins);
+  }
+
+  return cb(null, ok);
+};
+
+const corsOptions = {
+  origin: corsOrigin,
+  credentials: true,
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 cloudinary.config({
@@ -62,12 +84,8 @@ app.use(
 
 app.use(express.json());
 
-app.use(
-  cors({
-    origin: corsOrigin,
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use('/', require('./routes'));
 
@@ -109,16 +127,14 @@ io.use((socket, next) => {
     );
     socket.userId = decoded.id;
 
-    next();
+    return next();
   } catch (e) {
     return next(new Error('Unauthorized'));
   }
 });
 
 io.on('connection', (socket) => {
-  // -----------------------------
   // Booking chat
-  // -----------------------------
   socket.on('join_booking', async ({ bookingId }) => {
     try {
       if (!bookingId) return;
@@ -163,9 +179,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // -----------------------------
   // Place inquiry chat (pre-booking)
-  // -----------------------------
   socket.on('join_place', async ({ placeId, renterId }) => {
     try {
       if (!placeId) return;
@@ -176,7 +190,6 @@ io.on('connection', (socket) => {
       const me = String(socket.userId);
       const isHost = String(place.owner) === me;
 
-      // If host: must provide renterId
       let renterToUse = me;
       if (isHost) {
         if (!renterId) return;
@@ -199,7 +212,6 @@ io.on('connection', (socket) => {
       const me = String(socket.userId);
       const isHost = String(place.owner) === me;
 
-      // Decide renter thread
       let renterToUse = me;
       if (isHost) {
         if (!renterId) return;
@@ -216,8 +228,6 @@ io.on('connection', (socket) => {
       });
 
       const populated = await msg.populate('sender', 'name');
-
-      // ✅ IMPORTANT: emit SAME event name the client listens to
       io.to(placeRoom(placeId, renterToUse)).emit('new_message', populated);
     } catch (e) {
       console.error('send_place_message error:', e);
@@ -227,9 +237,13 @@ io.on('connection', (socket) => {
 
 const PORT = Number(process.env.PORT) || 8000;
 
-server.listen(PORT, (err) => {
-  if (err) console.log('Error in connecting to server: ', err);
-  console.log(`Server is running on port no. ${PORT}`);
-});
+(async () => {
+  await connectWithDB();
+
+  server.listen(PORT, (err) => {
+    if (err) console.log('Error in connecting to server: ', err);
+    console.log(`Server is running on port no. ${PORT}`);
+  });
+})();
 
 module.exports = app;
