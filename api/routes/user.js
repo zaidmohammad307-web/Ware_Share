@@ -5,7 +5,7 @@ const multer = require('multer');
 
 const upload = multer({ dest: '/tmp' });
 
-const { isLoggedIn } = require('../middlewares/user');
+const { isLoggedIn, isAdmin } = require('../middlewares/user');
 
 const {
   register,
@@ -28,8 +28,8 @@ router.post('/google/login', googleLogin);
 // PROFILE PICTURE
 router.post('/upload-picture', upload.single('picture', 1), uploadPicture);
 
-// UPDATE USER PROFILE
-router.put('/update-user', updateUserDetails);
+// UPDATE USER PROFILE (FIX: now requires auth)
+router.put('/update-user', isLoggedIn, updateUserDetails);
 
 // HOST SETTINGS
 router.put('/host/settings', isLoggedIn, updateHostSettings);
@@ -45,12 +45,11 @@ router.post(
   submitHostVerification
 );
 
-// ADMIN: GET PENDING HOSTS
-// For now: only must be logged in
-router.get('/admin/hosts/pending', isLoggedIn, getPendingHosts);
+// ADMIN: GET PENDING HOSTS (FIX: enforce admin)
+router.get('/admin/hosts/pending', isLoggedIn, isAdmin, getPendingHosts);
 
-// ADMIN: APPROVE / REJECT HOST
-router.put('/admin/hosts/:userId/verify', isLoggedIn, adminVerifyHost);
+// ADMIN: APPROVE / REJECT HOST (FIX: enforce admin)
+router.put('/admin/hosts/:userId/verify', isLoggedIn, isAdmin, adminVerifyHost);
 
 // LOGOUT
 router.get('/logout', logout);
