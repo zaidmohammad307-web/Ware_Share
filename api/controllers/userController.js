@@ -3,6 +3,26 @@ const User = require('../models/User');
 const cookieToken = require('../utils/cookieToken');
 const { buildSafeUser } = cookieToken;
 const cloudinary = require('cloudinary').v2;
+const fs = require('fs/promises');
+
+// Upload any file type (image/pdf) to Cloudinary and remove temp file
+async function uploadHostVerificationFile(file, label) {
+  if (!file || !file.path) return null;
+  try {
+    const uploadRes = await cloudinary.uploader.upload(file.path, {
+      folder: 'Airbnb/HostVerification',
+      resource_type: 'auto',
+    });
+    return { url: uploadRes.secure_url, label };
+  } finally {
+    // Best-effort cleanup of temp upload
+    try {
+      await fs.unlink(file.path);
+    } catch (_) {
+      // ignore
+    }
+  }
+}
 
 /* ------------------------------------------------
    REGISTER / SIGNUP
@@ -116,29 +136,38 @@ exports.googleLogin = async (req, res) => {
    UPLOAD PROFILE PICTURE
 -------------------------------------------------*/
 exports.uploadPicture = async (req, res) => {
+  let filePath = null;
   try {
-    const { path } = req.file;
+    filePath = req.file && req.file.path;
+    if (!filePath) {
+      return res.status(400).json({ message: 'No file provided' });
+    }
 
-    let result = await cloudinary.uploader.upload(path, {
+    const result = await cloudinary.uploader.upload(filePath, {
       folder: 'Airbnb/Users',
+      resource_type: 'image',
     });
 
-    res.status(200).json(result.secure_url);
+    return res.status(200).json(result.secure_url);
   } catch (error) {
     console.error('uploadPicture error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: error.message,
       message: 'Internal server error',
     });
+  } finally {
+    if (filePath) {
+      try {
+        await fs.unlink(filePath);
+      } catch (_) {
+        // ignore
+      }
+    }
   }
 };
 
 /* ------------------------------------------------
    UPDATE USER (name / password / picture)
-   FIXES:
-   - endpoint is now auth-protected in routes
-   - updates by req.user.id (not by arbitrary email)
-   - avoids double-hashing (let model pre-save hook hash once)
 -------------------------------------------------*/
 exports.updateUserDetails = async (req, res) => {
   try {
@@ -185,9 +214,44 @@ exports.updateUserDetails = async (req, res) => {
 };
 
 /* ------------------------------------------------
+   HOST SETTINGS (USER SIDE)
+-------------------------------------------------*/
+exports.updateHostSettings = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { wantsToHost, role } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (typeof wantsToHost === 'boolean') user.wantsToHost = wantsToHost;
+    if (role) user.role = role;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Host settings updated',
+      user: buildSafeUser(user),
+    });
+  } catch (err) {
+    console.error('updateHostSettings error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while updating host settings',
+      error: err.message,
+    });
+  }
+};
+
+/* ------------------------------------------------
    HOST VERIFICATION (USER SIDE)
    POST /users/host/verify  (isLoggedIn + multer.fields)
-   FIX: return safe user projection (no password hash)
 -------------------------------------------------*/
 exports.submitHostVerification = async (req, res) => {
   try {
@@ -225,22 +289,19 @@ exports.submitHostVerification = async (req, res) => {
     const newFiles = [];
 
     if (files.idDocument && files.idDocument[0]) {
-      const uploadRes = await cloudinary.uploader.upload(
-        files.idDocument[0].path,
-        { folder: 'Airbnb/HostVerification' }
+      const uploaded = await uploadHostVerificationFile(
+        files.idDocument[0],
+        'ID document'
       );
-      newFiles.push({ url: uploadRes.secure_url, label: 'ID document' });
+      if (uploaded) newFiles.push(uploaded);
     }
 
     if (files.companyDocument && files.companyDocument[0]) {
-      const uploadRes = await cloudinary.uploader.upload(
-        files.companyDocument[0].path,
-        { folder: 'Airbnb/HostVerification' }
+      const uploaded = await uploadHostVerificationFile(
+        files.companyDocument[0],
+        'Company / warehouse document'
       );
-      newFiles.push({
-        url: uploadRes.secure_url,
-        label: 'Company / warehouse document',
-      });
+      if (uploaded) newFiles.push(uploaded);
     }
 
     if (!newFiles.length && !companyName && !phone) {
@@ -294,7 +355,6 @@ exports.submitHostVerification = async (req, res) => {
 
 /* ------------------------------------------------
    ADMIN: GET PENDING HOSTS
-   GET /users/admin/hosts/pending
 -------------------------------------------------*/
 exports.getPendingHosts = async (req, res) => {
   try {
@@ -318,11 +378,9 @@ exports.getPendingHosts = async (req, res) => {
   }
 };
 
-// ------------------------------------------------
-// HOST VERIFICATION (ADMIN SIDE)
-// PUT /users/admin/hosts/:userId/verify
-// FIX: return safe user projection (no password hash)
-// ------------------------------------------------
+/* ------------------------------------------------
+   ADMIN: VERIFY HOST
+-------------------------------------------------*/
 exports.adminVerifyHost = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -362,97 +420,8 @@ exports.adminVerifyHost = async (req, res) => {
     console.error('adminVerifyHost error:', err);
     return res.status(500).json({
       success: false,
-      message: 'Internal server error while changing host status',
+      message: 'Internal server error while verifying host',
       error: err.message,
     });
   }
-};
-
-// ------------------------------------------------
-// HOST SETTINGS (no file upload, just fields)
-// PUT /users/host/settings
-// FIX: return safe user projection (no password hash)
-// ------------------------------------------------
-exports.updateHostSettings = async (req, res) => {
-  try {
-    const userId = req.user && req.user.id;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Not authenticated',
-      });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    const {
-      phone,
-      companyName,
-      country,
-      city,
-      taxId,
-      businessRegNumber,
-      website,
-      about,
-      wantsToHost,
-      isHost, // old frontend – map to wantsToHost
-    } = req.body;
-
-    if (!user.hostProfile) user.hostProfile = {};
-
-    if (phone) user.hostProfile.phone = phone;
-    if (companyName) user.hostProfile.companyName = companyName;
-    if (country) user.hostProfile.country = country;
-    if (city) user.hostProfile.city = city;
-    if (taxId) user.hostProfile.taxId = taxId;
-    if (businessRegNumber)
-      user.hostProfile.businessRegNumber = businessRegNumber;
-    if (website) user.hostProfile.website = website;
-    if (about) user.hostProfile.about = about;
-
-    if (typeof wantsToHost === 'boolean') user.wantsToHost = wantsToHost;
-    else if (typeof isHost === 'boolean') user.wantsToHost = isHost;
-
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Host settings updated',
-      user: buildSafeUser(user),
-    });
-  } catch (err) {
-    console.error('updateHostSettings error:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error while updating host settings',
-      error: err.message,
-    });
-  }
-};
-
-/* ------------------------------------------------
-   LOGOUT
-   FIX: clear cookie using same attributes as set-cookie
--------------------------------------------------*/
-exports.logout = async (req, res) => {
-  const isProd = process.env.NODE_ENV === 'production';
-
-  res.cookie('token', null, {
-    expires: new Date(Date.now()),
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-  });
-
-  res.status(200).json({
-    success: true,
-    message: 'Logged out',
-  });
 };
