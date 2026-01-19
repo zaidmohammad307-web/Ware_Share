@@ -1,7 +1,7 @@
 // api/controllers/userController.js
 const User = require('../models/User');
 const cookieToken = require('../utils/cookieToken');
-const bcrypt = require('bcryptjs');
+const { buildSafeUser } = cookieToken;
 const cloudinary = require('cloudinary').v2;
 
 /* ------------------------------------------------
@@ -97,7 +97,8 @@ exports.googleLogin = async (req, res) => {
       user = await User.create({
         name,
         email,
-        password: await bcrypt.hash(randomPassword, 10),
+        // Store a random password; hashing happens in the User model pre-save hook.
+        password: randomPassword,
       });
     }
 
@@ -134,30 +135,43 @@ exports.uploadPicture = async (req, res) => {
 
 /* ------------------------------------------------
    UPDATE USER (name / password / picture)
+   FIXES:
+   - endpoint is now auth-protected in routes
+   - updates by req.user.id (not by arbitrary email)
+   - avoids double-hashing (let model pre-save hook hash once)
 -------------------------------------------------*/
 exports.updateUserDetails = async (req, res) => {
   try {
+    const userId = req.user && req.user.id;
     const { name, password, email, picture } = req.body;
 
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({
-        message: 'User not found',
+    if (!userId) {
+      return res.status(401).json({
+        message: 'Not authenticated',
       });
     }
 
-    if (name) {
-      user.name = name;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    if (picture) {
-      user.picture = picture;
+    // Backward compatibility: frontend may still send email.
+    // Do not allow editing a different account by email.
+    if (
+      email &&
+      String(email).toLowerCase() !== String(user.email).toLowerCase()
+    ) {
+      return res.status(403).json({
+        message: 'You are not allowed to update another user',
+      });
     }
 
-    if (password) {
-      user.password = await bcrypt.hash(password, 10);
-    }
+    if (name) user.name = name;
+    if (picture) user.picture = picture;
+
+    // IMPORTANT: Do not hash here; the User model will hash on save.
+    if (password) user.password = password;
 
     const updatedUser = await user.save();
     cookieToken(updatedUser, res);
@@ -173,6 +187,7 @@ exports.updateUserDetails = async (req, res) => {
 /* ------------------------------------------------
    HOST VERIFICATION (USER SIDE)
    POST /users/host/verify  (isLoggedIn + multer.fields)
+   FIX: return safe user projection (no password hash)
 -------------------------------------------------*/
 exports.submitHostVerification = async (req, res) => {
   try {
@@ -212,22 +227,15 @@ exports.submitHostVerification = async (req, res) => {
     if (files.idDocument && files.idDocument[0]) {
       const uploadRes = await cloudinary.uploader.upload(
         files.idDocument[0].path,
-        {
-          folder: 'Airbnb/HostVerification',
-        }
+        { folder: 'Airbnb/HostVerification' }
       );
-      newFiles.push({
-        url: uploadRes.secure_url,
-        label: 'ID document',
-      });
+      newFiles.push({ url: uploadRes.secure_url, label: 'ID document' });
     }
 
     if (files.companyDocument && files.companyDocument[0]) {
       const uploadRes = await cloudinary.uploader.upload(
         files.companyDocument[0].path,
-        {
-          folder: 'Airbnb/HostVerification',
-        }
+        { folder: 'Airbnb/HostVerification' }
       );
       newFiles.push({
         url: uploadRes.secure_url,
@@ -235,7 +243,7 @@ exports.submitHostVerification = async (req, res) => {
       });
     }
 
-    if (!newFiles.length && (!companyName && !phone)) {
+    if (!newFiles.length && !companyName && !phone) {
       return res.status(400).json({
         success: false,
         message:
@@ -244,9 +252,7 @@ exports.submitHostVerification = async (req, res) => {
     }
 
     // Ensure hostProfile exists
-    if (!user.hostProfile) {
-      user.hostProfile = {};
-    }
+    if (!user.hostProfile) user.hostProfile = {};
 
     // Update host profile basic info
     if (companyName) user.hostProfile.companyName = companyName;
@@ -254,14 +260,13 @@ exports.submitHostVerification = async (req, res) => {
     if (country) user.hostProfile.country = country;
     if (city) user.hostProfile.city = city;
     if (taxId) user.hostProfile.taxId = taxId;
-    if (businessRegNumber) user.hostProfile.businessRegNumber = businessRegNumber;
+    if (businessRegNumber)
+      user.hostProfile.businessRegNumber = businessRegNumber;
     if (website) user.hostProfile.website = website;
     if (about) user.hostProfile.about = about;
 
     // Append uploaded files into hostVerificationFiles
-    if (!user.hostVerificationFiles) {
-      user.hostVerificationFiles = [];
-    }
+    if (!user.hostVerificationFiles) user.hostVerificationFiles = [];
     user.hostVerificationFiles.push(...newFiles);
 
     // Core verification flags
@@ -275,7 +280,7 @@ exports.submitHostVerification = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Host verification submitted. We will review your documents.',
-      user,
+      user: buildSafeUser(user),
     });
   } catch (err) {
     console.error('submitHostVerification error:', err);
@@ -316,6 +321,7 @@ exports.getPendingHosts = async (req, res) => {
 // ------------------------------------------------
 // HOST VERIFICATION (ADMIN SIDE)
 // PUT /users/admin/hosts/:userId/verify
+// FIX: return safe user projection (no password hash)
 // ------------------------------------------------
 exports.adminVerifyHost = async (req, res) => {
   try {
@@ -323,13 +329,10 @@ exports.adminVerifyHost = async (req, res) => {
     const { status, note } = req.body; // 'approved' | 'rejected' | 'pending'
 
     let newStatus;
-    if (status === 'approved') {
-      newStatus = 'approved';
-    } else if (status === 'rejected') {
-      newStatus = 'rejected';
-    } else if (status === 'pending') {
-      newStatus = 'pending';
-    } else {
+    if (status === 'approved') newStatus = 'approved';
+    else if (status === 'rejected') newStatus = 'rejected';
+    else if (status === 'pending') newStatus = 'pending';
+    else {
       return res.status(400).json({
         success: false,
         message: 'Invalid status value',
@@ -346,16 +349,14 @@ exports.adminVerifyHost = async (req, res) => {
 
     user.hostVerificationStatus = newStatus;
     user.isHostVerified = newStatus === 'approved';
-    if (note) {
-      user.hostVerificationNotes = note;
-    }
+    if (note) user.hostVerificationNotes = note;
 
     await user.save();
 
     return res.status(200).json({
       success: true,
       message: `Host verification ${newStatus}`,
-      user,
+      user: buildSafeUser(user),
     });
   } catch (err) {
     console.error('adminVerifyHost error:', err);
@@ -370,6 +371,7 @@ exports.adminVerifyHost = async (req, res) => {
 // ------------------------------------------------
 // HOST SETTINGS (no file upload, just fields)
 // PUT /users/host/settings
+// FIX: return safe user projection (no password hash)
 // ------------------------------------------------
 exports.updateHostSettings = async (req, res) => {
   try {
@@ -400,12 +402,10 @@ exports.updateHostSettings = async (req, res) => {
       website,
       about,
       wantsToHost,
-      isHost, // from old frontend – map to wantsToHost
+      isHost, // old frontend – map to wantsToHost
     } = req.body;
 
-    if (!user.hostProfile) {
-      user.hostProfile = {};
-    }
+    if (!user.hostProfile) user.hostProfile = {};
 
     if (phone) user.hostProfile.phone = phone;
     if (companyName) user.hostProfile.companyName = companyName;
@@ -417,19 +417,15 @@ exports.updateHostSettings = async (req, res) => {
     if (website) user.hostProfile.website = website;
     if (about) user.hostProfile.about = about;
 
-    if (typeof wantsToHost === 'boolean') {
-      user.wantsToHost = wantsToHost;
-    } else if (typeof isHost === 'boolean') {
-      // backwards compatibility with old field
-      user.wantsToHost = isHost;
-    }
+    if (typeof wantsToHost === 'boolean') user.wantsToHost = wantsToHost;
+    else if (typeof isHost === 'boolean') user.wantsToHost = isHost;
 
     await user.save();
 
     return res.status(200).json({
       success: true,
       message: 'Host settings updated',
-      user,
+      user: buildSafeUser(user),
     });
   } catch (err) {
     console.error('updateHostSettings error:', err);
@@ -443,14 +439,18 @@ exports.updateHostSettings = async (req, res) => {
 
 /* ------------------------------------------------
    LOGOUT
+   FIX: clear cookie using same attributes as set-cookie
 -------------------------------------------------*/
 exports.logout = async (req, res) => {
+  const isProd = process.env.NODE_ENV === 'production';
+
   res.cookie('token', null, {
     expires: new Date(Date.now()),
     httpOnly: true,
-    secure: false, // true in production with HTTPS
-    sameSite: 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
   });
+
   res.status(200).json({
     success: true,
     message: 'Logged out',
