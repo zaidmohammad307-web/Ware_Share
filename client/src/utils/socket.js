@@ -4,6 +4,7 @@ import { getItemFromLocalStorage } from './index';
 
 let socket = null;
 let currentToken = null;
+let listenersAttached = false;
 
 const getBaseURL = () =>
   import.meta.env.VITE_BASE_URL ||
@@ -57,8 +58,9 @@ export const getSocket = () => {
       }
     });
 
-    // Keep socket auth in sync with app auth events
-    if (typeof window !== 'undefined') {
+    // Keep socket auth in sync with app auth events (only attach once)
+    if (typeof window !== 'undefined' && !listenersAttached) {
+      listenersAttached = true;
       window.addEventListener('auth:logout', () => applyTokenToSocket(null));
       window.addEventListener('auth:token', (e) => {
         const next = e?.detail?.token || getItemFromLocalStorage('token');

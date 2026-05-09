@@ -92,7 +92,8 @@ exports.isLoggedIn = async (req, res, next) => {
 exports.isAdmin = (req, res, next) => {
   try {
     const email = String(req.user?.email || '').toLowerCase();
-    if (email !== 'admin@123456') {
+    const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@123456').toLowerCase();
+    if (email !== ADMIN_EMAIL) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: admin access required.',

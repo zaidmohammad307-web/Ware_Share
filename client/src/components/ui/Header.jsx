@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../hooks';
 import SearchBar from './SearchBar';
-import { Avatar, AvatarImage } from '@radix-ui/react-avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
 
 const Header = () => {
   const auth = useAuth();
@@ -95,14 +95,12 @@ const Header = () => {
           <div className="h-9 w-9 overflow-hidden rounded-full border border-border bg-accent/60">
             {user ? (
               <Avatar>
-                {user?.picture ? (
+                {user?.picture && (
                   <AvatarImage src={user.picture} className="h-full w-full" />
-                ) : (
-                  <AvatarImage
-                    src="https://res.cloudinary.com/rahul4019/image/upload/v1695133265/pngwing.com_zi4cre.png"
-                    className="h-full w-full"
-                  />
                 )}
+                <AvatarFallback>
+                  {user?.name?.slice(0, 1)?.toUpperCase() || '?'}
+                </AvatarFallback>
               </Avatar>
             ) : (
               <svg

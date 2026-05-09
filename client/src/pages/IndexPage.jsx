@@ -336,21 +336,21 @@ const IndexPage = () => {
       }
     }
 
-    // Safety & security filters (assuming booleans on place)
+    // Safety & security filters (matching actual Place schema field names)
     if (filters.requireCctv) {
-      result = result.filter((p) => p.cctv === true);
+      result = result.filter((p) => p.CCTV === true);
     }
     if (filters.requireGuards) {
       result = result.filter((p) => p.securityGuards === true);
     }
     if (filters.requireFireSystem) {
-      result = result.filter((p) => p.fireSystem === true);
+      result = result.filter((p) => p.fireSuppression === true);
     }
     if (filters.requireFoodGrade) {
-      result = result.filter((p) => p.foodGrade === true);
+      result = result.filter((p) => p.foodGradeCert === true);
     }
     if (filters.requireHazmat) {
-      result = result.filter((p) => p.hazmatCertified === true);
+      result = result.filter((p) => p.hazmatCert === true);
     }
 
     // Equipment (AND logic – must contain all selected)
