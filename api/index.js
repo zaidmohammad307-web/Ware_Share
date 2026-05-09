@@ -1,8 +1,26 @@
 // api/index.js
 require('dotenv').config();
+
+// ── ENV VALIDATION (crash early if misconfigured) ──
+const REQUIRED_ENV = [
+  'JWT_SECRET',
+  'DB_URL',
+  'CLOUDINARY_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
+  'SESSION_SECRET',
+];
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key] || !String(process.env[key]).trim()) {
+    console.error(`FATAL: Missing required environment variable: ${key}`);
+    process.exit(1);
+  }
+}
+
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+const helmet = require('helmet');
 const connectWithDB = require('./config/db');
 const cookieSession = require('cookie-session');
 const cookieParser = require('cookie-parser');
@@ -69,6 +87,10 @@ cloudinary.config({
 });
 
 const app = express();
+
+// ── SECURITY HEADERS ──
+app.use(helmet());
+
 app.use(cookieParser());
 
 app.use(
@@ -82,12 +104,26 @@ app.use(
   })
 );
 
-app.use(express.json());
+// ── BODY SIZE LIMIT ──
+app.use(express.json({ limit: '2mb' }));
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 app.use('/', require('./routes'));
+
+// ── GLOBAL ERROR HANDLER ──
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message || err);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    success: false,
+    message:
+      process.env.NODE_ENV === 'production'
+        ? 'Internal server error'
+        : err.message || 'Internal server error',
+  });
+});
 
 // -----------------------------
 // Socket.IO (Live Chat)
@@ -123,7 +159,7 @@ io.use((socket, next) => {
 
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || 'your_jwt_secret'
+      process.env.JWT_SECRET
     );
     socket.userId = decoded.id;
 
@@ -246,4 +282,15 @@ const PORT = Number(process.env.PORT) || 8000;
   });
 })();
 
+// ── GRACEFUL ERROR HANDLING ──
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1);
+});
+
 module.exports = app;
+
