@@ -38,3 +38,4 @@ placeReviewSchema.index({ booking: 1, user: 1 }, { unique: true });
 
 const PlaceReview = mongoose.model('PlaceReview', placeReviewSchema);
 module.exports = PlaceReview;
+
