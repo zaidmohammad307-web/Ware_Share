@@ -28,7 +28,7 @@ exports.isLoggedIn = async (req, res, next) => {
     // Decode token
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || 'your_jwt_secret'
+      process.env.JWT_SECRET
     );
 
     // Load user from DB (always prefer id from token)
