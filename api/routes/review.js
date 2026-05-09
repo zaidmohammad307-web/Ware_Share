@@ -25,3 +25,4 @@ router.post('/renter', isLoggedIn, createRenterReview);
 router.get('/renter/:renterId', getRenterReviews);
 
 module.exports = router;
+
