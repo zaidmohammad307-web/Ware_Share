@@ -14,3 +14,4 @@ router.get('/renter', isLoggedIn, getRenterDashboard);
 router.get('/owner', isLoggedIn, getOwnerDashboard);
 
 module.exports = router;
+
