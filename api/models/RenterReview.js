@@ -39,3 +39,4 @@ renterReviewSchema.index({ booking: 1, host: 1 }, { unique: true });
 
 const RenterReview = mongoose.model('RenterReview', renterReviewSchema);
 module.exports = RenterReview;
+
