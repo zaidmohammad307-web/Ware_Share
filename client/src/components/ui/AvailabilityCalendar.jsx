@@ -54,7 +54,6 @@ const AvailabilityCalendar = ({ placeId }) => {
         );
         setBlockedDates(parseBlockedDates(data || {}));
       } catch (err) {
-        console.error('availability error', err);
         setError('Could not load availability.');
       } finally {
         setLoading(false);

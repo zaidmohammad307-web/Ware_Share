@@ -31,7 +31,6 @@ const OwnerBookingsPage = () => {
       const { data } = await axiosInstance.get('/bookings/owner');
       setBookings(data.bookings || []);
     } catch (error) {
-      console.error(error);
       toast.error('Failed to load booking requests.');
     } finally {
       setLoading(false);
@@ -51,7 +50,6 @@ const OwnerBookingsPage = () => {
         prev.map((b) => (b._id === bookingId ? { ...b, ...data.booking } : b))
       );
     } catch (error) {
-      console.error(error);
       toast.error('Failed to update booking status.');
     }
   };
@@ -112,7 +110,6 @@ const OwnerBookingsPage = () => {
         [bookingId]: { ...form, submitted: true },
       }));
     } catch (error) {
-      console.error(error);
       const msg = error?.response?.data?.message || 'Failed to submit renter review.';
       toast.error(msg);
     }

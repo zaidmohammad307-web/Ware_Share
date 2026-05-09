@@ -30,7 +30,7 @@ const SingleBookedPlace = () => {
       const found = (data.booking || []).find((b) => b._id === id);
       setBooking(found || null);
     } catch (error) {
-      console.log('Error: ', error);
+      toast.error('Failed to load booking details.');
     } finally {
       setLoading(false);
     }

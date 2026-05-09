@@ -90,7 +90,6 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
         setHostId(normalizeId(data.hostId));
         setRenterIdResolved(normalizeId(data.renterId) || rid || null);
       } catch (e) {
-        console.log('Chat history error:', e);
         setMessages([]);
         setHostId(null);
         setRenterIdResolved(null);

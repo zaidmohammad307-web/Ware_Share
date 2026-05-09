@@ -1,7 +1,5 @@
 export const setItemsInLocalStorage = (key, value) => {
-  if (!key || !value) {
-    return console.error('Cannot store in LS');
-  }
+  if (!key || !value) return;
 
   const valueToStore =
     typeof value !== 'string' ? JSON.stringify(value) : value;
@@ -9,15 +7,11 @@ export const setItemsInLocalStorage = (key, value) => {
 };
 
 export const getItemFromLocalStorage = (key) => {
-  if (!key) {
-    return console.error(`Cannot get value from LS`);
-  }
+  if (!key) return null;
   return localStorage.getItem(key);
 };
 
 export const removeItemFromLocalStorage = (key) => {
-  if (!key) {
-    return console.error(`Cannot remove item from LS`);
-  }
+  if (!key) return;
   localStorage.removeItem(key);
 };

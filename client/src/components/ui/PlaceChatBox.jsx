@@ -17,7 +17,7 @@ const PlaceChatBox = ({ placeId }) => {
         const { data } = await axiosInstance.get(`/chat/place/${placeId}`);
         setMessages(data.messages || []);
       } catch (e) {
-        console.log('Place chat history error:', e);
+        // silently fail; UI shows "No messages yet"
       } finally {
         setLoading(false);
       }
