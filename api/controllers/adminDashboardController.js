@@ -506,3 +506,4 @@ exports.getRisk = async (req, res) => {
     });
   }
 };
+
