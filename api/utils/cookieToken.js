@@ -34,7 +34,7 @@ const cookieToken = (user, res) => {
       email: user.email,
       name: user.name,
     },
-    process.env.JWT_SECRET || 'your_jwt_secret',
+    process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRY || '7d' }
   );
 
@@ -56,3 +56,4 @@ const cookieToken = (user, res) => {
 
 module.exports = cookieToken;
 module.exports.buildSafeUser = buildSafeUser;
+
