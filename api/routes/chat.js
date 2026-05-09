@@ -10,3 +10,4 @@ router.get('/booking/:bookingId', isLoggedIn, getBookingChat);
 router.get('/place/:placeId', isLoggedIn, getPlaceChat);
 
 module.exports = router;
+
