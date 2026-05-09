@@ -117,8 +117,8 @@ const PlacePage = () => {
         setLoading(true);
         const { data } = await axiosInstance.get(`/places/${id}`);
         setPlace(data.place || data);
-      } catch (error) {
-        console.error(error);
+      } catch (_) {
+        // silently fail; place stays null
       } finally {
         setLoading(false);
       }
@@ -129,8 +129,8 @@ const PlacePage = () => {
         setReviewsLoading(true);
         const { data } = await axiosInstance.get(`/reviews/place/${id}`);
         setReviews(data.reviews || []);
-      } catch (error) {
-        console.error(error);
+      } catch (_) {
+        // silently fail; reviews stay empty
       } finally {
         setReviewsLoading(false);
       }
@@ -141,8 +141,8 @@ const PlacePage = () => {
         setAvailabilityLoading(true);
         const { data } = await axiosInstance.get(`/bookings/availability/${id}`);
         setUnavailableDates(data.unavailableDates || []);
-      } catch (error) {
-        console.error('Error loading availability:', error);
+      } catch (_) {
+        // silently fail; all dates treated as available
       } finally {
         setAvailabilityLoading(false);
       }

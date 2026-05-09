@@ -123,7 +123,6 @@ const ProfilePage = () => {
 
       toast.success('Host settings updated');
     } catch (err) {
-      console.error('Error updating host settings:', err);
       toast.error(
         err?.response?.data?.message ||
           'Failed to update host settings. Please try again.'
@@ -172,7 +171,6 @@ const ProfilePage = () => {
       setIdFile(null);
       setCompanyFile(null);
     } catch (err) {
-      console.error('Error submitting verification:', err);
       toast.error(
         err?.response?.data?.message ||
           'Failed to submit verification. Please try again.'
