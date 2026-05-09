@@ -16,3 +16,4 @@ router.get('/utilization', isLoggedIn, isAdmin, getUtilization);
 router.get('/risk', isLoggedIn, isAdmin, getRisk);
 
 module.exports = router;
+
