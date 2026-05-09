@@ -389,7 +389,7 @@ exports.searchPlaces = async (req, res) => {
 
     return res.status(200).json(searchMatches);
   } catch (err) {
-    console.log(err);
+    console.error('searchPlaces error:', err);
     return res.status(500).json({
       message: 'Internal server error',
     });

@@ -24,8 +24,9 @@ const AccountNav = () => {
     return classes;
   };
 
+  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
   const isAdmin =
-    user && user.email && user.email.toLowerCase() === 'admin@123456';
+    user && user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   return (
     <nav className="mt-24 mb-8 flex flex-wrap justify-center gap-4">

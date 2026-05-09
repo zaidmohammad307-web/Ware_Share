@@ -88,7 +88,7 @@ const RegisterPage = () => {
               handleGoogleLogin(credentialResponse.credential);
             }}
             onError={() => {
-              console.log('Login Failed');
+              toast.error('Google login failed. Please try again.');
             }}
             text="continue_with"
             width="350"

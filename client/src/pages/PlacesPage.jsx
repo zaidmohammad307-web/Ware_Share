@@ -1,6 +1,7 @@
 // client/src/pages/PlacesPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 import axiosInstance from '@/utils/axios';
 import AccountNav from '@/components/ui/AccountNav';
@@ -17,7 +18,7 @@ const PlacesPage = () => {
         const { data } = await axiosInstance.get('/places/user-places');
         setPlaces(data || []);
       } catch (error) {
-        console.log(error);
+        toast.error('Failed to load your warehouses.');
       } finally {
         setLoading(false);
       }
@@ -40,8 +41,7 @@ const PlacesPage = () => {
         )
       );
     } catch (err) {
-      console.error('Error updating place status:', err);
-      alert('Could not update status. Please try again.');
+      toast.error('Could not update status. Please try again.');
     } finally {
       setActionLoadingId(null);
     }
@@ -59,8 +59,7 @@ const PlacesPage = () => {
 
       setPlaces((prev) => prev.filter((p) => p._id !== place._id));
     } catch (err) {
-      console.error('Error deleting place:', err);
-      alert('Could not delete listing. Please try again.');
+      toast.error('Could not delete listing. Please try again.');
     } finally {
       setActionLoadingId(null);
     }

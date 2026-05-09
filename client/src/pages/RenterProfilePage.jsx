@@ -38,7 +38,6 @@ const RenterProfilePage = () => {
         const { data } = await axiosInstance.get(`/reviews/renter/${renterId}`);
         setReviews(data.reviews || []);
       } catch (e) {
-        console.log('Renter profile error:', e);
         setReviews([]);
       } finally {
         setLoading(false);

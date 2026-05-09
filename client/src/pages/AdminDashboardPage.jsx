@@ -90,11 +90,13 @@ function Card({ title, subtitle, right, children }) {
   );
 }
 
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
+
 function NotAuthorized() {
   return (
     <div className="mt-24 rounded-2xl border bg-white p-6 text-sm text-gray-700 shadow-sm">
       <div className="text-lg font-semibold text-gray-900">Not authorized</div>
-      <div className="mt-2">This page is restricted to admin@123456.</div>
+      <div className="mt-2">This page is restricted to administrators only.</div>
       <div className="mt-4">
         <Link className="font-semibold text-primary underline" to="/dashboard">
           Go to dashboard
@@ -110,7 +112,7 @@ const AdminDashboardPage = () => {
   const isLoggedIn = Boolean(user);
   if (!loading && !isLoggedIn) return <Navigate to="/login" replace />;
 
-  const isAdmin = user?.email && String(user.email).toLowerCase() === 'admin@123456';
+  const isAdmin = user?.email && String(user.email).toLowerCase() === ADMIN_EMAIL.toLowerCase();
   if (!loading && user && !isAdmin) return <NotAuthorized />;
 
   const [preset, setPreset] = useState('30');
@@ -168,7 +170,6 @@ const AdminDashboardPage = () => {
       if (r.data?.success) setRisk(r.data);
       else setRisk({ lowPerformingOwners: [] });
     } catch (e) {
-      console.error(e);
       const statusCode = e?.response?.status;
       if (statusCode === 403) {
         setNotAuthorized(true);

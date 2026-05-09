@@ -52,10 +52,6 @@ const ProfilePage = () => {
       phone: hp.phone || '',
     });
 
-    console.log('ProfilePage user = ', user);
-    console.log('ProfilePage hostVerificationStatus = ', user.hostVerificationStatus);
-    console.log('ProfilePage isHostVerified = ', user.isHostVerified);
-    console.log('ProfilePage hostVerificationFiles = ', user.hostVerificationFiles);
   }, [user]);
 
   const handleLogout = async () => {
@@ -127,7 +123,6 @@ const ProfilePage = () => {
 
       toast.success('Host settings updated');
     } catch (err) {
-      console.error('Error updating host settings:', err);
       toast.error(
         err?.response?.data?.message ||
           'Failed to update host settings. Please try again.'
@@ -168,14 +163,6 @@ const ProfilePage = () => {
 
       if (data.user && typeof auth.setUser === 'function') {
         auth.setUser(data.user);
-        console.log(
-          'After submit, updated user.hostVerificationStatus = ',
-          data.user.hostVerificationStatus
-        );
-        console.log(
-          'After submit, updated user.hostVerificationFiles = ',
-          data.user.hostVerificationFiles
-        );
       }
 
       toast.success(
@@ -184,7 +171,6 @@ const ProfilePage = () => {
       setIdFile(null);
       setCompanyFile(null);
     } catch (err) {
-      console.error('Error submitting verification:', err);
       toast.error(
         err?.response?.data?.message ||
           'Failed to submit verification. Please try again.'
@@ -202,16 +188,8 @@ const ProfilePage = () => {
           {/* Avatar */}
           <div className="flex h-40 w-40 justify-center rounded-full bg-gray-200 p-4 sm:h-72 sm:w-72 md:h-96 md:w-96">
             <Avatar>
-              {user.picture ? (
-                <AvatarImage src={user.picture} />
-              ) : (
-                <AvatarImage
-                  src="https://res.cloudinary.com/rahul4019/image/upload/v1695133265/pngwing.com_zi4cre.png"
-                  className="object-cover"
-                />
-              )}
-
-              <AvatarFallback>{user.name.slice(0, 1)}</AvatarFallback>
+              {user.picture && <AvatarImage src={user.picture} />}
+              <AvatarFallback>{user?.name?.slice(0, 1)?.toUpperCase() || '?'}</AvatarFallback>
             </Avatar>
           </div>
 
@@ -254,10 +232,6 @@ const ProfilePage = () => {
                     Your profile will show a ✅ Verified host badge.
                   </span>
                 )}
-
-                <span className="text-[10px] text-gray-400">
-                  (status: {statusValueForDebug})
-                </span>
               </div>
             </div>
 

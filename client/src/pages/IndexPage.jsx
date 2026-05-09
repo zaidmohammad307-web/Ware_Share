@@ -199,7 +199,7 @@ const IndexPage = () => {
         );
         setPlaces(visible);
       } catch (err) {
-        console.error(err);
+        // silently fail; places list stays empty
       } finally {
         setLoading(false);
       }
@@ -253,8 +253,7 @@ const IndexPage = () => {
         });
         setLocStatus('Location detected.');
       },
-      (error) => {
-        console.error(error);
+      () => {
         setLocStatus('Unable to get location. Please allow location access.');
       }
     );

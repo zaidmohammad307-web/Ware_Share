@@ -1,34 +1,39 @@
 import React, { useState } from 'react';
+import { toast } from 'react-toastify';
 
 import Image from './Image';
 import axiosInstance from '../../utils/axios';
 
 const PhotosUploader = ({ addedPhotos, setAddedPhotos }) => {
-  const [photoLink, setphotoLink] = useState('');
+  const [photoLink, setPhotoLink] = useState('');
 
   const addPhotoByLink = async (e) => {
     e.preventDefault();
-    const { data: filename } = await axiosInstance.post('/upload-by-link', {
-      link: photoLink,
-    });
-    setAddedPhotos((prev) => {
-      return [...prev, filename];
-    });
-    setphotoLink('');
+    try {
+      const { data: filename } = await axiosInstance.post('/upload-by-link', {
+        link: photoLink,
+      });
+      setAddedPhotos((prev) => [...prev, filename]);
+      setPhotoLink('');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to add photo from link.');
+    }
   };
 
   const uploadPhoto = async (e) => {
     const files = e.target.files;
-    const data = new FormData(); // creating new form data
+    const data = new FormData();
     for (let i = 0; i < files.length; i++) {
-      data.append('photos', files[i]); // adding all the photos to data one by one
+      data.append('photos', files[i]);
     }
-    const { data: filenames } = await axiosInstance.post('/upload', data, {
-      headers: { 'Content-type': 'multipart/form-data' },
-    });
-    setAddedPhotos((prev) => {
-      return [...prev, ...filenames];
-    });
+    try {
+      const { data: filenames } = await axiosInstance.post('/upload', data, {
+        headers: { 'Content-type': 'multipart/form-data' },
+      });
+      setAddedPhotos((prev) => [...prev, ...filenames]);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to upload photo(s).');
+    }
   };
 
   const removePhoto = (filename) => {
@@ -49,7 +54,7 @@ const PhotosUploader = ({ addedPhotos, setAddedPhotos }) => {
       <div className="flex gap-2">
         <input
           value={photoLink}
-          onChange={(e) => setphotoLink(e.target.value)}
+          onChange={(e) => setPhotoLink(e.target.value)}
           type="text"
           placeholder="Add using a link ...jpg"
         />

@@ -134,7 +134,8 @@ const DashboardPage = () => {
   const isLoggedIn = Boolean(user);
   if (!loading && !isLoggedIn) return <Navigate to="/login" replace />;
 
-  const isAdmin = user?.email && String(user.email).toLowerCase() === 'admin@123456';
+  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
+  const isAdmin = user?.email && String(user.email).toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -160,7 +161,6 @@ const DashboardPage = () => {
       if (!data?.success) throw new Error('Failed');
       setSummary(data);
     } catch (e) {
-      console.error(e);
       setSummary(null);
       setError('Failed to load overview.');
       toast.error('Failed to load dashboard overview.');
@@ -177,7 +177,6 @@ const DashboardPage = () => {
       if (!data?.success) throw new Error('Failed');
       setRenter(data);
     } catch (e) {
-      console.error(e);
       setRenter(null);
       setError('Failed to load renting data.');
       toast.error('Failed to load renting dashboard.');
@@ -198,7 +197,6 @@ const DashboardPage = () => {
       if (!data?.success) throw new Error('Failed');
       setOwner(data);
     } catch (e) {
-      console.error(e);
       setOwner(null);
       setError('Failed to load hosting data.');
       toast.error('Failed to load hosting dashboard.');
@@ -235,7 +233,6 @@ const DashboardPage = () => {
       if (tab === 'overview') await fetchOverview();
       if (tab === 'owner') await fetchOwner();
     } catch (e) {
-      console.error(e);
       toast.error('Failed to update booking status.');
     }
   };

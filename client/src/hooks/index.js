@@ -198,7 +198,7 @@ export const useProvideAuth = () => {
       applyAuthPayload(data);
       return { success: true, message: 'Login successfull' };
     } catch (error) {
-      const message = error?.message || 'Google login failed';
+      const message = error?.response?.data?.message || error?.message || 'Google login failed';
       return { success: false, message };
     }
   };
@@ -213,7 +213,6 @@ export const useProvideAuth = () => {
 
       return { success: true, message: 'Logout successfull' };
     } catch (error) {
-      console.log(error);
       return { success: false, message: 'Something went wrong!' };
     }
   };
@@ -229,7 +228,8 @@ export const useProvideAuth = () => {
 
       return data;
     } catch (error) {
-      console.log(error);
+      const message = error?.response?.data?.message || 'Failed to upload picture';
+      return { success: false, message };
     }
   };
 
@@ -247,7 +247,8 @@ export const useProvideAuth = () => {
       applyAuthPayload(data);
       return data;
     } catch (error) {
-      console.log(error);
+      const message = error?.response?.data?.message || 'Failed to update user';
+      return { success: false, message };
     }
   };
 
@@ -274,9 +275,14 @@ export const useProvidePlaces = () => {
   const [loading, setLoading] = useState(true);
 
   const getPlaces = async () => {
-    const { data } = await axiosInstance.get('/places');
-    setPlaces(data.places);
-    setLoading(false);
+    try {
+      const { data } = await axiosInstance.get('/places');
+      setPlaces(data.places || []);
+    } catch (_) {
+      setPlaces([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

@@ -639,8 +639,7 @@ const PlacesFormPage = () => {
 
         setAddedPhotos(Array.isArray(place.photos) ? place.photos : []);
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         toast.error('Failed to load warehouse data.');
       })
       .finally(() => setLoading(false));
@@ -699,8 +698,7 @@ const PlacesFormPage = () => {
       toast.success('Warehouse saved successfully.');
       setRedirect(true);
     } catch (error) {
-      console.error(error);
-      toast.error('Failed to save warehouse.');
+      toast.error(error?.response?.data?.message || 'Failed to save warehouse.');
     }
   };
 

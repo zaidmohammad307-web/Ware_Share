@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import AccountNav from './client/src/components/ui/AccountNav';
-import axiosInstance from './client/src/utils/axios';
+import AccountNav from '@/components/ui/AccountNav';
+import axiosInstance from '@/utils/axios';
 
 const ChatInboxPage = () => {
   const [threads, setThreads] = useState([]);
@@ -14,7 +14,6 @@ const ChatInboxPage = () => {
         const { data } = await axiosInstance.get('/chat/inbox');
         setThreads(data.threads || []);
       } catch (e) {
-        console.log('Inbox error:', e);
         setThreads([]);
       } finally {
         setLoading(false);

@@ -18,7 +18,6 @@ const ChatInboxPage = () => {
       const { data } = await axiosInstance.get('/chat/inbox');
       setThreads(data.threads || []);
     } catch (e) {
-      console.error('Inbox error:', e);
       setThreads([]);
     } finally {
       setLoading(false);

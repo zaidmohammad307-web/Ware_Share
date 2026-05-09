@@ -387,7 +387,6 @@ const BookingWidget = ({ place }) => {
       setRedirect(`/account/bookings/${bookingId}`);
       toast.success('Request sent to the warehouse owner.');
     } catch (error) {
-      console.error(error);
       toast.error(
         error?.response?.data?.message || 'Failed to send booking request.'
       );

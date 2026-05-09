@@ -18,7 +18,6 @@ const BookingsPage = () => {
       // backend returns { success, booking: [...] }
       setBookings(data.booking || []);
     } catch (error) {
-      console.error(error);
       toast.error('Failed to load your bookings.');
     } finally {
       setLoading(false);

@@ -33,8 +33,8 @@ const HostProfilePage = () => {
         const fromReview = reviews[0]?.host;
         const fromPlace = places[0]?.owner;
         setHost(fromReview || fromPlace || null);
-      } catch (err) {
-        console.error(err);
+      } catch (_) {
+        // silently fail; empty state shows "no data" fallback
       } finally {
         setLoading(false);
       }

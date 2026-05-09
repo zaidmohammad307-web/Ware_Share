@@ -19,7 +19,6 @@ const AdminHostVerificationPage = () => {
       const { data } = await axiosInstance.get('/users/admin/hosts/pending');
       setHosts(data.hosts || []);
     } catch (err) {
-      console.error('Error loading pending hosts:', err);
       toast.error(
         err?.response?.data?.message ||
           'Failed to load pending host verifications.'
@@ -53,7 +52,6 @@ const AdminHostVerificationPage = () => {
       // Remove this host from the list after decision
       setHosts((prev) => prev.filter((h) => h._id !== hostId));
     } catch (err) {
-      console.error('Error updating host status:', err);
       toast.error(
         err?.response?.data?.message ||
           'Failed to update host verification status.'
@@ -61,8 +59,10 @@ const AdminHostVerificationPage = () => {
     }
   };
 
+  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
+
   // If not logged in or not admin email, show nothing / simple message
-  if (!user || user.email?.toLowerCase() !== 'admin@123456') {
+  if (!user || user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
     return (
       <div>
         <AccountNav />

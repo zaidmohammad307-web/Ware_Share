@@ -36,7 +36,6 @@ const AccountPlaces = () => {
       // data is array of places
       setPlaces(data || []);
     } catch (err) {
-      console.error('fetchPlaces error', err);
       setError('Unable to load your warehouses. Please try again.');
     } finally {
       setLoading(false);
@@ -65,7 +64,6 @@ const AccountPlaces = () => {
         prev.map((p) => (p._id === place._id ? { ...p, ...updated } : p))
       );
     } catch (err) {
-      console.error('updatePlaceStatus error', err);
       setError('Could not update listing status. Please try again.');
     } finally {
       setSavingId(null);
@@ -86,7 +84,6 @@ const AccountPlaces = () => {
 
       setPlaces((prev) => prev.filter((p) => p._id !== place._id));
     } catch (err) {
-      console.error('deletePlace error', err);
       setError('Could not delete listing. Please try again.');
     } finally {
       setDeletingId(null);
