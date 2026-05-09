@@ -60,7 +60,7 @@ function daysBetween(checkIn, checkOut) {
   return Math.max(1, days);
 }
 
-// PUBLIC — insurance constants (for frontend pricing display)
+// PUBLIC â insurance constants (for frontend pricing display)
 exports.getInsuranceConfig = async (req, res) => {
   return res.status(200).json({
     success: true,
@@ -392,7 +392,7 @@ exports.getBookings = async (req, res) => {
   }
 };
 
-// RENTER: get single booking by id
+// RENTER OR HOST: get single booking by id
 exports.getBookingById = async (req, res) => {
   try {
     const userData = req.user;
@@ -407,7 +407,11 @@ exports.getBookingById = async (req, res) => {
       });
     }
 
-    if (String(booking.user) !== String(userData.id)) {
+    const isRenter = String(booking.user) === String(userData.id);
+    const isHost =
+      booking.place && String(booking.place.owner) === String(userData.id);
+
+    if (!isRenter && !isHost) {
       return res.status(403).json({
         success: false,
         message: 'You are not allowed to view this booking',
