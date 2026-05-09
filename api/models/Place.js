@@ -126,7 +126,7 @@ const placeSchema = new mongoose.Schema(
     loadingFee: { type: Number },
     tempControlFee: { type: Number },
 
-    // ✅ NEW: negotiable price flag
+    // â NEW: negotiable price flag
     negotiablePrice: { type: Boolean, default: false },
 
     // SERVICES
