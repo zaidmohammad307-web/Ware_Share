@@ -12,6 +12,7 @@ const USER_AGENT =
   `WareShare/1.0 (dev; ${process.env.NOMINATIM_EMAIL || 'no-email-configured'})`;
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const CACHE_MAX_SIZE = 500;
 
 // Simple in-memory cache to reduce requests and avoid rate limiting.
 // Key => { expiresAt, value }
@@ -28,11 +29,17 @@ const cacheGet = (key) => {
 };
 
 const cacheSet = (key, value, ttlMs = CACHE_TTL_MS) => {
+  // Evict oldest entries if cache is full
+  if (cache.size >= CACHE_MAX_SIZE) {
+    const firstKey = cache.keys().next().value;
+    cache.delete(firstKey);
+  }
   cache.set(key, { value, expiresAt: Date.now() + ttlMs });
 };
 
 // Very small per-IP rate limit (token bucket): default 1 req/sec, burst 3.
 const buckets = new Map();
+const BUCKETS_MAX_SIZE = 1000;
 const RATE = 1; // tokens per second
 const BURST = 3;
 
@@ -47,6 +54,11 @@ const takeToken = (ip) => {
     return false;
   }
   b.tokens -= 1;
+  // Evict oldest buckets if map is too large
+  if (buckets.size >= BUCKETS_MAX_SIZE) {
+    const firstKey = buckets.keys().next().value;
+    buckets.delete(firstKey);
+  }
   buckets.set(ip, b);
   return true;
 };
