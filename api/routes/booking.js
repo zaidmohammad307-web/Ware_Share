@@ -53,3 +53,4 @@ router.put('/:id/payment', isLoggedIn, updateBookingPayment);
 router.put('/:id/status', isLoggedIn, updateBookingStatus);
 
 module.exports = router;
+
