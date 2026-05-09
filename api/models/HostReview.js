@@ -39,3 +39,4 @@ hostReviewSchema.index({ booking: 1, reviewer: 1 }, { unique: true });
 
 const HostReview = mongoose.model('HostReview', hostReviewSchema);
 module.exports = HostReview;
+
