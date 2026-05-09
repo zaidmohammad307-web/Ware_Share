@@ -98,7 +98,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔒 Encrypt password before saving it into the DB
+// ð Encrypt password before saving it into the DB
 userSchema.pre('save', async function (next) {
   // Only hash if password was created/changed
   if (!this.isModified('password')) {
@@ -109,14 +109,14 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// 🔑 Create and return JWT token
+// ð Create and return JWT token
 userSchema.methods.getJwtToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRY,
   });
 };
 
-// ✅ Validate the password
+// â Validate the password
 userSchema.methods.isValidatedPassword = async function (userSentPassword) {
   return await bcrypt.compare(userSentPassword, this.password);
 };
