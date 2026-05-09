@@ -98,26 +98,50 @@ exports.login = async (req, res) => {
 };
 
 /* ------------------------------------------------
-   GOOGLE LOGIN
+   GOOGLE LOGIN (server-side token verification)
 -------------------------------------------------*/
 exports.googleLogin = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        message: 'Google credential token is required',
+      });
+    }
+
+    // Verify the Google ID token server-side
+    let name, email;
+    try {
+      const { OAuth2Client } = require('google-auth-library');
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      name = payload.name || `${payload.given_name || ''} ${payload.family_name || ''}`.trim();
+      email = payload.email;
+    } catch (verifyErr) {
+      console.error('Google token verification failed:', verifyErr.message);
+      return res.status(401).json({
+        message: 'Invalid Google credential',
+      });
+    }
 
     if (!name || !email) {
       return res.status(400).json({
-        message: 'Name and email are required',
+        message: 'Could not extract name and email from Google token',
       });
     }
 
     let user = await User.findOne({ email });
 
     if (!user) {
-      const randomPassword = Math.random().toString(36).slice(-8);
+      const randomPassword = require('crypto').randomBytes(16).toString('hex');
       user = await User.create({
         name,
         email,
-        // Store a random password; hashing happens in the User model pre-save hook.
         password: randomPassword,
       });
     }
@@ -126,7 +150,7 @@ exports.googleLogin = async (req, res) => {
   } catch (err) {
     console.error('googleLogin error:', err);
     res.status(500).json({
-      message: 'Internal server Error',
+      message: 'Internal server error',
       error: err.message,
     });
   }
@@ -219,7 +243,7 @@ exports.updateUserDetails = async (req, res) => {
 exports.updateHostSettings = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { wantsToHost, role } = req.body;
+    const { wantsToHost, isHost, role } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -229,7 +253,9 @@ exports.updateHostSettings = async (req, res) => {
       });
     }
 
-    if (typeof wantsToHost === 'boolean') user.wantsToHost = wantsToHost;
+    // Accept both 'wantsToHost' and 'isHost' (frontend compat)
+    const hostValue = wantsToHost !== undefined ? wantsToHost : isHost;
+    if (typeof hostValue === 'boolean') user.wantsToHost = hostValue;
     if (role) user.role = role;
 
     await user.save();
