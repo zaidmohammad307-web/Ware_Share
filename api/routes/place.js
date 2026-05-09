@@ -39,3 +39,4 @@ router
   .delete(isLoggedIn, deletePlace);
 
 module.exports = router;
+
