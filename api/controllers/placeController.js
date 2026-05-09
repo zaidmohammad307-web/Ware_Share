@@ -98,7 +98,7 @@ const getHostFlags = async (userId, reqUser) => {
 };
 
 /* ----------------------------------------
-   ➕ ADD PLACE
+   â ADD PLACE
 ---------------------------------------- */
 exports.addPlace = async (req, res) => {
   try {
@@ -160,7 +160,7 @@ exports.addPlace = async (req, res) => {
 };
 
 /* ----------------------------------------
-   🙋 USER PLACES (all, live + hidden)
+   ð USER PLACES (all, live + hidden)
 ---------------------------------------- */
 exports.userPlaces = async (req, res) => {
   try {
@@ -171,13 +171,13 @@ exports.userPlaces = async (req, res) => {
   } catch (err) {
     console.error('userPlaces error:', err);
     return res.status(500).json({
-      message: 'Internal serever error',
+      message: 'Internal server error',
     });
   }
 };
 
 /* ----------------------------------------
-   ✏️ UPDATE PLACE
+   âï¸ UPDATE PLACE
 ---------------------------------------- */
 exports.updatePlace = async (req, res) => {
   try {
@@ -237,7 +237,7 @@ exports.updatePlace = async (req, res) => {
 };
 
 /* ----------------------------------------
-   🌍 PUBLIC PLACES (only LIVE / no-status)
+   ð PUBLIC PLACES (only LIVE / no-status)
 ---------------------------------------- */
 exports.getPlaces = async (req, res) => {
   try {
@@ -305,7 +305,7 @@ exports.getPlaces = async (req, res) => {
 };
 
 /* ----------------------------------------
-   🔍 SINGLE PLACE (with host rating)
+   ð SINGLE PLACE (with host rating)
 ---------------------------------------- */
 exports.singlePlace = async (req, res) => {
   try {
@@ -313,7 +313,14 @@ exports.singlePlace = async (req, res) => {
     const place = await Place.findById(id);
 
     if (!place) {
-      return res.status(400).json({
+      return res.status(404).json({
+        message: 'Place not found',
+      });
+    }
+
+    // Prevent public access to hidden listings
+    if (place.status === 'hidden') {
+      return res.status(404).json({
         message: 'Place not found',
       });
     }
@@ -350,13 +357,13 @@ exports.singlePlace = async (req, res) => {
   } catch (err) {
     console.error('singlePlace error:', err);
     return res.status(500).json({
-      message: 'Internal serever error',
+      message: 'Internal server error',
     });
   }
 };
 
 /* ----------------------------------------
-   🔍 SEARCH PLACES (only LIVE / no-status)
+   ð SEARCH PLACES (only LIVE / no-status)
 ---------------------------------------- */
 exports.searchPlaces = async (req, res) => {
   try {
@@ -366,28 +373,31 @@ exports.searchPlaces = async (req, res) => {
       $or: [{ status: 'live' }, { status: { $exists: false } }],
     };
 
-    // If empty search → return all live places
+    // If empty search â return all live places
     if (!searchword || searchword.trim() === '') {
       const places = await Place.find(statusFilter);
       return res.status(200).json(places);
     }
 
+    // Escape regex special characters to prevent ReDoS
+    const escaped = searchword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const searchMatches = await Place.find({
       ...statusFilter,
-      address: { $regex: searchword, $options: 'i' },
+      address: { $regex: escaped, $options: 'i' },
     });
 
     return res.status(200).json(searchMatches);
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      message: 'Internal serever error 1',
+      message: 'Internal server error',
     });
   }
 };
 
 /* ----------------------------------------
-   🧑‍💼 PLACES BY HOST (PUBLIC: only LIVE / no-status)
+   ð§âð¼ PLACES BY HOST (PUBLIC: only LIVE / no-status)
 ---------------------------------------- */
 exports.getPlacesByHost = async (req, res) => {
   try {
@@ -418,7 +428,7 @@ exports.getPlacesByHost = async (req, res) => {
 };
 
 /* ----------------------------------------
-   🔄 TOGGLE PLACE STATUS (live / hidden)
+   ð TOGGLE PLACE STATUS (live / hidden)
 ---------------------------------------- */
 exports.updatePlaceStatus = async (req, res) => {
   try {
@@ -436,7 +446,7 @@ exports.updatePlaceStatus = async (req, res) => {
       });
     }
 
-    // Toggle status on the server – ignore body for simplicity
+    // Toggle status on the server â ignore body for simplicity
     const current = place.status || 'live';
     const next = current === 'hidden' ? 'live' : 'hidden';
 
@@ -479,7 +489,7 @@ exports.updatePlaceStatus = async (req, res) => {
 };
 
 /* ----------------------------------------
-   🗑️ DELETE PLACE
+   ðï¸ DELETE PLACE
 ---------------------------------------- */
 exports.deletePlace = async (req, res) => {
   try {
