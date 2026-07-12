@@ -7,7 +7,7 @@ const connectWithDB = async () => {
 
     const dbUrl = String(process.env.DB_URL || '').trim();
     if (!dbUrl) {
-      console.error('DB_URL is missing. Set it in your environment variables.');
+      console.error('FATAL: DB_URL is not set.');
       process.exit(1);
     }
 
@@ -18,12 +18,15 @@ const connectWithDB = async () => {
     await mongoose.connect(dbUrl, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 10000,
     });
 
     console.log('DB connected successfully');
   } catch (err) {
-    console.log('DB connection failed');
-    console.log(err);
+    console.error('FATAL: DB connection failed');
+    console.error('  name   :', err?.name);
+    console.error('  message:', err?.message);
+    console.error('  code   :', err?.code);
     process.exit(1);
   }
 };
