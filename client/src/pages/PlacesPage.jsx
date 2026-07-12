@@ -31,17 +31,22 @@ const PlacesPage = () => {
 
     try {
       setActionLoadingId(place._id);
-      await axiosInstance.patch(`/places/${place._id}/status`, {
-        status: newStatus,
-      });
+      const { data } = await axiosInstance.patch(
+        `/places/${place._id}/status`,
+        { status: newStatus }
+      );
 
+      const serverStatus = data?.status || newStatus;
       setPlaces((prev) =>
         prev.map((p) =>
-          p._id === place._id ? { ...p, status: newStatus } : p
+          p._id === place._id ? { ...p, status: serverStatus } : p
         )
       );
     } catch (err) {
-      toast.error('Could not update status. Please try again.');
+      toast.error(
+        err?.response?.data?.message ||
+          'Could not update status. Please try again.'
+      );
     } finally {
       setActionLoadingId(null);
     }
@@ -59,7 +64,10 @@ const PlacesPage = () => {
 
       setPlaces((prev) => prev.filter((p) => p._id !== place._id));
     } catch (err) {
-      toast.error('Could not delete listing. Please try again.');
+      toast.error(
+        err?.response?.data?.message ||
+          'Could not delete listing. Please try again.'
+      );
     } finally {
       setActionLoadingId(null);
     }
