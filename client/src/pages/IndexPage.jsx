@@ -98,6 +98,7 @@ const distanceKm = (coord1, coord2) => {
 const IndexPage = () => {
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const [filters, setFilters] = useState({
     search: '',
@@ -191,15 +192,15 @@ const IndexPage = () => {
     const loadPlaces = async () => {
       try {
         setLoading(true);
+        setLoadError(false);
         const { data } = await axiosInstance.get('/places');
         const all = data.places || [];
-        // extra safety: only show live / no-status places on the home page
         const visible = all.filter(
           (p) => !p.status || p.status === 'live'
         );
         setPlaces(visible);
       } catch (err) {
-        // silently fail; places list stays empty
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -1135,7 +1136,15 @@ const IndexPage = () => {
       )}
 
       {/* Results */}
-      {filteredPlaces.length === 0 ? (
+      {loadError ? (
+        <p className="text-sm text-red-500">
+          Failed to load warehouses. Please check your connection and refresh.
+        </p>
+      ) : filteredPlaces.length === 0 && places.length === 0 ? (
+        <p className="text-sm text-gray-500">
+          No warehouses have been listed yet. Check back soon!
+        </p>
+      ) : filteredPlaces.length === 0 ? (
         <p className="text-sm text-gray-500">
           No warehouses match your filters. Try broadening your search.
         </p>
