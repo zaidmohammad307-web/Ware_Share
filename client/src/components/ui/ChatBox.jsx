@@ -122,6 +122,12 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
 
     return () => {
       socket.off('new_message', onNewMessage);
+      if (mode === 'booking' && bookingId) {
+        socket.emit('leave_booking', { bookingId });
+      }
+      if (mode === 'place' && placeId) {
+        socket.emit('leave_place', { placeId, renterId: normalizeId(renterId) || null });
+      }
     };
   }, [socket, mode, bookingId, placeId, renterId]);
 

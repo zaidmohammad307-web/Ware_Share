@@ -1,4 +1,5 @@
 // api/controllers/reviewController.js
+const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const PlaceReview = require('../models/PlaceReview');
 const HostReview = require('../models/HostReview');
@@ -293,7 +294,6 @@ exports.getRenterReviews = async (req, res) => {
       });
     }
 
-    const mongoose = require('mongoose');
     if (!mongoose.Types.ObjectId.isValid(renterId)) {
       return res.status(400).json({
         success: false,

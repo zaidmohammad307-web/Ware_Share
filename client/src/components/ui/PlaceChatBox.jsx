@@ -36,6 +36,7 @@ const PlaceChatBox = ({ placeId }) => {
 
     return () => {
       socket.off('new_message', onNew);
+      socket.emit('leave_place', { placeId });
     };
   }, [socket, placeId]);
 

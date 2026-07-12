@@ -162,7 +162,7 @@ export const useProvideAuth = () => {
       });
 
       applyAuthPayload(data);
-      return { success: true, message: 'Registration successfull' };
+      return { success: true, message: 'Registration successful' };
     } catch (error) {
       const message = error?.response?.data?.message || 'Registration failed';
       return { success: false, message };
@@ -179,7 +179,7 @@ export const useProvideAuth = () => {
       });
 
       applyAuthPayload(data);
-      return { success: true, message: 'Login successfull' };
+      return { success: true, message: 'Login successful' };
     } catch (error) {
       const message = error?.response?.data?.message || 'Login failed';
       return { success: false, message };
@@ -196,7 +196,7 @@ export const useProvideAuth = () => {
       });
 
       applyAuthPayload(data);
-      return { success: true, message: 'Login successfull' };
+      return { success: true, message: 'Login successful' };
     } catch (error) {
       const message = error?.response?.data?.message || error?.message || 'Google login failed';
       return { success: false, message };
@@ -211,7 +211,7 @@ export const useProvideAuth = () => {
         clearAuth();
       }
 
-      return { success: true, message: 'Logout successfull' };
+      return { success: true, message: 'Logout successful' };
     } catch (error) {
       return { success: false, message: 'Something went wrong!' };
     }

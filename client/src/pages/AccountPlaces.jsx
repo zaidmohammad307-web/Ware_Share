@@ -51,7 +51,7 @@ const AccountPlaces = () => {
       setSavingId(place._id);
       setError('');
 
-      const nextStatus = !place.isActive;
+      const nextStatus = place.isActive !== false ? false : true;
 
       const { data } = await axiosInstance.patch(
         `/places/${place._id}/status`,

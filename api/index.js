@@ -28,6 +28,7 @@ const cloudinary = require('cloudinary').v2;
 
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 const Booking = require('./models/Booking');
 const Place = require('./models/Place');
@@ -173,7 +174,7 @@ io.on('connection', (socket) => {
   // Booking chat
   socket.on('join_booking', async ({ bookingId }) => {
     try {
-      if (!bookingId) return;
+      if (!bookingId || !mongoose.Types.ObjectId.isValid(bookingId)) return;
 
       const booking = await Booking.findById(bookingId).populate('place');
       if (!booking || !booking.place) return;
@@ -190,7 +191,7 @@ io.on('connection', (socket) => {
 
   socket.on('send_message', async ({ bookingId, text }) => {
     try {
-      if (!bookingId || !text || !text.trim()) return;
+      if (!bookingId || !mongoose.Types.ObjectId.isValid(bookingId) || !text || !text.trim()) return;
 
       const booking = await Booking.findById(bookingId).populate('place');
       if (!booking || !booking.place) return;
@@ -218,7 +219,7 @@ io.on('connection', (socket) => {
   // Place inquiry chat (pre-booking)
   socket.on('join_place', async ({ placeId, renterId }) => {
     try {
-      if (!placeId) return;
+      if (!placeId || !mongoose.Types.ObjectId.isValid(placeId)) return;
 
       const place = await Place.findById(placeId);
       if (!place) return;
@@ -238,9 +239,23 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('leave_booking', ({ bookingId }) => {
+    if (bookingId && mongoose.Types.ObjectId.isValid(bookingId)) {
+      socket.leave(bookingRoom(bookingId));
+    }
+  });
+
+  socket.on('leave_place', ({ placeId, renterId }) => {
+    if (placeId && mongoose.Types.ObjectId.isValid(placeId)) {
+      const me = String(socket.userId);
+      const renterToUse = renterId ? String(renterId) : me;
+      socket.leave(placeRoom(placeId, renterToUse));
+    }
+  });
+
   socket.on('send_place_message', async ({ placeId, renterId, text }) => {
     try {
-      if (!placeId || !text || !text.trim()) return;
+      if (!placeId || !mongoose.Types.ObjectId.isValid(placeId) || !text || !text.trim()) return;
 
       const place = await Place.findById(placeId);
       if (!place) return;
