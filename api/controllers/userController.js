@@ -256,7 +256,8 @@ exports.updateHostSettings = async (req, res) => {
     // Accept both 'wantsToHost' and 'isHost' (frontend compat)
     const hostValue = wantsToHost !== undefined ? wantsToHost : isHost;
     if (typeof hostValue === 'boolean') user.wantsToHost = hostValue;
-    if (role) user.role = role;
+    const ALLOWED_ROLES = ['user', 'host'];
+    if (role && ALLOWED_ROLES.includes(role)) user.role = role;
 
     await user.save();
 

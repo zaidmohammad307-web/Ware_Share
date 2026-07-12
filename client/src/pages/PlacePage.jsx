@@ -101,6 +101,7 @@ const PlacePage = () => {
   const { id } = useParams();
   const [place, setPlace] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [placeError, setPlaceError] = useState(null);
 
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -115,10 +116,16 @@ const PlacePage = () => {
     const loadPlace = async () => {
       try {
         setLoading(true);
+        setPlaceError(null);
         const { data } = await axiosInstance.get(`/places/${id}`);
         setPlace(data.place || data);
-      } catch (_) {
-        // silently fail; place stays null
+      } catch (err) {
+        const status = err?.response?.status;
+        setPlaceError(
+          status === 404
+            ? 'This warehouse listing no longer exists.'
+            : 'Failed to load warehouse. Please try again.'
+        );
       } finally {
         setLoading(false);
       }
@@ -461,10 +468,18 @@ const PlacePage = () => {
     );
   };
 
-  if (loading || !place) {
+  if (loading) {
     return (
       <div className="mt-24 px-4">
         <p>Loading warehouse...</p>
+      </div>
+    );
+  }
+
+  if (placeError || !place) {
+    return (
+      <div className="mt-24 px-4">
+        <p className="text-red-600">{placeError || 'Warehouse not found.'}</p>
       </div>
     );
   }

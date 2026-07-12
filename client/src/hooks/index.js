@@ -1,6 +1,5 @@
 // client/src/hooks/index.js
 import { useState, useEffect, useContext, useCallback } from 'react';
-import jwt_decode from 'jwt-decode';
 
 import { UserContext } from '@/providers/UserProvider';
 import { PlaceContext } from '@/providers/PlaceProvider';
@@ -187,12 +186,9 @@ export const useProvideAuth = () => {
   };
 
   const googleLogin = async (credential) => {
-    const decoded = jwt_decode(credential);
-
     try {
       const { data } = await axiosInstance.post('/users/google/login', {
-        name: `${decoded.given_name} ${decoded.family_name}`,
-        email: decoded.email,
+        credential,
       });
 
       applyAuthPayload(data);

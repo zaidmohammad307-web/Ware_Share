@@ -113,7 +113,7 @@ const BookingWidget = ({ place }) => {
 
   const { user } = useAuth();
   const { noOfGuests, name, phone } = bookingData;
-  const { _id: id, price } = place;
+  const { _id: id, pricePerDay, price } = place;
 
   useEffect(() => {
     if (user) {
@@ -157,8 +157,8 @@ const BookingWidget = ({ place }) => {
 
   const baseBookingPricePreview = useMemo(() => {
     if (daysPreview < 1) return 0;
-    return roundTo2(daysPreview * Number(price || 0));
-  }, [daysPreview, price]);
+    return roundTo2(daysPreview * Number(pricePerDay ?? price ?? 0));
+  }, [daysPreview, pricePerDay, price]);
 
   const insuranceFeePreview = useMemo(() => {
     if (!insurance.insuranceSelected) return 0;

@@ -25,7 +25,7 @@ router.post('/login', login);
 router.post('/google/login', googleLogin);
 
 // PROFILE PICTURE
-router.post('/upload-picture', upload.single('picture'), uploadPicture);
+router.post('/upload-picture', isLoggedIn, upload.single('picture'), uploadPicture);
 
 // UPDATE USER PROFILE (requires auth)
 router.put('/update-user', isLoggedIn, updateUserDetails);

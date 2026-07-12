@@ -529,6 +529,13 @@ exports.updateBookingStatus = async (req, res) => {
       });
     }
 
+    if (!booking.place) {
+      return res.status(404).json({
+        success: false,
+        message: 'Warehouse no longer exists',
+      });
+    }
+
     if (String(booking.place.owner) !== String(userData.id)) {
       return res.status(403).json({
         success: false,
