@@ -2,7 +2,9 @@
 const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Place = require('../models/Place');
+const User = require('../models/User');
 const RenterReview = require('../models/RenterReview');
+const { sendMail, emailWrap } = require('../utils/mailer');
 
 const {
   INSURANCE_CONSTANTS,
@@ -109,7 +111,9 @@ exports.createBookings = async (req, res) => {
       });
     }
 
-    const placeDoc = await Place.findById(place).select('price pricePerDay city');
+    const placeDoc = await Place.findById(place).select(
+      'price pricePerDay city title owner blockedDates'
+    );
     if (!placeDoc) {
       return res.status(404).json({
         success: false,
@@ -123,6 +127,39 @@ exports.createBookings = async (req, res) => {
         success: false,
         message: 'Invalid booking dates',
       });
+    }
+
+    // Reject dates that overlap an existing pending/approved booking
+    const conflict = await Booking.findOne({
+      place,
+      status: { $in: ['pending', 'approved'] },
+      checkIn: { $lt: new Date(checkOut) },
+      checkOut: { $gt: new Date(checkIn) },
+    }).select('_id');
+
+    if (conflict) {
+      return res.status(409).json({
+        success: false,
+        message:
+          'Some of the selected dates are no longer available. Please pick different dates.',
+      });
+    }
+
+    // Reject dates the host has blocked
+    if (Array.isArray(placeDoc.blockedDates) && placeDoc.blockedDates.length) {
+      const blocked = new Set(placeDoc.blockedDates);
+      let cur = new Date(checkIn);
+      const endDate = new Date(checkOut);
+      while (cur < endDate) {
+        if (blocked.has(toYMDUTC(cur))) {
+          return res.status(409).json({
+            success: false,
+            message:
+              'The host has blocked some of the selected dates. Please pick different dates.',
+          });
+        }
+        cur = addOneDayUTC(cur);
+      }
     }
 
     const perDay = Number(placeDoc.pricePerDay ?? placeDoc.price);
@@ -354,6 +391,29 @@ exports.createBookings = async (req, res) => {
 
     const populated = await Booking.findById(booking._id).populate('place');
 
+    // Notify the host by email (fire-and-forget; never blocks the response)
+    User.findById(placeDoc.owner)
+      .select('email name')
+      .then((host) => {
+        if (!host?.email) return;
+        return sendMail({
+          to: host.email,
+          subject: `New booking request for ${placeDoc.title || 'your warehouse'}`,
+          html: emailWrap(`
+            <p>Hi ${host.name || 'there'},</p>
+            <p><strong>${name}</strong> requested to book
+            <strong>${placeDoc.title || 'your warehouse'}</strong>.</p>
+            <ul>
+              <li>Check-in: ${toYMDUTC(new Date(checkIn))}</li>
+              <li>Check-out: ${toYMDUTC(new Date(checkOut))}</li>
+              <li>Total: JOD ${totalPrice}</li>
+            </ul>
+            <p>Log in to WareShare to approve or decline this request.</p>
+          `),
+        });
+      })
+      .catch((e) => console.error('booking email error:', e?.message));
+
     return res.status(201).json({
       success: true,
       booking: populated,
@@ -562,6 +622,31 @@ exports.updateBookingStatus = async (req, res) => {
 
     const populated = await Booking.findById(id).populate('place');
 
+    // Notify the renter by email (fire-and-forget)
+    if (status === 'approved' || status === 'declined') {
+      User.findById(booking.user)
+        .select('email name')
+        .then((renter) => {
+          if (!renter?.email) return;
+          const placeTitle = populated?.place?.title || 'the warehouse';
+          return sendMail({
+            to: renter.email,
+            subject: `Your booking was ${status}`,
+            html: emailWrap(`
+              <p>Hi ${renter.name || 'there'},</p>
+              <p>Your booking request for <strong>${placeTitle}</strong> was
+              <strong>${status}</strong> by the host.</p>
+              ${
+                status === 'approved'
+                  ? '<p>Log in to WareShare to complete payment and view details.</p>'
+                  : '<p>You can browse other warehouses on WareShare.</p>'
+              }
+            `),
+          });
+        })
+        .catch((e) => console.error('status email error:', e?.message));
+    }
+
     return res.status(200).json({
       success: true,
       booking: populated,
@@ -655,6 +740,12 @@ exports.getPlaceAvailability = async (req, res) => {
     }).select('checkIn checkOut status');
 
     const unavailableSet = new Set();
+
+    // Include dates the host has manually blocked
+    const placeDoc = await Place.findById(placeId).select('blockedDates');
+    if (placeDoc && Array.isArray(placeDoc.blockedDates)) {
+      placeDoc.blockedDates.forEach((d) => unavailableSet.add(d));
+    }
 
     bookings.forEach((b) => {
       if (!b.checkIn || !b.checkOut) return;

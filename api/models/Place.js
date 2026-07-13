@@ -26,6 +26,9 @@ const placeSchema = new mongoose.Schema(
       default: 'live',
     },
 
+    // Dates the host has manually blocked ('YYYY-MM-DD' strings)
+    blockedDates: [{ type: String }],
+
     // CAPACITY & SPACE
     totalArea: { type: Number },
     availableArea: { type: Number },

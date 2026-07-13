@@ -1,10 +1,11 @@
 // client/src/components/ui/AccountNav.jsx
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks';
+import { useAuth, useUnreadMessages } from '@/hooks';
 
 const AccountNav = () => {
   const { pathname } = useLocation();
   const { user } = useAuth();
+  const unreadCount = useUnreadMessages();
 
   let subpage = pathname.split('/')?.[2];
   if (subpage === undefined) {
@@ -52,6 +53,11 @@ const AccountNav = () => {
 
       <Link className={linkClasses('chats')} to="/account/chats">
         Messages
+        {unreadCount > 0 && (
+          <span className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
       </Link>
 
       {isAdmin && (

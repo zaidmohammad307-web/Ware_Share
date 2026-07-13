@@ -12,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import PlacesPage from './pages/PlacesPage';
 import BookingsPage from './pages/BookingsPage';
 import PlacesFormPage from './pages/PlacesFormPage';
+import ManageAvailabilityPage from './pages/ManageAvailabilityPage';
 import PlacePage from './pages/PlacePage';
 import SingleBookedPlace from './pages/SingleBookedPlace';
 import NotFoundPage from './pages/NotFoundPage';
@@ -58,6 +59,7 @@ function App() {
               <Route path="/account/places" element={<PlacesPage />} />
               <Route path="/account/places/new" element={<PlacesFormPage />} />
               <Route path="/account/places/:id" element={<PlacesFormPage />} />
+              <Route path="/account/places/:id/availability" element={<ManageAvailabilityPage />} />
 
               <Route path="/place/:id" element={<PlacePage />} />
 

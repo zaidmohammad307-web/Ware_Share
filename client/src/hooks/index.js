@@ -11,6 +11,43 @@ import {
 } from '@/utils';
 import axiosInstance from '@/utils/axios';
 
+// Unread chat message count for the logged-in user (polls every 60s)
+export const useUnreadMessages = () => {
+  const { user } = useContext(UserContext);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) {
+      setCount(0);
+      return;
+    }
+
+    let active = true;
+
+    const fetchCount = async () => {
+      try {
+        const { data } = await axiosInstance.get('/chat/unread');
+        if (active) setCount(data?.count || 0);
+      } catch (_) {
+        // keep last known count
+      }
+    };
+
+    fetchCount();
+    const interval = setInterval(fetchCount, 60 * 1000);
+    const onFocus = () => fetchCount();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [user]);
+
+  return count;
+};
+
 // Sets the browser tab title for the current page
 export const usePageTitle = (title) => {
   useEffect(() => {

@@ -1,6 +1,7 @@
 // api/controllers/placeController.js
 const mongoose = require('mongoose');
 const Place = require('../models/Place');
+const Booking = require('../models/Booking');
 const HostReview = require('../models/HostReview');
 const User = require('../models/User');
 
@@ -519,5 +520,91 @@ exports.deletePlace = async (req, res) => {
       message: 'Internal server error while deleting place',
       error: err.message,
     });
+  }
+};
+
+/* ----------------------------------------
+   📅 BLOCKED DATES (owner only)
+---------------------------------------- */
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+exports.getBlockedDates = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const place = await Place.findById(id).select('title owner blockedDates');
+    if (!place) {
+      return res.status(404).json({ message: 'Place not found' });
+    }
+
+    if (String(place.owner) !== String(userId)) {
+      return res.status(403).json({ message: 'Not your listing' });
+    }
+
+    // Dates already taken by bookings (owner cannot unblock these)
+    const bookings = await Booking.find({
+      place: id,
+      status: { $in: ['approved', 'pending'] },
+    }).select('checkIn checkOut');
+
+    const bookedSet = new Set();
+    bookings.forEach((b) => {
+      if (!b.checkIn || !b.checkOut) return;
+      let cur = new Date(b.checkIn);
+      const end = new Date(b.checkOut);
+      while (cur < end) {
+        const y = cur.getUTCFullYear();
+        const m = String(cur.getUTCMonth() + 1).padStart(2, '0');
+        const d = String(cur.getUTCDate()).padStart(2, '0');
+        bookedSet.add(`${y}-${m}-${d}`);
+        cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      title: place.title,
+      blockedDates: place.blockedDates || [],
+      bookedDates: Array.from(bookedSet),
+    });
+  } catch (err) {
+    console.error('getBlockedDates error:', err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.updateBlockedDates = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { dates } = req.body;
+
+    if (!Array.isArray(dates)) {
+      return res.status(400).json({ message: 'dates must be an array' });
+    }
+
+    const clean = [...new Set(dates.filter((d) => YMD_RE.test(String(d))))].sort();
+
+    if (clean.length > 730) {
+      return res.status(400).json({ message: 'Too many blocked dates (max 730)' });
+    }
+
+    const place = await Place.findById(id).select('owner');
+    if (!place) {
+      return res.status(404).json({ message: 'Place not found' });
+    }
+
+    if (String(place.owner) !== String(userId)) {
+      return res.status(403).json({ message: 'Not your listing' });
+    }
+
+    place.blockedDates = clean;
+    await place.save();
+
+    return res.status(200).json({ success: true, blockedDates: clean });
+  } catch (err) {
+    console.error('updateBlockedDates error:', err);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };

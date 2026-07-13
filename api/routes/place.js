@@ -13,6 +13,8 @@ const {
   getPlacesByHost,
   deletePlace,
   updatePlaceStatus,
+  getBlockedDates,
+  updateBlockedDates,
 } = require('../controllers/placeController');
 
 // ✅ Public: get all active places
@@ -31,6 +33,12 @@ router.get('/host/:hostId', getPlacesByHost);
 router
   .route('/:id/status')
   .patch(isLoggedIn, updatePlaceStatus);
+
+// ✅ Protected: owner availability management (block/unblock dates)
+router
+  .route('/:id/blocked-dates')
+  .get(isLoggedIn, getBlockedDates)
+  .put(isLoggedIn, updateBlockedDates);
 
 // ✅ Get single place (public) + delete place (protected, owner only)
 router

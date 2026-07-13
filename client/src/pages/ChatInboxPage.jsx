@@ -91,6 +91,8 @@ const ChatInboxPage = () => {
                   ? { label: 'Booking', cls: 'bg-blue-50 text-blue-700' }
                   : { label: 'Place', cls: 'bg-emerald-50 text-emerald-700' };
 
+              const unread = t.unreadCount || 0;
+
               return (
                 <Link
                   key={`${t.type}-${t.placeId || ''}-${t.bookingId || ''}-${t.renterId || ''}-${idx}`}
@@ -120,10 +122,23 @@ const ChatInboxPage = () => {
                           {address && <div className="mt-1 truncate text-xs text-gray-500">{address}</div>}
                         </div>
 
-                        {when && <div className="flex-shrink-0 text-xs text-gray-500">{when}</div>}
+                        <div className="flex flex-shrink-0 items-center gap-2">
+                          {when && <div className="text-xs text-gray-500">{when}</div>}
+                          {unread > 0 && (
+                            <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
+                              {unread > 99 ? '99+' : unread}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="mt-2 line-clamp-2 text-sm text-gray-700">{lastText}</div>
+                      <div
+                        className={`mt-2 line-clamp-2 text-sm ${
+                          unread > 0 ? 'font-semibold text-gray-900' : 'text-gray-700'
+                        }`}
+                      >
+                        {lastText}
+                      </div>
 
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-500">
                         {t.type === 'place' && t.placeId && (

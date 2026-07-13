@@ -217,6 +217,14 @@ const PlacesPage = () => {
                           Edit
                         </Link>
 
+                        {/* Availability */}
+                        <Link
+                          to={`/account/places/${place._id}/availability`}
+                          className="rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          Availability
+                        </Link>
+
                         {/* Hide / Make live */}
                         <button
                           type="button"

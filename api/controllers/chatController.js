@@ -33,6 +33,12 @@ exports.getBookingChat = async (req, res) => {
       .populate('sender', 'name')
       .sort({ createdAt: 1 });
 
+    // Opening the chat marks messages sent TO me as read
+    Message.updateMany(
+      { booking: booking._id, sender: { $ne: userId }, read: false },
+      { read: true }
+    ).catch(() => {});
+
     return res.status(200).json({
       success: true,
       messages,
@@ -94,6 +100,19 @@ exports.getPlaceChat = async (req, res) => {
       .populate('sender', 'name')
       .sort({ createdAt: 1 });
 
+    // Opening the chat marks messages sent TO me as read
+    Message.updateMany(
+      {
+        booking: null,
+        place: place._id,
+        host: place.owner,
+        renter: renterIdToUse,
+        sender: { $ne: userId },
+        read: false,
+      },
+      { read: true }
+    ).catch(() => {});
+
     return res.status(200).json({
       success: true,
       messages,
@@ -113,14 +132,12 @@ exports.getPlaceChat = async (req, res) => {
 exports.getChatInbox = async (req, res) => {
   try {
     const userId = req.user.id;
+    const meId = new mongoose.Types.ObjectId(userId);
 
     const threads = await Message.aggregate([
       {
         $match: {
-          $or: [
-            { host: new mongoose.Types.ObjectId(userId) },
-            { renter: new mongoose.Types.ObjectId(userId) },
-          ],
+          $or: [{ host: meId }, { renter: meId }],
         },
       },
       {
@@ -143,6 +160,20 @@ exports.getChatInbox = async (req, res) => {
             renter: '$threadRenter',
           },
           lastMessage: { $first: '$$ROOT' },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ['$sender', meId] },
+                    { $ne: ['$read', true] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
         },
       },
       { $sort: { 'lastMessage.createdAt': -1 } },
@@ -199,6 +230,7 @@ exports.getChatInbox = async (req, res) => {
           sender: String(last.sender),
           createdAt: last.createdAt,
         },
+        unreadCount: t.unreadCount || 0,
       };
     });
 
@@ -209,3 +241,24 @@ exports.getChatInbox = async (req, res) => {
   }
 };
 
+
+// -----------------------------
+// Total unread message count (for nav badge)
+// -----------------------------
+exports.getUnreadCount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const meId = new mongoose.Types.ObjectId(userId);
+
+    const count = await Message.countDocuments({
+      $or: [{ host: meId }, { renter: meId }],
+      sender: { $ne: meId },
+      read: false,
+    });
+
+    return res.status(200).json({ success: true, count });
+  } catch (err) {
+    console.error('getUnreadCount error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

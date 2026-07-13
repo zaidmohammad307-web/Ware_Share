@@ -16,9 +16,15 @@ const messageSchema = new mongoose.Schema(
 
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     text: { type: String, required: true, trim: true },
+
+    // Has the recipient (the non-sender participant) seen this message?
+    read: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
+
+messageSchema.index({ host: 1, read: 1 });
+messageSchema.index({ renter: 1, read: 1 });
 
 module.exports = mongoose.model('Message', messageSchema);
 
