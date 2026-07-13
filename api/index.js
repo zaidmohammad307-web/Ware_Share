@@ -89,6 +89,9 @@ cloudinary.config({
 
 const app = express();
 
+// Render terminates TLS at its proxy; needed for correct req.ip / secure cookies
+app.set('trust proxy', 1);
+
 // ── SECURITY HEADERS ──
 app.use(helmet());
 
@@ -110,6 +113,30 @@ app.use(express.json({ limit: '2mb' }));
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
+
+// ── HEALTH CHECK (for Render / uptime monitors) ──
+app.get('/health', (req, res) => {
+  const dbState = mongoose.connection.readyState; // 1 = connected
+  res.status(dbState === 1 ? 200 : 503).json({
+    ok: dbState === 1,
+    db: dbState === 1 ? 'connected' : 'disconnected',
+    uptime: Math.round(process.uptime()),
+  });
+});
+
+// ── RATE LIMIT AUTH ENDPOINTS (brute-force protection) ──
+const rateLimit = require('express-rate-limit');
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many attempts. Please try again in 15 minutes.',
+  },
+});
+app.use(['/users/login', '/users/register', '/users/google/login'], authLimiter);
 
 app.use('/', require('./routes'));
 

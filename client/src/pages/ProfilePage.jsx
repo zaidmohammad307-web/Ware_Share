@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
 import PlacesPage from './PlacesPage';
-import { useAuth } from '../hooks';
+import { useAuth, usePageTitle } from '../hooks';
 import {
   LogOut,
   Mail,
@@ -21,6 +21,8 @@ import EditProfileDialog from '@/components/ui/EditProfileDialog';
 import axiosInstance from '@/utils/axios';
 
 const ProfilePage = () => {
+  usePageTitle('My profile');
+
   const auth = useAuth();
   const { user, logout } = auth;
   const [redirect, setRedirect] = useState(null);

@@ -6,8 +6,11 @@ import { toast } from 'react-toastify';
 import axiosInstance from '@/utils/axios';
 import AccountNav from '@/components/ui/AccountNav';
 import Spinner from '@/components/ui/Spinner';
+import { usePageTitle } from '@/hooks';
 
 const PlacesPage = () => {
+  usePageTitle('Your warehouses');
+
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
@@ -148,6 +151,7 @@ const PlacesPage = () => {
                       <img
                         src={place.photos[0]}
                         alt={place.title}
+                        loading="lazy"
                         className="h-40 w-full object-cover"
                       />
                     </Link>

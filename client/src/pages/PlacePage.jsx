@@ -12,9 +12,12 @@ import {
   startOfWeek,
 } from 'date-fns';
 
+import { toast } from 'react-toastify';
+
 import axiosInstance from '@/utils/axios';
 import BookingWidget from '../components/ui/BookingWidget';
 import PlaceMap from '../components/ui/PlaceMap';
+import { usePageTitle } from '@/hooks';
 
 const labelMaps = {
   warehouseType: {
@@ -102,6 +105,25 @@ const PlacePage = () => {
   const [place, setPlace] = useState(null);
   const [loading, setLoading] = useState(true);
   const [placeError, setPlaceError] = useState(null);
+
+  usePageTitle(place?.title || 'Warehouse');
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = place?.title || 'Warehouse on WareShare';
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied to clipboard');
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        toast.error('Could not share the link.');
+      }
+    }
+  };
 
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -516,6 +538,16 @@ const PlacePage = () => {
                 <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl">
                   {place.title || 'Warehouse'}
                 </h1>
+
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                  title="Share this warehouse"
+                >
+                  <span className="text-sm">🔗</span>
+                  <span>Share</span>
+                </button>
 
                 {badges.length > 0 && (
                   <div className="flex flex-wrap items-center gap-2">

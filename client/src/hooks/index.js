@@ -11,6 +11,16 @@ import {
 } from '@/utils';
 import axiosInstance from '@/utils/axios';
 
+// Sets the browser tab title for the current page
+export const usePageTitle = (title) => {
+  useEffect(() => {
+    document.title = title ? `${title} · WareShare` : 'WareShare';
+    return () => {
+      document.title = 'WareShare';
+    };
+  }, [title]);
+};
+
 // USER
 export const useAuth = () => {
   return useContext(UserContext);
