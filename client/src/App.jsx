@@ -17,6 +17,7 @@ import InfoPage from './pages/InfoPage';
 import ReportIssuePage from './pages/ReportIssuePage';
 import LaunchPage from './pages/LaunchPage';
 import WaitlistAdminPage from './pages/WaitlistAdminPage';
+import SitemapPage from './pages/SitemapPage';
 import PlacePage from './pages/PlacePage';
 import SingleBookedPlace from './pages/SingleBookedPlace';
 import NotFoundPage from './pages/NotFoundPage';
@@ -71,6 +72,7 @@ function App() {
               {/* Footer content + support */}
               <Route path="/info/:slug" element={<InfoPage />} />
               <Route path="/support/report" element={<ReportIssuePage />} />
+              <Route path="/sitemap" element={<SitemapPage />} />
               <Route path="/admin/waitlist" element={<WaitlistAdminPage />} />
 
               <Route path="/account/bookings" element={<BookingsPage />} />

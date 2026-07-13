@@ -395,6 +395,33 @@ const PAGES = {
     ],
   },
 
+  'company-details': {
+    title: 'Company details',
+    subtitle: 'Who is behind WareShare.',
+    sections: [
+      {
+        heading: 'The company',
+        body: [
+          'WareShare is an early-stage technology company building the on-demand warehouse storage marketplace, headquartered in Amman, Jordan.',
+        ],
+      },
+      {
+        heading: 'What we operate',
+        bullets: [
+          'The WareShare web platform connecting storage renters with verified warehouse hosts.',
+          'Host verification, booking, secure messaging, and payment coordination services.',
+        ],
+      },
+      {
+        heading: 'Contact',
+        body: [
+          'For legal, partnership, or company inquiries, reach us through the contact form and we will route your message to the right person.',
+        ],
+      },
+    ],
+    cta: { label: 'Contact us', to: '/support/report' },
+  },
+
   terms: {
     title: 'Terms of service',
     subtitle: 'The rules of using WareShare.',
