@@ -138,6 +138,19 @@ const authLimiter = rateLimit({
 });
 app.use(['/users/login', '/users/register', '/users/google/login'], authLimiter);
 
+// Public form endpoints (waitlist signup, issue reports)
+const formLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many submissions. Please try again later.',
+  },
+});
+app.use(['/waitlist', '/support/report'], formLimiter);
+
 app.use('/', require('./routes'));
 
 // ── GLOBAL ERROR HANDLER ──

@@ -93,6 +93,7 @@ router.post('/upload', isLoggedIn, upload.array('photos', 10), async (req, res) 
   }
 });
 
+router.use('/', require('./support'));
 router.use('/users', require('./user'));
 router.use('/places', require('./place'));
 router.use('/bookings', require('./booking'));

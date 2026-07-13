@@ -13,6 +13,10 @@ import PlacesPage from './pages/PlacesPage';
 import BookingsPage from './pages/BookingsPage';
 import PlacesFormPage from './pages/PlacesFormPage';
 import ManageAvailabilityPage from './pages/ManageAvailabilityPage';
+import InfoPage from './pages/InfoPage';
+import ReportIssuePage from './pages/ReportIssuePage';
+import LaunchPage from './pages/LaunchPage';
+import WaitlistAdminPage from './pages/WaitlistAdminPage';
 import PlacePage from './pages/PlacePage';
 import SingleBookedPlace from './pages/SingleBookedPlace';
 import NotFoundPage from './pages/NotFoundPage';
@@ -50,6 +54,7 @@ function App() {
       <UserProvider>
         <PlaceProvider>
           <Routes>
+            <Route path="/launch" element={<LaunchPage />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<IndexPage />} />
               <Route path="/login" element={<LoginPage />} />
@@ -62,6 +67,11 @@ function App() {
               <Route path="/account/places/:id/availability" element={<ManageAvailabilityPage />} />
 
               <Route path="/place/:id" element={<PlacePage />} />
+
+              {/* Footer content + support */}
+              <Route path="/info/:slug" element={<InfoPage />} />
+              <Route path="/support/report" element={<ReportIssuePage />} />
+              <Route path="/admin/waitlist" element={<WaitlistAdminPage />} />
 
               <Route path="/account/bookings" element={<BookingsPage />} />
               <Route path="/account/bookings/:id" element={<SingleBookedPlace />} />

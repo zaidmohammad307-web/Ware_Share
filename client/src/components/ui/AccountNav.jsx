@@ -74,6 +74,12 @@ const AccountNav = () => {
           Admin dashboard
         </Link>
       )}
+
+      {isAdmin && (
+        <Link className={linkClasses('waitlist')} to="/admin/waitlist">
+          Waitlist
+        </Link>
+      )}
     </nav>
   );
 };

@@ -1,5 +1,6 @@
 // client/src/components/ui/Footer.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -11,29 +12,29 @@ const Footer = () => {
           <div className="flex flex-col gap-1">
             <strong className="font-semibold text-white">Help &amp; support</strong>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/help-center" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Help Center
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/safety-security" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Safety &amp; security guidelines
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/warehouse-access" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Warehouse access &amp; check-in
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/insurance-claims" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Insurance &amp; claims
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/support/report" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Report an issue
-              </span>
+              </Link>
             </p>
           </div>
 
@@ -41,24 +42,24 @@ const Footer = () => {
           <div className="flex flex-col gap-1">
             <strong className="font-semibold text-white">For warehouse owners</strong>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/list-your-warehouse" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 List your warehouse
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/pricing-tips" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Pricing &amp; utilization tips
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/best-practices" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Operational best practices
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/partners" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Partner &amp; enterprise solutions
-              </span>
+              </Link>
             </p>
           </div>
 
@@ -66,29 +67,29 @@ const Footer = () => {
           <div className="flex flex-col gap-1">
             <strong className="font-semibold text-white">About WareShare</strong>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/mission" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Our mission
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/how-it-works" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 How the marketplace works
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/careers" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Careers
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/press" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 Press &amp; media
-              </span>
+              </Link>
             </p>
             <p>
-              <span className="cursor-pointer font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
+              <Link to="/info/esg" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
                 ESG &amp; sustainability
-              </span>
+              </Link>
             </p>
           </div>
         </div>
@@ -155,11 +156,11 @@ const Footer = () => {
             </p>
             <div>
               <ul className="flex gap-6 text-sm text-gray-300">
-                <li className="cursor-pointer decoration-1 underline-offset-1 hover:underline md:list-disc">
-                  Privacy
+                <li className="decoration-1 underline-offset-1 hover:underline md:list-disc">
+                  <Link to="/info/privacy">Privacy</Link>
                 </li>
-                <li className="cursor-pointer list-disc decoration-1 underline-offset-1 hover:underline">
-                  Terms
+                <li className="list-disc decoration-1 underline-offset-1 hover:underline">
+                  <Link to="/info/terms">Terms</Link>
                 </li>
                 <li className="cursor-pointer list-disc decoration-1 underline-offset-1 hover:underline">
                   Sitemap
