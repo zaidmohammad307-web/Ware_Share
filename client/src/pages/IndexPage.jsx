@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import axiosInstance from '@/utils/axios';
 import SearchMap from '@/components/ui/SearchMap';
 import { usePageTitle } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
 const labelMaps = {
   warehouseType: {
@@ -98,6 +99,7 @@ const distanceKm = (coord1, coord2) => {
 
 const IndexPage = () => {
   usePageTitle('Find storage');
+  const { t, formatPrice } = usePrefs();
 
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -505,7 +507,7 @@ const IndexPage = () => {
     <div className="mt-24 px-4 pb-10">
       <div className="mb-4 flex items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">
-          Find storage on Wareshare
+          {t('home.title')}
         </h1>
 
         <div className="flex items-center gap-2">
@@ -520,7 +522,7 @@ const IndexPage = () => {
                   : 'text-gray-700'
               }`}
             >
-              List
+              {t('home.list')}
             </button>
             <button
               type="button"
@@ -531,7 +533,7 @@ const IndexPage = () => {
                   : 'text-gray-700'
               }`}
             >
-              Map
+              {t('home.map')}
             </button>
           </div>
 
@@ -541,7 +543,7 @@ const IndexPage = () => {
             onClick={() => setFiltersOpen((prev) => !prev)}
             className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-100"
           >
-            <span>{filtersOpen ? 'Hide filters' : 'Show filters'}</span>
+            <span>{filtersOpen ? t('home.hideFilters') : t('home.showFilters')}</span>
             <span className="text-[10px]">
               {filtersOpen ? '▴' : '▾'}
             </span>
@@ -554,7 +556,7 @@ const IndexPage = () => {
         {/* Filters header (always visible) */}
         <div className="flex items-center justify-between px-4 py-2">
           <div className="text-xs font-semibold text-gray-600">
-            Filters & search
+            {t('home.filtersSearch')}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -562,7 +564,7 @@ const IndexPage = () => {
               onClick={resetFilters}
               className="text-[11px] font-semibold text-gray-500 hover:text-gray-700"
             >
-              Reset all
+              {t('home.resetAll')}
             </button>
             <button
               type="button"
@@ -1158,15 +1160,15 @@ const IndexPage = () => {
       {/* Results */}
       {loadError ? (
         <p className="text-sm text-red-500">
-          Failed to load warehouses. Please check your connection and refresh.
+          {t('home.loadFailed')}
         </p>
       ) : filteredPlaces.length === 0 && places.length === 0 ? (
         <p className="text-sm text-gray-500">
-          No warehouses have been listed yet. Check back soon!
+          {t('home.noneYet')}
         </p>
       ) : filteredPlaces.length === 0 ? (
         <p className="text-sm text-gray-500">
-          No warehouses match your filters. Try broadening your search.
+          {t('home.noMatch')}
         </p>
       ) : viewMode === 'list' ? (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -1249,6 +1251,18 @@ const IndexPage = () => {
                         {place.city && place.zone && <span> • </span>}
                         {place.zone && <span>{place.zone}</span>}
                       </div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                        {place.hostVerified && (
+                          <span className="font-semibold text-emerald-700">
+                            ✅ {t('home.verifiedHost')}
+                          </span>
+                        )}
+                        {typeof place.availableArea === 'number' && (
+                          <span className="text-gray-500">
+                            {place.availableArea} m² {t('home.available')}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Host rating */}
@@ -1284,15 +1298,15 @@ const IndexPage = () => {
 
                   {/* Price + distance */}
                   <div className="mt-2 flex items-baseline justify-between">
-                    <div className="text-sm font-semibold">
+                    <div className="text-sm font-bold text-primary">
                       {typeof place.pricePerDay === 'number'
-                        ? `JOD ${place.pricePerDay}`
+                        ? formatPrice(place.pricePerDay)
                         : typeof place.price === 'number'
-                        ? `JOD ${place.price}`
-                        : 'Price on request'}
+                        ? formatPrice(place.price)
+                        : t('home.priceOnRequest')}
                       <span className="text-xs font-normal text-gray-500">
                         {' '}
-                        / day
+                        {t('home.perDay')}
                       </span>
                     </div>
 
@@ -1311,7 +1325,7 @@ const IndexPage = () => {
         </div>
       ) : (
         <div className="mt-4">
-          <SearchMap places={filteredPlaces} userLocation={userLocation} />
+          <SearchMap places={filteredPlaces} userLocation={userLocation} priceLabel={(v) => formatPrice(v)} />
         </div>
       )}
     </div>

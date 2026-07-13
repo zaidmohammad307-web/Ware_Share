@@ -18,6 +18,7 @@ import axiosInstance from '@/utils/axios';
 import BookingWidget from '../components/ui/BookingWidget';
 import PlaceMap from '../components/ui/PlaceMap';
 import { usePageTitle } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
 const labelMaps = {
   warehouseType: {
@@ -107,6 +108,7 @@ const PlacePage = () => {
   const [placeError, setPlaceError] = useState(null);
 
   usePageTitle(place?.title || 'Warehouse');
+  const { formatPrice } = usePrefs();
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -508,7 +510,9 @@ const PlacePage = () => {
 
   const primaryPrice = toNum(place.pricePerDay) ?? toNum(place.price) ?? null;
   const priceLabel =
-    primaryPrice !== null ? `${formatJOD(primaryPrice)} / day` : 'Price on request';
+    primaryPrice !== null
+      ? `${formatPrice(primaryPrice)} / day`
+      : 'Price on request';
 
   const locationLine = (() => {
     const parts = [];

@@ -18,6 +18,7 @@ import ReportIssuePage from './pages/ReportIssuePage';
 import LaunchPage from './pages/LaunchPage';
 import WaitlistAdminPage from './pages/WaitlistAdminPage';
 import SitemapPage from './pages/SitemapPage';
+import { PreferencesProvider } from './providers/PreferencesProvider';
 import PlacePage from './pages/PlacePage';
 import SingleBookedPlace from './pages/SingleBookedPlace';
 import NotFoundPage from './pages/NotFoundPage';
@@ -52,6 +53,7 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <PreferencesProvider>
       <UserProvider>
         <PlaceProvider>
           <Routes>
@@ -108,6 +110,7 @@ function App() {
           <ToastContainer autoClose={2000} transition={Slide} />
         </PlaceProvider>
       </UserProvider>
+      </PreferencesProvider>
     </GoogleOAuthProvider>
   );
 }

@@ -3,7 +3,8 @@ const WaitlistEntry = require('../models/WaitlistEntry');
 const SupportTicket = require('../models/SupportTicket');
 const { sendMail, emailWrap } = require('../utils/mailer');
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// Loose on purpose: some accounts use non-standard emails (no TLD).
+const EMAIL_RE = /^\S+@\S+$/;
 const PHONE_RE = /^\+?[0-9\s\-()]{7,20}$/;
 
 /* ----------------------------------------

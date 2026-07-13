@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import axiosInstance from '@/utils/axios';
 import { usePageTitle } from '@/hooks';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const EMAIL_RE = /^\S+@\S+$/;
 const PHONE_RE = /^\+?[0-9\s\-()]{7,20}$/;
 
 /* ---------------------------------------------

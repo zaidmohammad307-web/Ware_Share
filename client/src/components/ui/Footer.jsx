@@ -1,46 +1,16 @@
 // client/src/components/ui/Footer.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { usePrefs, CURRENCIES } from '@/providers/PreferencesProvider';
 
 const LANGS = [
-  { code: 'EN', label: 'English (EN)', live: true },
-  { code: 'AR', label: 'العربية (AR)', live: false },
-];
-
-const CURRENCIES = [
-  { code: 'JOD', label: 'JOD — Jordanian dinar', live: true },
-  { code: 'USD', label: 'USD — US dollar', live: false },
+  { code: 'EN', label: 'English (EN)' },
+  { code: 'AR', label: 'العربية (AR)' },
 ];
 
 const Footer = () => {
+  const { t, lang, setLang, currency, setCurrency, ratesLive } = usePrefs();
   const [openMenu, setOpenMenu] = useState(null); // 'lang' | 'currency' | null
-  const [lang, setLang] = useState(
-    () => localStorage.getItem('wareshare_lang') || 'EN'
-  );
-  const [currency, setCurrency] = useState(
-    () => localStorage.getItem('wareshare_currency') || 'JOD'
-  );
-
-  const pickLang = (l) => {
-    setOpenMenu(null);
-    if (!l.live) {
-      toast.info('Arabic support is coming soon — launching with the full release.');
-      return;
-    }
-    setLang(l.code);
-    localStorage.setItem('wareshare_lang', l.code);
-  };
-
-  const pickCurrency = (c) => {
-    setOpenMenu(null);
-    if (!c.live) {
-      toast.info('USD pricing is coming soon. All prices are shown in JOD for now.');
-      return;
-    }
-    setCurrency(c.code);
-    localStorage.setItem('wareshare_currency', c.code);
-  };
 
   const shareUrl =
     typeof window !== 'undefined'
@@ -52,95 +22,58 @@ const Footer = () => {
   const menuItemCls =
     'block w-full whitespace-nowrap px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100';
 
+  const columns = [
+    {
+      heading: t('footer.helpSupport'),
+      links: [
+        { label: t('footer.helpCenter'), to: '/info/help-center' },
+        { label: t('footer.safety'), to: '/info/safety-security' },
+        { label: t('footer.access'), to: '/info/warehouse-access' },
+        { label: t('footer.insurance'), to: '/info/insurance-claims' },
+        { label: t('footer.report'), to: '/support/report' },
+      ],
+    },
+    {
+      heading: t('footer.forOwners'),
+      links: [
+        { label: t('footer.listWarehouse'), to: '/info/list-your-warehouse' },
+        { label: t('footer.pricingTips'), to: '/info/pricing-tips' },
+        { label: t('footer.bestPractices'), to: '/info/best-practices' },
+        { label: t('footer.partners'), to: '/info/partners' },
+      ],
+    },
+    {
+      heading: t('footer.about'),
+      links: [
+        { label: t('footer.mission'), to: '/info/mission' },
+        { label: t('footer.howItWorks'), to: '/info/how-it-works' },
+        { label: t('footer.careers'), to: '/info/careers' },
+        { label: t('footer.press'), to: '/info/press' },
+        { label: t('footer.esg'), to: '/info/esg' },
+      ],
+    },
+  ];
+
   return (
     <div className="flex w-full justify-center bg-[#222222] pb-8 text-gray-200">
       <div className="flex w-full max-w-screen-xl flex-col items-center px-6">
         {/* Top grid for links */}
         <div className="grid w-full grid-cols-1 gap-6 py-8 text-sm md:grid-cols-3">
-          {/* Help & Support */}
-          <div className="flex flex-col gap-1">
-            <strong className="font-semibold text-white">Help &amp; support</strong>
-            <p>
-              <Link to="/info/help-center" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Help Center
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/safety-security" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Safety &amp; security guidelines
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/warehouse-access" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Warehouse access &amp; check-in
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/insurance-claims" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Insurance &amp; claims
-              </Link>
-            </p>
-            <p>
-              <Link to="/support/report" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Report an issue
-              </Link>
-            </p>
-          </div>
-
-          {/* For warehouse owners */}
-          <div className="flex flex-col gap-1">
-            <strong className="font-semibold text-white">For warehouse owners</strong>
-            <p>
-              <Link to="/info/list-your-warehouse" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                List your warehouse
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/pricing-tips" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Pricing &amp; utilization tips
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/best-practices" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Operational best practices
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/partners" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Partner &amp; enterprise solutions
-              </Link>
-            </p>
-          </div>
-
-          {/* About WareShare */}
-          <div className="flex flex-col gap-1">
-            <strong className="font-semibold text-white">About WareShare</strong>
-            <p>
-              <Link to="/info/mission" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Our mission
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/how-it-works" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                How the marketplace works
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/careers" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Careers
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/press" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                Press &amp; media
-              </Link>
-            </p>
-            <p>
-              <Link to="/info/esg" className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline">
-                ESG &amp; sustainability
-              </Link>
-            </p>
-          </div>
+          {columns.map((col) => (
+            <div key={col.heading} className="flex flex-col gap-1">
+              <strong className="font-semibold text-white">{col.heading}</strong>
+              {col.links.map((l) => (
+                <p key={l.to + l.label}>
+                  <Link
+                    to={l.to}
+                    className="font-normal text-gray-300 decoration-1 underline-offset-1 hover:underline"
+                  >
+                    {l.label}
+                  </Link>
+                </p>
+              ))}
+            </div>
+          ))}
         </div>
 
         <div className="my-4 w-full border border-white/10"></div>
@@ -180,14 +113,14 @@ const Footer = () => {
                       <button
                         key={l.code}
                         type="button"
-                        onClick={() => pickLang(l)}
+                        onClick={() => {
+                          setLang(l.code);
+                          setOpenMenu(null);
+                        }}
                         className={menuItemCls}
                       >
                         {l.label}
                         {l.code === lang && ' ✓'}
-                        {!l.live && (
-                          <span className="ml-2 text-xs text-gray-400">soon</span>
-                        )}
                       </button>
                     ))}
                   </div>
@@ -207,19 +140,22 @@ const Footer = () => {
                   <span className="ml-1 text-xs">▾</span>
                 </button>
                 {openMenu === 'currency' && (
-                  <div className="absolute bottom-full left-0 z-20 mb-2 overflow-hidden rounded-xl bg-white shadow-lg">
+                  <div className="absolute bottom-full left-0 z-20 mb-2 max-h-72 overflow-y-auto rounded-xl bg-white shadow-lg">
+                    <div className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                      {ratesLive ? 'Live exchange rates' : 'Approximate rates'}
+                    </div>
                     {CURRENCIES.map((c) => (
                       <button
                         key={c.code}
                         type="button"
-                        onClick={() => pickCurrency(c)}
+                        onClick={() => {
+                          setCurrency(c.code);
+                          setOpenMenu(null);
+                        }}
                         className={menuItemCls}
                       >
                         {c.label}
                         {c.code === currency && ' ✓'}
-                        {!c.live && (
-                          <span className="ml-2 text-xs text-gray-400">soon</span>
-                        )}
                       </button>
                     ))}
                   </div>
@@ -282,21 +218,21 @@ const Footer = () => {
           {/* Legal links */}
           <div className="flex w-full flex-col gap-2 px-1 font-normal text-gray-300 md:w-auto md:flex-row md:items-center md:gap-8">
             <p className="text-sm">
-              &copy; {new Date().getFullYear()} WareShare. All rights reserved.
+              &copy; {new Date().getFullYear()} WareShare. {t('footer.rights')}
             </p>
             <div>
               <ul className="flex gap-6 text-sm text-gray-300">
                 <li className="decoration-1 underline-offset-1 hover:underline md:list-disc">
-                  <Link to="/info/privacy">Privacy</Link>
+                  <Link to="/info/privacy">{t('footer.privacy')}</Link>
                 </li>
                 <li className="list-disc decoration-1 underline-offset-1 hover:underline">
-                  <Link to="/info/terms">Terms</Link>
+                  <Link to="/info/terms">{t('footer.terms')}</Link>
                 </li>
                 <li className="list-disc decoration-1 underline-offset-1 hover:underline">
-                  <Link to="/sitemap">Sitemap</Link>
+                  <Link to="/sitemap">{t('footer.sitemap')}</Link>
                 </li>
                 <li className="list-disc decoration-1 underline-offset-1 hover:underline">
-                  <Link to="/info/company-details">Company details</Link>
+                  <Link to="/info/company-details">{t('footer.companyDetails')}</Link>
                 </li>
               </ul>
             </div>

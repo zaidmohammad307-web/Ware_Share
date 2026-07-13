@@ -256,11 +256,21 @@ exports.getPlaces = async (req, res) => {
     ];
 
     let ratingsMap = {};
+    let verifiedMap = {};
 
     if (ownerIds.length > 0) {
       const ownerObjectIds = ownerIds.map(
         (id) => new mongoose.Types.ObjectId(id)
       );
+
+      const owners = await User.find({ _id: { $in: ownerObjectIds } }).select(
+        'isHostVerified hostVerificationStatus'
+      );
+      verifiedMap = owners.reduce((acc, u) => {
+        acc[String(u._id)] =
+          !!u.isHostVerified || u.hostVerificationStatus === 'approved';
+        return acc;
+      }, {});
 
       const agg = await HostReview.aggregate([
         { $match: { host: { $in: ownerObjectIds } } },
@@ -291,6 +301,7 @@ exports.getPlaces = async (req, res) => {
         ...p,
         hostRating: ratingInfo ? ratingInfo.avgRating : null,
         hostRatingCount: ratingInfo ? ratingInfo.count : 0,
+        hostVerified: ownerId ? !!verifiedMap[ownerId] : false,
       };
     });
 

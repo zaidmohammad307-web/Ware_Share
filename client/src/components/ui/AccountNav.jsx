@@ -1,11 +1,13 @@
 // client/src/components/ui/AccountNav.jsx
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth, useUnreadMessages } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
 const AccountNav = () => {
   const { pathname } = useLocation();
   const { user } = useAuth();
   const unreadCount = useUnreadMessages();
+  const { t } = usePrefs();
 
   let subpage = pathname.split('/')?.[2];
   if (subpage === undefined) {
@@ -32,27 +34,27 @@ const AccountNav = () => {
   return (
     <nav className="mt-24 mb-8 flex flex-wrap justify-center gap-4">
       <Link className={linkClasses('dashboard')} to="/dashboard">
-        Dashboard
+        {t('nav.dashboard')}
       </Link>
 
       <Link className={linkClasses('profile')} to="/account">
-        My profile
+        {t('nav.myProfile')}
       </Link>
 
       <Link className={linkClasses('bookings')} to="/account/bookings">
-        My bookings
+        {t('nav.myBookings')}
       </Link>
 
       <Link className={linkClasses('places')} to="/account/places">
-        My warehouses
+        {t('nav.myWarehouses')}
       </Link>
 
       <Link className={linkClasses('owner')} to="/account/owner/bookings">
-        Requests to my warehouses
+        {t('nav.requests')}
       </Link>
 
       <Link className={linkClasses('chats')} to="/account/chats">
-        Messages
+        {t('nav.messages')}
         {unreadCount > 0 && (
           <span className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -65,19 +67,19 @@ const AccountNav = () => {
           className={linkClasses('admin-hosts')}
           to="/account/admin/hosts"
         >
-          Admin host verification
+          {t('nav.adminHosts')}
         </Link>
       )}
 
       {isAdmin && (
         <Link className={linkClasses('admin-dashboard')} to="/admin/dashboard">
-          Admin dashboard
+          {t('nav.adminDashboard')}
         </Link>
       )}
 
       {isAdmin && (
         <Link className={linkClasses('waitlist')} to="/admin/waitlist">
-          Waitlist
+          {t('nav.waitlist')}
         </Link>
       )}
     </nav>
