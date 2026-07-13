@@ -18,6 +18,9 @@ const bookingSchema = new mongoose.Schema(
     checkOut: { type: Date, required: true },
     noOfGuests: { type: Number, required: true },
 
+    // Space booked in m². null = the full warehouse (legacy bookings too).
+    areaM2: { type: Number, default: null },
+
     name: { type: String, required: true },
     phone: { type: String, required: true },
 

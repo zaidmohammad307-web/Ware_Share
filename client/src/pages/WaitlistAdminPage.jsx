@@ -22,10 +22,12 @@ const WaitlistAdminPage = () => {
         const { data } = await axiosInstance.get('/waitlist');
         setEntries(data.entries || []);
       } catch (err) {
+        const status = err?.response?.status;
+        const serverMsg = err?.response?.data?.message;
         setError(
-          err?.response?.status === 403
-            ? 'Admin access required.'
-            : 'Failed to load waitlist.'
+          status === 403
+            ? 'Admin access required — make sure ADMIN_EMAIL on the server matches your login email.'
+            : `Failed to load waitlist${status ? ` (HTTP ${status})` : ''}${serverMsg ? `: ${serverMsg}` : '.'}`
         );
       } finally {
         setLoading(false);

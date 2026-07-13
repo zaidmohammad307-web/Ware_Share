@@ -7,9 +7,11 @@ import axiosInstance from '@/utils/axios';
 import AccountNav from '@/components/ui/AccountNav';
 import Spinner from '@/components/ui/Spinner';
 import { usePageTitle } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
 const PlacesPage = () => {
   usePageTitle('Your warehouses');
+  const { t } = usePrefs();
 
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,10 +90,10 @@ const PlacesPage = () => {
       <div className="mt-4 flex items-center justify-between px-4">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">
-            Your warehouses
+            {t('places.title')}
           </h1>
           <p className="text-sm text-gray-500">
-            Manage visibility, pricing, and details of your Wareshare listings.
+            {t('places.subtitle')}
           </p>
         </div>
 
@@ -113,7 +115,7 @@ const PlacesPage = () => {
               d="M12 4.5v15m7.5-7.5h-15"
             />
           </svg>
-          Add new warehouse
+          {t('places.addNew')}
         </Link>
       </div>
 
@@ -182,7 +184,7 @@ const PlacesPage = () => {
                             : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         }`}
                       >
-                        {isHidden ? 'Hidden' : 'Live'}
+                        {isHidden ? t('places.hidden') : t('places.live')}
                       </span>
                     </div>
 
@@ -214,7 +216,7 @@ const PlacesPage = () => {
                           to={`/account/places/${place._id}`}
                           className="rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
                         >
-                          Edit
+                          {t('common.edit')}
                         </Link>
 
                         {/* Availability */}
@@ -222,7 +224,7 @@ const PlacesPage = () => {
                           to={`/account/places/${place._id}/availability`}
                           className="rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
                         >
-                          Availability
+                          {t('places.availability')}
                         </Link>
 
                         {/* Hide / Make live */}
@@ -237,10 +239,10 @@ const PlacesPage = () => {
                           } ${isBusy ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
                           {isBusy
-                            ? 'Saving...'
+                            ? '…'
                             : isHidden
-                            ? 'Make live'
-                            : 'Hide'}
+                            ? t('places.makeLive')
+                            : t('places.hide')}
                         </button>
                       </div>
 

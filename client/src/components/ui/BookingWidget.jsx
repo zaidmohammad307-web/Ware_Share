@@ -5,6 +5,7 @@ import { differenceInDays } from 'date-fns';
 import { toast } from 'react-toastify';
 
 import { useAuth } from '../../hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
 import axiosInstance from '@/utils/axios';
 import DatePickerWithRange from './DatePickerWithRange';
 
@@ -112,8 +113,16 @@ const BookingWidget = ({ place }) => {
   const [redirect, setRedirect] = useState('');
 
   const { user } = useAuth();
+  const { t } = usePrefs();
   const { noOfGuests, name, phone } = bookingData;
-  const { _id: id, pricePerDay, price } = place;
+  const { _id: id, pricePerDay, price, availableArea } = place;
+
+  // Space requested in m². Empty = book the full warehouse.
+  const [areaM2, setAreaM2] = useState('');
+  const totalCapacity =
+    Number.isFinite(Number(availableArea)) && Number(availableArea) > 0
+      ? Number(availableArea)
+      : null;
 
   useEffect(() => {
     if (user) {
@@ -155,10 +164,19 @@ const BookingWidget = ({ place }) => {
     return Math.max(1, numberOfDays);
   }, [dateRange.from, dateRange.to, numberOfDays]);
 
+  const areaFractionPreview = useMemo(() => {
+    if (!totalCapacity) return 1;
+    const a = Number(areaM2);
+    if (!Number.isFinite(a) || a <= 0 || a >= totalCapacity) return 1;
+    return a / totalCapacity;
+  }, [areaM2, totalCapacity]);
+
   const baseBookingPricePreview = useMemo(() => {
     if (daysPreview < 1) return 0;
-    return roundTo2(daysPreview * Number(pricePerDay ?? price ?? 0));
-  }, [daysPreview, pricePerDay, price]);
+    return roundTo2(
+      daysPreview * Number(pricePerDay ?? price ?? 0) * areaFractionPreview
+    );
+  }, [daysPreview, pricePerDay, price, areaFractionPreview]);
 
   const insuranceFeePreview = useMemo(() => {
     if (!insurance.insuranceSelected) return 0;
@@ -342,6 +360,10 @@ const BookingWidget = ({ place }) => {
         name,
         phone,
         place: id,
+        areaM2:
+          totalCapacity && Number(areaM2) > 0 && Number(areaM2) < totalCapacity
+            ? Number(areaM2)
+            : undefined,
 
         // Insurance
         insuranceSelected: !!insurance.insuranceSelected,
@@ -423,7 +445,7 @@ const BookingWidget = ({ place }) => {
 
       <div className="mt-4">
         <label className="block text-sm font-medium">
-          Units / pallet positions needed
+          {t('book.units')}
         </label>
         <input
           type="number"
@@ -435,8 +457,30 @@ const BookingWidget = ({ place }) => {
         />
       </div>
 
+      {totalCapacity && (
+        <div className="mt-4">
+          <label className="block text-sm font-medium">
+            {t('book.space')}
+          </label>
+          <input
+            type="number"
+            value={areaM2}
+            onChange={(e) => setAreaM2(e.target.value)}
+            placeholder={`${t('book.fullWarehouse')} (${totalCapacity} m²)`}
+            className="w-full rounded-md border p-2"
+            min={1}
+            max={totalCapacity}
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            {Number(areaM2) > 0 && Number(areaM2) < totalCapacity
+              ? `${areaM2} / ${totalCapacity} m² — ${t('book.partialNote')}`
+              : `${t('book.leaveEmpty')} ${totalCapacity} m².`}
+          </p>
+        </div>
+      )}
+
       <div className="mt-4">
-        <label className="block text-sm font-medium">Your name</label>
+        <label className="block text-sm font-medium">{t('book.yourName')}</label>
         <input
           type="text"
           name="name"
@@ -447,7 +491,7 @@ const BookingWidget = ({ place }) => {
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium">Phone</label>
+        <label className="block text-sm font-medium">{t('book.phone')}</label>
         <input
           type="tel"
           name="phone"

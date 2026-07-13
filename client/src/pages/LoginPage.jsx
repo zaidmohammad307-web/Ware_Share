@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
 import ProfilePage from './ProfilePage';
 import { useAuth } from '../hooks';
 
 const LoginPage = () => {
+  const { t } = usePrefs();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [redirect, setRedirect] = useState(false);
   const auth = useAuth();
@@ -49,7 +51,7 @@ const LoginPage = () => {
   return (
     <div className="mt-4 flex grow items-center justify-around p-4 md:p-0">
       <div className="mb-40">
-        <h1 className="mb-4 text-center text-4xl">Login</h1>
+        <h1 className="mb-4 text-center text-4xl">{t('auth.login')}</h1>
         <form className="mx-auto max-w-md" onSubmit={handleFormSubmit}>
           <input
             name="email"
@@ -65,7 +67,7 @@ const LoginPage = () => {
             value={formData.password}
             onChange={handleFormData}
           />
-          <button className="primary my-4">Login</button>
+          <button className="primary my-4">{t('auth.login')}</button>
         </form>
 
         <div className="mb-4 flex w-full items-center gap-4">
@@ -89,9 +91,9 @@ const LoginPage = () => {
         </div>
 
         <div className="py-2 text-center text-gray-500">
-          Don't have an account yet?{' '}
+          {t('auth.noAccount')}{' '}
           <Link className="text-black underline" to={'/register'}>
-            Register now
+            {t('auth.registerNow')}
           </Link>
         </div>
       </div>

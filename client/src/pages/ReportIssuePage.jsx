@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 import axiosInstance from '@/utils/axios';
 import { useAuth, usePageTitle } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
 const CATEGORIES = [
   { value: 'bug', label: 'App problem / bug' },
@@ -19,6 +20,7 @@ const ReportIssuePage = () => {
   usePageTitle('Report an issue');
 
   const { user } = useAuth();
+  const { t } = usePrefs();
 
   const [form, setForm] = useState({
     name: user?.name || '',
@@ -75,17 +77,16 @@ const ReportIssuePage = () => {
   return (
     <div className="mt-24 px-4 pb-16">
       <div className="mx-auto w-full max-w-xl">
-        <h1 className="text-3xl font-semibold text-gray-900">Report an issue</h1>
+        <h1 className="text-3xl font-semibold text-gray-900">{t('report.title')}</h1>
         <p className="mt-2 text-sm text-gray-600">
-          Tell us what went wrong — a booking, a listing, the app itself, or a
-          safety concern. We reply by email.
+          {t('report.subtitle')}
         </p>
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs font-semibold text-gray-600">
-                Your name
+                {t('report.yourName')}
               </label>
               <input
                 type="text"
@@ -97,7 +98,7 @@ const ReportIssuePage = () => {
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-600">
-                Email <span className="text-red-500">*</span>
+                {t('report.email')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -112,7 +113,7 @@ const ReportIssuePage = () => {
 
           <div>
             <label className="text-xs font-semibold text-gray-600">
-              Category
+              {t('report.category')}
             </label>
             <select
               className="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm"
@@ -129,7 +130,7 @@ const ReportIssuePage = () => {
 
           <div>
             <label className="text-xs font-semibold text-gray-600">
-              What happened? <span className="text-red-500">*</span>
+              {t('report.what')} <span className="text-red-500">*</span>
             </label>
             <textarea
               required
@@ -147,7 +148,7 @@ const ReportIssuePage = () => {
             disabled={submitting}
             className="rounded-full bg-primary px-8 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? 'Sending…' : 'Send report'}
+            {submitting ? t('report.sending') : t('report.send')}
           </button>
         </form>
       </div>

@@ -68,6 +68,49 @@ const STRINGS = {
     'footer.companyDetails': 'Company details',
     'footer.rights': 'All rights reserved.',
 
+
+    // Auth
+    'auth.login': 'Login',
+    'auth.register': 'Register',
+    'auth.noAccount': "Don't have an account yet?",
+    'auth.registerNow': 'Register now',
+    'auth.alreadyMember': 'Already a member?',
+
+    // Booking widget
+    'book.units': 'Units / pallet positions needed',
+    'book.space': 'Space needed (m²)',
+    'book.fullWarehouse': 'Full warehouse',
+    'book.leaveEmpty': 'Leave empty to book the entire',
+    'book.partialNote': 'priced proportionally. The rest stays rentable.',
+    'book.yourName': 'Your name',
+    'book.phone': 'Phone',
+    'book.bookNow': 'Request booking',
+
+    // Report form
+    'report.title': 'Report an issue',
+    'report.subtitle': 'Tell us what went wrong — a booking, a listing, the app itself, or a safety concern. We reply by email.',
+    'report.yourName': 'Your name',
+    'report.email': 'Email',
+    'report.category': 'Category',
+    'report.what': 'What happened?',
+    'report.send': 'Send report',
+    'report.sending': 'Sending…',
+
+    // Places page
+    'places.title': 'Your warehouses',
+    'places.subtitle': 'Manage visibility, pricing, and details of your Wareshare listings.',
+    'places.addNew': 'Add new warehouse',
+    'places.live': 'Live',
+    'places.hidden': 'Hidden',
+    'places.makeLive': 'Make live',
+    'places.hide': 'Hide',
+    'places.availability': 'Availability',
+
+    // Chats
+    'chats.title': 'Chats',
+    'chats.refresh': 'Refresh',
+    'chats.none': 'No conversations yet.',
+
     // Common
     'common.loading': 'Loading…',
     'common.save': 'Save',
@@ -129,6 +172,49 @@ const STRINGS = {
     'footer.sitemap': 'خريطة الموقع',
     'footer.companyDetails': 'بيانات الشركة',
     'footer.rights': 'جميع الحقوق محفوظة.',
+
+
+    // Auth
+    'auth.login': 'تسجيل الدخول',
+    'auth.register': 'إنشاء حساب',
+    'auth.noAccount': 'ليس لديك حساب بعد؟',
+    'auth.registerNow': 'سجّل الآن',
+    'auth.alreadyMember': 'لديك حساب بالفعل؟',
+
+    // Booking widget
+    'book.units': 'عدد الوحدات / مواقع المنصات المطلوبة',
+    'book.space': 'المساحة المطلوبة (م²)',
+    'book.fullWarehouse': 'المستودع كامل',
+    'book.leaveEmpty': 'اتركه فارغًا لحجز كامل الـ',
+    'book.partialNote': 'السعر يُحتسب نسبيًا، والباقي يبقى متاحًا للإيجار.',
+    'book.yourName': 'اسمك',
+    'book.phone': 'الهاتف',
+    'book.bookNow': 'إرسال طلب حجز',
+
+    // Report form
+    'report.title': 'الإبلاغ عن مشكلة',
+    'report.subtitle': 'أخبرنا بما حدث — حجز أو إعلان أو التطبيق نفسه أو مشكلة سلامة. نرد عبر البريد الإلكتروني.',
+    'report.yourName': 'اسمك',
+    'report.email': 'البريد الإلكتروني',
+    'report.category': 'التصنيف',
+    'report.what': 'ما الذي حدث؟',
+    'report.send': 'إرسال البلاغ',
+    'report.sending': 'جارٍ الإرسال…',
+
+    // Places page
+    'places.title': 'مستودعاتك',
+    'places.subtitle': 'أدر ظهور إعلاناتك وأسعارها وتفاصيلها على وير شير.',
+    'places.addNew': 'أضف مستودعًا جديدًا',
+    'places.live': 'منشور',
+    'places.hidden': 'مخفي',
+    'places.makeLive': 'انشره',
+    'places.hide': 'أخفه',
+    'places.availability': 'التوفر',
+
+    // Chats
+    'chats.title': 'المحادثات',
+    'chats.refresh': 'تحديث',
+    'chats.none': 'لا توجد محادثات بعد.',
 
     // Common
     'common.loading': 'جارٍ التحميل…',

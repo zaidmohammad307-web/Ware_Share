@@ -112,7 +112,7 @@ exports.createBookings = async (req, res) => {
     }
 
     const placeDoc = await Place.findById(place).select(
-      'price pricePerDay city title owner blockedDates'
+      'price pricePerDay city title owner blockedDates availableArea'
     );
     if (!placeDoc) {
       return res.status(404).json({
@@ -129,20 +129,84 @@ exports.createBookings = async (req, res) => {
       });
     }
 
-    // Reject dates that overlap an existing pending/approved booking
-    const conflict = await Booking.findOne({
+    // ---- Capacity-aware availability ----
+    // A warehouse with availableArea can be rented partially: multiple
+    // bookings may overlap in time as long as their combined m² fits.
+    // Places without availableArea keep the legacy whole-place behavior.
+    const totalCapacity =
+      Number.isFinite(Number(placeDoc.availableArea)) &&
+      Number(placeDoc.availableArea) > 0
+        ? Number(placeDoc.availableArea)
+        : null;
+
+    let requestedArea = null;
+    if (
+      req.body.areaM2 !== undefined &&
+      req.body.areaM2 !== null &&
+      req.body.areaM2 !== ''
+    ) {
+      requestedArea = Number(req.body.areaM2);
+      if (!Number.isFinite(requestedArea) || requestedArea <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid space requested (areaM2 must be a positive number)',
+        });
+      }
+      if (totalCapacity && requestedArea > totalCapacity) {
+        return res.status(409).json({
+          success: false,
+          message: `This warehouse has ${totalCapacity} m² available in total. Please request ${totalCapacity} m² or less.`,
+        });
+      }
+      // No capacity info on the place -> treat any request as full booking
+      if (!totalCapacity) requestedArea = null;
+      // Requesting the whole space is the same as a full booking
+      if (totalCapacity && requestedArea >= totalCapacity) requestedArea = null;
+    }
+
+    const overlapping = await Booking.find({
       place,
       status: { $in: ['pending', 'approved'] },
       checkIn: { $lt: new Date(checkOut) },
       checkOut: { $gt: new Date(checkIn) },
-    }).select('_id');
+    }).select('checkIn checkOut areaM2');
 
-    if (conflict) {
-      return res.status(409).json({
-        success: false,
-        message:
-          'Some of the selected dates are no longer available. Please pick different dates.',
-      });
+    if (!totalCapacity) {
+      // Legacy: whole-place bookings only
+      if (overlapping.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message:
+            'Some of the selected dates are no longer available. Please pick different dates.',
+        });
+      }
+    } else {
+      const myArea = requestedArea ?? totalCapacity;
+
+      // Walk the requested range day by day and check remaining capacity
+      let cur = new Date(checkIn);
+      const endDate = new Date(checkOut);
+      while (cur < endDate) {
+        const dayEnd = addOneDayUTC(cur);
+        let used = 0;
+        for (const b of overlapping) {
+          if (new Date(b.checkIn) < dayEnd && new Date(b.checkOut) > cur) {
+            // Bookings without areaM2 occupy the whole warehouse
+            used += Number(b.areaM2) || totalCapacity;
+          }
+        }
+        if (used + myArea > totalCapacity) {
+          const remaining = Math.max(0, totalCapacity - used);
+          return res.status(409).json({
+            success: false,
+            message:
+              remaining > 0
+                ? `Only ${remaining} m² is available on ${toYMDUTC(cur)}. Reduce the space requested or pick different dates.`
+                : `The warehouse is fully booked on ${toYMDUTC(cur)}. Please pick different dates.`,
+          });
+        }
+        cur = dayEnd;
+      }
     }
 
     // Reject dates the host has blocked
@@ -170,7 +234,10 @@ exports.createBookings = async (req, res) => {
       });
     }
 
-    const baseBookingPrice = roundTo2(days * perDay);
+    // Partial bookings pay proportionally to the space they occupy
+    const areaFraction =
+      totalCapacity && requestedArea ? requestedArea / totalCapacity : 1;
+    const baseBookingPrice = roundTo2(days * perDay * areaFraction);
 
     // ---- Insurance (server source of truth) ----
     const insuranceIsSelected = parseBool(insuranceSelected);
@@ -360,6 +427,7 @@ exports.createBookings = async (req, res) => {
       checkIn,
       checkOut,
       noOfGuests,
+      areaM2: requestedArea,
       name,
       phone,
 
@@ -603,6 +671,50 @@ exports.updateBookingStatus = async (req, res) => {
       });
     }
 
+    // Approving must not oversubscribe the warehouse among approved bookings
+    if (status === 'approved') {
+      const cap = Number(booking.place.availableArea);
+      const totalCapacity = Number.isFinite(cap) && cap > 0 ? cap : null;
+
+      const others = await Booking.find({
+        place: booking.place._id,
+        _id: { $ne: booking._id },
+        status: 'approved',
+        checkIn: { $lt: booking.checkOut },
+        checkOut: { $gt: booking.checkIn },
+      }).select('checkIn checkOut areaM2');
+
+      if (!totalCapacity) {
+        if (others.length > 0) {
+          return res.status(409).json({
+            success: false,
+            message:
+              'These dates are already taken by another approved booking.',
+          });
+        }
+      } else {
+        const myArea = Number(booking.areaM2) || totalCapacity;
+        let cur = new Date(booking.checkIn);
+        const endDate = new Date(booking.checkOut);
+        while (cur < endDate) {
+          const dayEnd = addOneDayUTC(cur);
+          let used = 0;
+          for (const b of others) {
+            if (new Date(b.checkIn) < dayEnd && new Date(b.checkOut) > cur) {
+              used += Number(b.areaM2) || totalCapacity;
+            }
+          }
+          if (used + myArea > totalCapacity) {
+            return res.status(409).json({
+              success: false,
+              message: `Not enough space left on ${toYMDUTC(cur)} — approving this would oversubscribe the warehouse (${Math.max(0, totalCapacity - used)} m² remaining).`,
+            });
+          }
+          cur = dayEnd;
+        }
+      }
+    }
+
     booking.status = status;
 
     // Dummy payment logic
@@ -737,23 +849,40 @@ exports.getPlaceAvailability = async (req, res) => {
     const bookings = await Booking.find({
       place: placeId,
       status: { $in: ['approved', 'pending'] },
-    }).select('checkIn checkOut status');
+    }).select('checkIn checkOut status areaM2');
+
+    const placeDoc = await Place.findById(placeId).select(
+      'blockedDates availableArea'
+    );
+
+    const totalCapacity =
+      placeDoc &&
+      Number.isFinite(Number(placeDoc.availableArea)) &&
+      Number(placeDoc.availableArea) > 0
+        ? Number(placeDoc.availableArea)
+        : null;
 
     const unavailableSet = new Set();
+    // Per-date m² still bookable (only for capacity-aware places)
+    const remainingByDate = {};
 
-    // Include dates the host has manually blocked
-    const placeDoc = await Place.findById(placeId).select('blockedDates');
+    // Host-blocked dates are always unavailable
     if (placeDoc && Array.isArray(placeDoc.blockedDates)) {
       placeDoc.blockedDates.forEach((d) => unavailableSet.add(d));
     }
 
+    // Sum booked area per date; without capacity info, any booking = full
+    const usedByDate = {};
     bookings.forEach((b) => {
       if (!b.checkIn || !b.checkOut) return;
 
       const start = new Date(b.checkIn);
       const end = new Date(b.checkOut);
-
       if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
+
+      const area = totalCapacity
+        ? Number(b.areaM2) || totalCapacity
+        : Infinity;
 
       let cur = new Date(
         Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())
@@ -763,14 +892,31 @@ exports.getPlaceAvailability = async (req, res) => {
       );
 
       while (cur < endUtc) {
-        unavailableSet.add(toYMDUTC(cur));
+        const key = toYMDUTC(cur);
+        usedByDate[key] = (usedByDate[key] || 0) + area;
         cur = addOneDayUTC(cur);
+      }
+    });
+
+    Object.entries(usedByDate).forEach(([date, used]) => {
+      if (!totalCapacity) {
+        unavailableSet.add(date);
+        return;
+      }
+      const remaining = totalCapacity - used;
+      if (remaining <= 0) {
+        unavailableSet.add(date);
+      } else {
+        remainingByDate[date] = remaining;
       }
     });
 
     return res.status(200).json({
       success: true,
       unavailableDates: Array.from(unavailableSet),
+      // Extra capacity info for partial-rental UIs
+      totalCapacity,
+      remainingByDate,
     });
   } catch (err) {
     console.error('getPlaceAvailability error:', err);

@@ -138,12 +138,14 @@ const authLimiter = rateLimit({
 });
 app.use(['/users/login', '/users/register', '/users/google/login'], authLimiter);
 
-// Public form endpoints (waitlist signup, issue reports)
+// Public form endpoints (waitlist signup, issue reports).
+// Only POSTs are limited — the admin GET /waitlist must never be throttled.
 const formLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method !== 'POST',
   message: {
     success: false,
     message: 'Too many submissions. Please try again later.',

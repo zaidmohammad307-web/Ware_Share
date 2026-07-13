@@ -4,10 +4,12 @@ import axiosInstance from '@/utils/axios';
 import AccountNav from '@/components/ui/AccountNav';
 import Spinner from '@/components/ui/Spinner';
 import { useAuth } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
 const ChatInboxPage = () => {
   const { user } = useAuth();
   const myId = user?._id || user?.id;
+  const { t } = usePrefs();
 
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,13 +61,13 @@ const ChatInboxPage = () => {
 
       <div className="mx-auto max-w-4xl px-4 pb-10">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Chats</h1>
+          <h1 className="text-2xl font-semibold">{t('chats.title')}</h1>
           <button
             type="button"
             onClick={loadInbox}
             className="rounded-xl border px-3 py-2 text-sm font-semibold hover:bg-gray-50"
           >
-            Refresh
+            {t('chats.refresh')}
           </button>
         </div>
 
@@ -73,7 +75,7 @@ const ChatInboxPage = () => {
 
         {!loading && threads.length === 0 && (
           <div className="rounded-2xl border bg-white p-4 text-sm text-gray-600 shadow-sm">
-            No conversations yet.
+            {t('chats.none')}
           </div>
         )}
 
