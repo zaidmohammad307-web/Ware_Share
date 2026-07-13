@@ -452,3 +452,86 @@ exports.adminVerifyHost = async (req, res) => {
     });
   }
 };
+
+/* =====================================================
+   FAVORITES (synced saved places)
+   ===================================================== */
+const mongooseFav = require('mongoose');
+
+exports.getFavorites = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('favorites');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    return res.status(200).json({
+      success: true,
+      ids: (user.favorites || []).map(String),
+    });
+  } catch (err) {
+    console.error('getFavorites error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.toggleFavorite = async (req, res) => {
+  try {
+    const { placeId } = req.params;
+    if (!mongooseFav.Types.ObjectId.isValid(placeId)) {
+      return res.status(400).json({ success: false, message: 'Invalid placeId' });
+    }
+
+    const user = await User.findById(req.user.id).select('favorites');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const current = (user.favorites || []).map(String);
+    if (current.includes(placeId)) {
+      user.favorites = user.favorites.filter((id) => String(id) !== placeId);
+    } else {
+      user.favorites.push(placeId);
+    }
+
+    await user.save();
+    return res.status(200).json({
+      success: true,
+      ids: user.favorites.map(String),
+    });
+  } catch (err) {
+    console.error('toggleFavorite error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// One-time merge of device favorites into the account after login
+exports.mergeFavorites = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ success: false, message: 'ids must be an array' });
+    }
+
+    const valid = ids
+      .filter((id) => mongooseFav.Types.ObjectId.isValid(String(id)))
+      .slice(0, 500);
+
+    const user = await User.findById(req.user.id).select('favorites');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const set = new Set((user.favorites || []).map(String));
+    valid.forEach((id) => set.add(String(id)));
+    user.favorites = Array.from(set);
+
+    await user.save();
+    return res.status(200).json({
+      success: true,
+      ids: user.favorites.map(String),
+    });
+  } catch (err) {
+    console.error('mergeFavorites error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

@@ -17,6 +17,9 @@ const {
   updateHostSettings,
   getPendingHosts,
   adminVerifyHost,
+  getFavorites,
+  toggleFavorite,
+  mergeFavorites,
 } = require('../controllers/userController');
 
 // AUTH
@@ -29,6 +32,11 @@ router.post('/upload-picture', isLoggedIn, upload.single('picture'), uploadPictu
 
 // UPDATE USER PROFILE (requires auth)
 router.put('/update-user', isLoggedIn, updateUserDetails);
+
+// FAVORITES (synced saved places)
+router.get('/favorites', isLoggedIn, getFavorites);
+router.put('/favorites/:placeId', isLoggedIn, toggleFavorite);
+router.post('/favorites/merge', isLoggedIn, mergeFavorites);
 
 // HOST SETTINGS
 router.put('/host/settings', isLoggedIn, updateHostSettings);

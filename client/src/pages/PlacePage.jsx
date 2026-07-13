@@ -17,6 +17,7 @@ import { toast } from 'react-toastify';
 import axiosInstance from '@/utils/axios';
 import BookingWidget from '../components/ui/BookingWidget';
 import PlaceMap from '../components/ui/PlaceMap';
+import PhotoLightbox from '../components/ui/PhotoLightbox';
 import { usePageTitle } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
@@ -109,6 +110,7 @@ const PlacePage = () => {
 
   usePageTitle(place?.title || 'Warehouse');
   const { formatPrice } = usePrefs();
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -533,6 +535,13 @@ const PlacePage = () => {
 
   return (
     <div className="mt-20 px-4 pb-12">
+      {lightboxIndex !== null && place.photos?.length > 0 && (
+        <PhotoLightbox
+          photos={place.photos}
+          startIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
       <div className="mx-auto w-full max-w-6xl">
         {/* A. HERO SECTION */}
         <div className="mb-6 rounded-2xl border bg-white p-5 shadow-sm">
@@ -661,29 +670,42 @@ const PlacePage = () => {
         {place.photos?.length > 0 && (
           <div className="mb-8 overflow-hidden rounded-2xl border bg-white shadow-sm">
             <div className="grid grid-cols-2 gap-1 md:grid-cols-4 md:grid-rows-2">
-              <div className="col-span-2 row-span-2 h-72 bg-gray-200 md:h-[420px]">
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(0)}
+                className="col-span-2 row-span-2 h-72 cursor-zoom-in bg-gray-200 md:h-[420px]"
+              >
                 <img
                   src={place.photos[0]}
                   alt={place.title}
                   className="h-full w-full object-cover"
                 />
-              </div>
+              </button>
 
-              {place.photos.slice(1, 5).map((photo) => (
-                <div key={photo} className="h-36 bg-gray-200 md:h-[209px]">
+              {place.photos.slice(1, 5).map((photo, i) => (
+                <button
+                  type="button"
+                  key={photo}
+                  onClick={() => setLightboxIndex(i + 1)}
+                  className="h-36 cursor-zoom-in bg-gray-200 md:h-[209px]"
+                >
                   <img
                     src={photo}
                     alt={place.title}
                     className="h-full w-full object-cover"
                   />
-                </div>
+                </button>
               ))}
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-white px-4 py-3">
-              <div className="text-sm text-gray-600">
-                {place.photos.length} photo{place.photos.length === 1 ? '' : 's'}
-              </div>
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(0)}
+                className="text-sm font-semibold text-primary hover:underline"
+              >
+                View all {place.photos.length} photo{place.photos.length === 1 ? '' : 's'}
+              </button>
               <div className="flex flex-wrap items-center gap-2">
                 <a
                   href="#location"

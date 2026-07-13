@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 import axiosInstance from '@/utils/axios';
 import SearchMap from '@/components/ui/SearchMap';
-import { usePageTitle } from '@/hooks';
+import { usePageTitle, useFavorites } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
 const labelMaps = {
@@ -143,48 +143,22 @@ const IndexPage = () => {
   // list / map view
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
 
-  // ❤️ favorites: store IDs + animation state
-  const [favorites, setFavorites] = useState(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = localStorage.getItem('wareshare_favorites');
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
+  // ❤️ favorites: synced to account when logged in (device-local otherwise)
+  const { favorites, toggleFavorite: toggleFavoriteBase } = useFavorites();
 
   const [heartAnim, setHeartAnim] = useState({}); // { [placeId]: 'added' | 'removed' | null }
 
-  // keep favorites in localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('wareshare_favorites', JSON.stringify(favorites));
-    } catch {
-      // ignore
-    }
-  }, [favorites]);
-
   const toggleFavorite = (placeId) => {
-    setFavorites((prev) => {
-      const isFav = prev.includes(placeId);
+    const isFav = favorites.includes(placeId);
+    setHeartAnim((prevAnim) => ({
+      ...prevAnim,
+      [placeId]: isFav ? 'removed' : 'added',
+    }));
+    setTimeout(() => {
+      setHeartAnim((prevAnim) => ({ ...prevAnim, [placeId]: null }));
+    }, isFav ? 400 : 500);
 
-      if (isFav) {
-        // un-save: fade-out
-        setHeartAnim((prevAnim) => ({ ...prevAnim, [placeId]: 'removed' }));
-        setTimeout(() => {
-          setHeartAnim((prevAnim) => ({ ...prevAnim, [placeId]: null }));
-        }, 400);
-        return prev.filter((id) => id !== placeId);
-      } else {
-        // save: bounce + burst
-        setHeartAnim((prevAnim) => ({ ...prevAnim, [placeId]: 'added' }));
-        setTimeout(() => {
-          setHeartAnim((prevAnim) => ({ ...prevAnim, [placeId]: null }));
-        }, 500);
-        return [...prev, placeId];
-      }
-    });
+    toggleFavoriteBase(placeId);
   };
 
   const favoritePlaces = useMemo(

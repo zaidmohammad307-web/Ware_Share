@@ -11,6 +11,88 @@ import {
 } from '@/utils';
 import axiosInstance from '@/utils/axios';
 
+// Saved places: synced to the account when logged in, device-local otherwise.
+// On first load after login, device favorites merge into the account once.
+export const useFavorites = () => {
+  const { user } = useContext(UserContext);
+
+  const readLocal = () => {
+    try {
+      const raw = localStorage.getItem('wareshare_favorites');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [favorites, setFavorites] = useState(readLocal);
+
+  // Keep device copy so favorites survive logout
+  useEffect(() => {
+    try {
+      localStorage.setItem('wareshare_favorites', JSON.stringify(favorites));
+    } catch {
+      // ignore
+    }
+  }, [favorites]);
+
+  // When logged in: merge device favorites into the account, then use server list
+  useEffect(() => {
+    if (!user) return;
+
+    let active = true;
+
+    const sync = async () => {
+      try {
+        const local = readLocal();
+        const merged = local.length
+          ? await axiosInstance.post('/users/favorites/merge', { ids: local })
+          : await axiosInstance.get('/users/favorites');
+        if (active && Array.isArray(merged.data?.ids)) {
+          setFavorites(merged.data.ids);
+        }
+      } catch {
+        // stay on device copy
+      }
+    };
+
+    sync();
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  const toggleFavorite = useCallback(
+    (placeId) => {
+      // Optimistic flip locally
+      setFavorites((prev) =>
+        prev.includes(placeId)
+          ? prev.filter((id) => id !== placeId)
+          : [...prev, placeId]
+      );
+
+      if (user) {
+        axiosInstance
+          .put(`/users/favorites/${placeId}`)
+          .then(({ data }) => {
+            if (Array.isArray(data?.ids)) setFavorites(data.ids);
+          })
+          .catch(() => {
+            // revert on failure
+            setFavorites((prev) =>
+              prev.includes(placeId)
+                ? prev.filter((id) => id !== placeId)
+                : [...prev, placeId]
+            );
+          });
+      }
+    },
+    [user]
+  );
+
+  return { favorites, toggleFavorite };
+};
+
 // Unread chat message count for the logged-in user (polls every 60s)
 export const useUnreadMessages = () => {
   const { user } = useContext(UserContext);

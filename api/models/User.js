@@ -33,6 +33,9 @@ const userSchema = new mongoose.Schema(
         'https://res.cloudinary.com/rahul4019/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1695133265/pngwing.com_zi4cre.png',
     },
 
+    // Saved / favorited places (synced across devices)
+    favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Place' }],
+
     /* =====================================================
        HOSTING CAPABILITY (UNIVERSAL ACCOUNT)
        ===================================================== */
