@@ -14,6 +14,25 @@ const PHONE_RE = /^\+?[0-9\s\-()]{7,20}$/;
    Interactive demo panels (mock app screens)
 --------------------------------------------- */
 
+// Real warehouse photo (Unsplash CDN, free license). If it ever fails to
+// load we fall back to a branded gradient block.
+const WAREHOUSE_PHOTO =
+  'https://images.unsplash.com/photo-1553413077-190dd305871c?w=800&q=70&auto=format';
+
+const WarehousePhoto = ({ className }) => (
+  <div className={`relative overflow-hidden bg-gradient-to-br from-secondary to-blue-100 ${className}`}>
+    <img
+      src={WAREHOUSE_PHOTO}
+      alt="Warehouse with pallet racking"
+      loading="lazy"
+      className="h-full w-full object-cover"
+      onError={(e) => {
+        e.currentTarget.style.display = 'none';
+      }}
+    />
+  </div>
+);
+
 const DemoSearch = () => (
   <div>
     {/* Filter chips */}
@@ -30,9 +49,7 @@ const DemoSearch = () => (
 
     {/* Listing card mock */}
     <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-      <div className="flex h-28 items-center justify-center bg-gradient-to-br from-secondary to-blue-100 text-4xl">
-        🏭
-      </div>
+      <WarehousePhoto className="h-32 w-full" />
       <div className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -51,6 +68,65 @@ const DemoSearch = () => (
           <span className="rounded-full bg-gray-100 px-2 py-0.5">CCTV</span>
           <span className="rounded-full bg-gray-100 px-2 py-0.5">Forklift</span>
           <span className="rounded-full bg-gray-100 px-2 py-0.5">Food-grade ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const DemoMap = () => (
+  <div>
+    <div className="relative h-56 overflow-hidden rounded-2xl border shadow-sm">
+      {/* Stylized map */}
+      <svg viewBox="0 0 320 224" className="h-full w-full bg-[#EAF2FB]">
+        {/* City blocks */}
+        <g fill="#DDE9F7">
+          <rect x="10" y="12" width="80" height="56" rx="6" />
+          <rect x="110" y="12" width="90" height="40" rx="6" />
+          <rect x="220" y="12" width="88" height="70" rx="6" />
+          <rect x="10" y="90" width="60" height="60" rx="6" />
+          <rect x="90" y="72" width="80" height="78" rx="6" />
+          <rect x="190" y="102" width="70" height="48" rx="6" />
+          <rect x="10" y="170" width="120" height="42" rx="6" />
+          <rect x="150" y="170" width="158" height="42" rx="6" />
+        </g>
+        {/* Roads */}
+        <g stroke="#FFFFFF" strokeWidth="8" strokeLinecap="round">
+          <path d="M0 80 H320" />
+          <path d="M0 160 H320" />
+          <path d="M80 0 V224" />
+          <path d="M180 0 V224" />
+          <path d="M270 0 V100" />
+        </g>
+      </svg>
+
+      {/* Price pins */}
+      <div className="absolute left-[12%] top-[22%] rounded-full bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-md">
+        JOD 18
+      </div>
+      <div className="absolute left-[52%] top-[50%] -translate-x-1/2 -translate-y-1/2 scale-110 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-lg ring-4 ring-primary/20">
+        JOD 32
+      </div>
+      <div className="absolute right-[10%] top-[18%] rounded-full bg-white px-2.5 py-1 text-xs font-bold text-gray-800 shadow-md">
+        JOD 25
+      </div>
+
+      {/* You are here */}
+      <div className="absolute bottom-[16%] left-[30%]">
+        <span className="block h-3.5 w-3.5 rounded-full border-2 border-white bg-blue-600 shadow" />
+      </div>
+
+      {/* Selected listing preview over the map */}
+      <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2 rounded-xl bg-white/95 p-2 shadow-lg backdrop-blur">
+        <WarehousePhoto className="h-12 w-16 flex-shrink-0 rounded-lg" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xs font-semibold text-gray-900">
+            Cold storage — Airport Rd
+          </div>
+          <div className="text-[11px] text-gray-500">2.4 km away · ⭐ 4.9</div>
+        </div>
+        <div className="whitespace-nowrap text-xs font-bold text-primary">
+          JOD 32/day
         </div>
       </div>
     </div>
@@ -84,32 +160,72 @@ const DemoChat = () => (
 const DemoBook = () => (
   <div className="rounded-2xl border bg-white p-4 shadow-sm">
     <div className="mb-3 flex items-center justify-between">
-      <div className="text-sm font-semibold text-gray-900">Booking summary</div>
+      <div className="text-sm font-semibold text-gray-900">Your booking</div>
       <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
         ✓ Approved
       </span>
     </div>
-    <div className="space-y-2 text-sm text-gray-700">
-      <div className="flex justify-between">
-        <span className="text-gray-500">Dates</span>
-        <span className="font-medium">Jul 20 → Aug 3 (14 days)</span>
-      </div>
-      <div className="flex justify-between">
-        <span className="text-gray-500">Storage</span>
-        <span className="font-medium">JOD 448</span>
-      </div>
-      <div className="flex justify-between">
-        <span className="text-gray-500">Insurance (declared JOD 9,000)</span>
-        <span className="font-medium">JOD 25</span>
-      </div>
-      <div className="flex justify-between">
-        <span className="text-gray-500">Pickup & delivery</span>
-        <span className="font-medium">JOD 60</span>
-      </div>
-      <div className="mt-2 flex justify-between border-t pt-2 text-base font-bold text-gray-900">
-        <span>Total</span>
-        <span className="text-primary">JOD 533</span>
-      </div>
+
+    {/* Mini calendar strip */}
+    <div className="mb-3 grid grid-cols-7 gap-1 text-center text-[11px]">
+      {['18', '19', '20', '21', '22', '23', '24'].map((d) => {
+        const selected = Number(d) >= 20 && Number(d) <= 23;
+        return (
+          <div
+            key={d}
+            className={`rounded-lg py-1.5 font-semibold ${
+              selected
+                ? 'bg-primary text-white'
+                : d === '19'
+                ? 'bg-gray-100 text-gray-300 line-through'
+                : 'bg-gray-50 text-gray-600'
+            }`}
+          >
+            {d}
+          </div>
+        );
+      })}
+    </div>
+    <div className="mb-3 text-center text-[11px] text-gray-400">
+      Jul 20 → Aug 3 · booked in real time, unavailable dates greyed out
+    </div>
+
+    {/* Status flow */}
+    <div className="flex items-center justify-between">
+      {[
+        { label: 'Requested', state: 'done' },
+        { label: 'Approved', state: 'done' },
+        { label: 'Check-in', state: 'next' },
+      ].map((step, i) => (
+        <React.Fragment key={step.label}>
+          {i > 0 && (
+            <div
+              className={`mx-1 h-0.5 flex-1 rounded ${
+                step.state === 'done' ? 'bg-primary' : 'bg-gray-200'
+              }`}
+            />
+          )}
+          <div className="flex flex-col items-center gap-1">
+            <span
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
+                step.state === 'done'
+                  ? 'bg-primary text-white'
+                  : 'border-2 border-gray-300 bg-white text-gray-400'
+              }`}
+            >
+              {step.state === 'done' ? '✓' : i + 1}
+            </span>
+            <span className="text-[10px] font-medium text-gray-600">
+              {step.label}
+            </span>
+          </div>
+        </React.Fragment>
+      ))}
+    </div>
+
+    <div className="mt-3 flex justify-between border-t pt-2 text-sm font-bold text-gray-900">
+      <span>14 days × JOD 32</span>
+      <span className="text-primary">JOD 448</span>
     </div>
   </div>
 );
@@ -155,6 +271,14 @@ const DEMO_TABS = [
     Panel: DemoSearch,
   },
   {
+    key: 'map',
+    icon: '🗺️',
+    label: 'Map view',
+    caption:
+      'See every warehouse around you with live day rates on the map — tap a pin to preview the space and its distance from you.',
+    Panel: DemoMap,
+  },
+  {
     key: 'chat',
     icon: '💬',
     label: 'Chat first',
@@ -164,10 +288,10 @@ const DEMO_TABS = [
   },
   {
     key: 'book',
-    icon: '📦',
-    label: 'Book & insure',
+    icon: '📅',
+    label: 'Easy booking',
     caption:
-      'Transparent day-rate pricing with optional insurance, packing, and pickup & delivery — one total, no surprises.',
+      'Pick your dates on a live availability calendar, send the request, and track it from approval to check-in — clear day-rate pricing, no surprises.',
     Panel: DemoBook,
   },
   {
