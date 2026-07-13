@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../hooks';
-import { usePrefs, CURRENCIES } from '@/providers/PreferencesProvider';
 import SearchBar from './SearchBar';
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
 
@@ -14,7 +13,6 @@ const Header = () => {
   const [showSearchBar, setShowSearchBar] = useState(true);
   const [hasShadow, setHasShadow] = useState(false);
   const { user } = auth;
-  const { lang, setLang, currency, setCurrency } = usePrefs();
 
   const handleScroll = () => {
     const shouldHaveShadow = window.scrollY > 0;
@@ -71,31 +69,6 @@ const Header = () => {
             </div>
           </div>
         )}
-
-        {/* Language + currency (always visible) */}
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setLang(lang === 'AR' ? 'EN' : 'AR')}
-            title={lang === 'AR' ? 'Switch to English' : 'التبديل إلى العربية'}
-            className="flex h-9 items-center gap-1 rounded-full border border-border bg-white/80 px-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-accent"
-          >
-            🌐 {lang === 'AR' ? 'ع' : 'EN'}
-          </button>
-
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            title="Display currency"
-            className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-white/80 px-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-accent"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.code}
-              </option>
-            ))}
-          </select>
-        </div>
 
         {/* Account / Avatar */}
         <Link
