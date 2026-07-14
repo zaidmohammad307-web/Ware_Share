@@ -19,11 +19,85 @@ import {
 } from 'lucide-react';
 import EditProfileDialog from '@/components/ui/EditProfileDialog';
 import axiosInstance from '@/utils/axios';
+import { usePrefs } from '@/providers/PreferencesProvider';
+
+const STR = {
+  EN: {
+    notHost: 'Not a host yet',
+    pending: 'Verification pending',
+    rejected: 'Verification rejected',
+    verified: 'Verified host',
+    hostNotSubmitted: 'Host (verification not submitted)',
+    name: 'Name: ',
+    email: 'Email: ',
+    verifiedNote: 'Your profile will show a ✅ Verified host badge.',
+    logout: 'Logout',
+    hostSettings: 'Host settings',
+    hostSettingsSub: 'Become a warehouse host and list your storage on Wareshare.',
+    wantToHost: 'I want to host warehouses',
+    wantToHostSub: 'Turn this on if you plan to list your own warehouse spaces.',
+    companyName: 'Company / warehouse name',
+    companyPlaceholder: 'e.g. Amman Logistics Hub',
+    phone: 'Host contact phone',
+    saving: 'Saving...',
+    saveHostSettings: 'Save host settings',
+    hostVerification: 'Host verification',
+    uploadHint:
+      'Upload at least one document. We recommend both your ID and company / warehouse registration.',
+    govId: 'Government ID (photo or scan)',
+    companyReg: 'Company / warehouse registration',
+    docsOnFile: 'document(s) already on file.',
+    lastReviewNote: 'Last review note: ',
+    submitting: 'Submitting…',
+    submitVerification: 'Submit for verification',
+    settingsUpdated: 'Host settings updated',
+    settingsFailed: 'Failed to update host settings. Please try again.',
+    uploadAtLeastOne: 'Please upload at least one document (ID or company doc).',
+    verificationSubmitted: 'Verification submitted. We will review your documents.',
+    verificationFailed: 'Failed to submit verification. Please try again.',
+  },
+  AR: {
+    notHost: 'لست مضيفًا بعد',
+    pending: 'التحقق قيد الانتظار',
+    rejected: 'تم رفض التحقق',
+    verified: 'مضيف موثّق',
+    hostNotSubmitted: 'مضيف (لم يتم إرسال التحقق)',
+    name: 'الاسم: ',
+    email: 'البريد الإلكتروني: ',
+    verifiedNote: 'سيظهر في ملفك الشخصي شارة ✅ مضيف موثّق.',
+    logout: 'تسجيل الخروج',
+    hostSettings: 'إعدادات المضيف',
+    hostSettingsSub: 'كن مضيف مستودعات واعرض مساحتك التخزينية على وير شير.',
+    wantToHost: 'أريد استضافة مستودعات',
+    wantToHostSub: 'فعّل هذا الخيار إذا كنت تخطط لعرض مساحات مستودعاتك الخاصة.',
+    companyName: 'اسم الشركة / المستودع',
+    companyPlaceholder: 'مثال: مركز عمّان اللوجستي',
+    phone: 'هاتف التواصل للمضيف',
+    saving: 'جارٍ الحفظ...',
+    saveHostSettings: 'حفظ إعدادات المضيف',
+    hostVerification: 'توثيق المضيف',
+    uploadHint:
+      'ارفع مستندًا واحدًا على الأقل. ننصح برفع هويتك وسجل الشركة / المستودع معًا.',
+    govId: 'هوية حكومية (صورة أو نسخة ممسوحة)',
+    companyReg: 'سجل الشركة / المستودع',
+    docsOnFile: 'مستند/مستندات موجودة بالفعل في الملف.',
+    lastReviewNote: 'ملاحظة المراجعة الأخيرة: ',
+    submitting: 'جارٍ الإرسال…',
+    submitVerification: 'إرسال للتوثيق',
+    settingsUpdated: 'تم تحديث إعدادات المضيف',
+    settingsFailed: 'تعذر تحديث إعدادات المضيف. حاول مرة أخرى.',
+    uploadAtLeastOne: 'يرجى رفع مستند واحد على الأقل (الهوية أو مستند الشركة).',
+    verificationSubmitted: 'تم إرسال طلب التوثيق. سنراجع مستنداتك.',
+    verificationFailed: 'تعذر إرسال طلب التوثيق. حاول مرة أخرى.',
+  },
+};
 
 const ProfilePage = () => {
   usePageTitle('My profile');
 
   const auth = useAuth();
+  const { lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
   const { user, logout } = auth;
   const [redirect, setRedirect] = useState(null);
 
@@ -79,22 +153,22 @@ const ProfilePage = () => {
   const isHostVerified = !!user?.isHostVerified;
   const wantsToHost = !!user?.wantsToHost;
 
-  let statusLabel = 'Not a host yet';
+  let statusLabel = L.notHost;
   let statusClasses = 'bg-gray-100 text-gray-700';
   let statusValueForDebug = hvStatus;
 
   if (hvStatus === 'pending') {
-    statusLabel = 'Verification pending';
+    statusLabel = L.pending;
     statusClasses = 'bg-amber-100 text-amber-800';
   } else if (hvStatus === 'rejected') {
-    statusLabel = 'Verification rejected';
+    statusLabel = L.rejected;
     statusClasses = 'bg-red-100 text-red-800';
   } else if (hvStatus === 'approved' || isHostVerified) {
-    statusLabel = 'Verified host';
+    statusLabel = L.verified;
     statusClasses = 'bg-emerald-100 text-emerald-800';
     statusValueForDebug = 'approved';
   } else if (wantsToHost && hvStatus === 'not_submitted') {
-    statusLabel = 'Host (verification not submitted)';
+    statusLabel = L.hostNotSubmitted;
     statusClasses = 'bg-gray-100 text-gray-700';
   }
 
@@ -123,11 +197,11 @@ const ProfilePage = () => {
         auth.setUser(data.user);
       }
 
-      toast.success('Host settings updated');
+      toast.success(L.settingsUpdated);
     } catch (err) {
       toast.error(
         err?.response?.data?.message ||
-          'Failed to update host settings. Please try again.'
+          L.settingsFailed
       );
     } finally {
       setHostSaving(false);
@@ -139,7 +213,7 @@ const ProfilePage = () => {
     e.preventDefault();
 
     if (!idFile && !companyFile) {
-      toast.error('Please upload at least one document (ID or company doc).');
+      toast.error(L.uploadAtLeastOne);
       return;
     }
 
@@ -168,14 +242,14 @@ const ProfilePage = () => {
       }
 
       toast.success(
-        data.message || 'Verification submitted. We will review your documents.'
+        data.message || L.verificationSubmitted
       );
       setIdFile(null);
       setCompanyFile(null);
     } catch (err) {
       toast.error(
         err?.response?.data?.message ||
-          'Failed to submit verification. Please try again.'
+          L.verificationFailed
       );
     } finally {
       setVerifyLoading(false);
@@ -202,14 +276,14 @@ const ProfilePage = () => {
                 <div className="flex items-center gap-2">
                   <Text height="18" width="18" />
                   <div className="text-xl">
-                    <span>Name: </span>
+                    <span>{L.name}</span>
                     <span className="text-gray-600">{user.name}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail height="18" width="18" />
                   <div className="text-xl">
-                    <span>Email: </span>
+                    <span>{L.email}</span>
                     <span className="text-gray-600">{user.email}</span>
                   </div>
                 </div>
@@ -231,7 +305,7 @@ const ProfilePage = () => {
 
                 {(statusValueForDebug === 'approved' || isHostVerified) && (
                   <span className="text-xs text-gray-500">
-                    Your profile will show a ✅ Verified host badge.
+                    {L.verifiedNote}
                   </span>
                 )}
               </div>
@@ -243,7 +317,7 @@ const ProfilePage = () => {
 
               <Button variant="secondary" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Logout
+                {L.logout}
               </Button>
             </div>
 
@@ -252,10 +326,10 @@ const ProfilePage = () => {
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-semibold text-gray-800">
-                    Host settings
+                    {L.hostSettings}
                   </h2>
                   <p className="text-xs text-gray-500">
-                    Become a warehouse host and list your storage on Wareshare.
+                    {L.hostSettingsSub}
                   </p>
                 </div>
               </div>
@@ -265,11 +339,10 @@ const ProfilePage = () => {
                 <label className="flex items-center justify-between gap-3 text-sm">
                   <div>
                     <span className="font-medium text-gray-800">
-                      I want to host warehouses
+                      {L.wantToHost}
                     </span>
                     <p className="text-xs text-gray-500">
-                      Turn this on if you plan to list your own warehouse
-                      spaces.
+                      {L.wantToHostSub}
                     </p>
                   </div>
                   <input
@@ -286,12 +359,12 @@ const ProfilePage = () => {
                   <div className="grid gap-3 md:grid-cols-2">
                     <div>
                       <label className="text-xs font-semibold text-gray-600">
-                        Company / warehouse name
+                        {L.companyName}
                       </label>
                       <input
                         type="text"
                         className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
-                        placeholder="e.g. Amman Logistics Hub"
+                        placeholder={L.companyPlaceholder}
                         value={hostForm.companyName}
                         onChange={(e) =>
                           handleHostFormChange('companyName', e.target.value)
@@ -300,7 +373,7 @@ const ProfilePage = () => {
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600">
-                        Host contact phone
+                        {L.phone}
                       </label>
                       <input
                         type="tel"
@@ -322,7 +395,7 @@ const ProfilePage = () => {
                     onClick={handleSaveHostSettings}
                     disabled={hostSaving}
                   >
-                    {hostSaving ? 'Saving...' : 'Save host settings'}
+                    {hostSaving ? L.saving : L.saveHostSettings}
                   </Button>
                 </div>
               </div>
@@ -336,18 +409,17 @@ const ProfilePage = () => {
                   <div className="flex items-center gap-2">
                     <UploadCloud className="h-4 w-4 text-gray-700" />
                     <h3 className="text-sm font-semibold text-gray-800">
-                      Host verification
+                      {L.hostVerification}
                     </h3>
                   </div>
                   <p className="text-xs text-gray-500">
-                    Upload at least one document. We recommend both your ID and
-                    company / warehouse registration.
+                    {L.uploadHint}
                   </p>
 
                   <div className="grid gap-3 md:grid-cols-2">
                     <div>
                       <label className="text-xs font-semibold text-gray-600">
-                        Government ID (photo or scan)
+                        {L.govId}
                       </label>
                       <input
                         type="file"
@@ -359,15 +431,14 @@ const ProfilePage = () => {
                       />
                       {hostVerificationFiles.length > 0 && (
                         <p className="mt-1 text-[11px] text-gray-500">
-                          {hostVerificationFiles.length} document(s) already on
-                          file.
+                          {hostVerificationFiles.length} {L.docsOnFile}
                         </p>
                       )}
                     </div>
 
                     <div>
                       <label className="text-xs font-semibold text-gray-600">
-                        Company / warehouse registration
+                        {L.companyReg}
                       </label>
                       <input
                         type="file"
@@ -382,7 +453,7 @@ const ProfilePage = () => {
 
                   {user.hostVerificationNotes && (
                     <div className="rounded-xl bg-gray-50 p-2 text-[11px] text-gray-600">
-                      <span className="font-semibold">Last review note: </span>
+                      <span className="font-semibold">{L.lastReviewNote}</span>
                       {user.hostVerificationNotes}
                     </div>
                   )}
@@ -393,7 +464,7 @@ const ProfilePage = () => {
                     disabled={verifyLoading}
                     className="mt-1"
                   >
-                    {verifyLoading ? 'Submitting…' : 'Submit for verification'}
+                    {verifyLoading ? L.submitting : L.submitVerification}
                   </Button>
                 </form>
               )}
