@@ -8,64 +8,78 @@ import { usePageTitle, useFavorites } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
 const labelMaps = {
-  warehouseType: {
-    general: 'General storage',
-    cold: 'Cold storage',
-    frozen: 'Frozen storage',
-    dry: 'Dry / ambient storage',
-    hazmat: 'Hazardous material storage',
-    bonded: 'Bonded warehouse',
-    fulfillment: 'Fulfillment center',
-    'cross-docking': 'Cross-docking facility',
+  EN: {
+    warehouseType: {
+      general: 'General storage',
+      cold: 'Cold storage',
+      frozen: 'Frozen storage',
+      dry: 'Dry / ambient storage',
+      hazmat: 'Hazardous material storage',
+      bonded: 'Bonded warehouse',
+      fulfillment: 'Fulfillment center',
+      'cross-docking': 'Cross-docking facility',
+    },
+  },
+  AR: {
+    warehouseType: {
+      general: 'تخزين عام',
+      cold: 'تخزين مبرّد',
+      frozen: 'تخزين مجمّد',
+      dry: 'تخزين جاف',
+      hazmat: 'تخزين المواد الخطرة',
+      bonded: 'مستودع جمركي',
+      fulfillment: 'مركز تجهيز الطلبات',
+      'cross-docking': 'منشأة عبور وتحميل مباشر',
+    },
   },
 };
 
 const warehouseTypeOptions = [
-  { value: '', label: 'Any type' },
-  { value: 'general', label: 'General storage' },
-  { value: 'cold', label: 'Cold storage' },
-  { value: 'frozen', label: 'Frozen storage' },
-  { value: 'dry', label: 'Dry / ambient' },
-  { value: 'hazmat', label: 'Hazardous material' },
-  { value: 'bonded', label: 'Bonded warehouse' },
-  { value: 'fulfillment', label: 'Fulfillment center' },
-  { value: 'cross-docking', label: 'Cross-docking facility' },
+  { value: '', EN: 'Any type', AR: 'أي نوع' },
+  { value: 'general', EN: 'General storage', AR: 'تخزين عام' },
+  { value: 'cold', EN: 'Cold storage', AR: 'تخزين مبرّد' },
+  { value: 'frozen', EN: 'Frozen storage', AR: 'تخزين مجمّد' },
+  { value: 'dry', EN: 'Dry / ambient', AR: 'تخزين جاف' },
+  { value: 'hazmat', EN: 'Hazardous material', AR: 'مواد خطرة' },
+  { value: 'bonded', EN: 'Bonded warehouse', AR: 'مستودع جمركي' },
+  { value: 'fulfillment', EN: 'Fulfillment center', AR: 'مركز تجهيز الطلبات' },
+  { value: 'cross-docking', EN: 'Cross-docking facility', AR: 'منشأة عبور' },
 ];
 
 const equipmentOptions = [
-  { value: 'forklift', label: 'Forklift' },
-  { value: 'racks', label: 'Racks / shelves' },
-  { value: 'loading-dock', label: 'Loading docks' },
-  { value: 'dock-leveler', label: 'Dock leveler' },
-  { value: 'ramp', label: 'Ramp' },
-  { value: 'chillers', label: 'Chillers' },
-  { value: 'freezers', label: 'Freezers' },
+  { value: 'forklift', EN: 'Forklift', AR: 'رافعة شوكية' },
+  { value: 'racks', EN: 'Racks / shelves', AR: 'رفوف' },
+  { value: 'loading-dock', EN: 'Loading docks', AR: 'أرصفة تحميل' },
+  { value: 'dock-leveler', EN: 'Dock leveler', AR: 'معدّل ارتفاع الرصيف' },
+  { value: 'ramp', EN: 'Ramp', AR: 'منحدر تحميل' },
+  { value: 'chillers', EN: 'Chillers', AR: 'أجهزة تبريد' },
+  { value: 'freezers', EN: 'Freezers', AR: 'أجهزة تجميد' },
 ];
 
 const allowedGoodsOptions = [
-  { value: 'fmcg', label: 'FMCG' },
-  { value: 'electronics', label: 'Electronics' },
-  { value: 'pharma', label: 'Pharma' },
-  { value: 'clothing', label: 'Clothing / textiles' },
-  { value: 'automotive', label: 'Automotive' },
-  { value: 'industrial', label: 'Industrial goods' },
-  { value: 'food', label: 'Food items' },
-  { value: 'chemicals', label: 'Chemicals' },
+  { value: 'fmcg', EN: 'FMCG', AR: 'سلع استهلاكية' },
+  { value: 'electronics', EN: 'Electronics', AR: 'إلكترونيات' },
+  { value: 'pharma', EN: 'Pharma', AR: 'أدوية' },
+  { value: 'clothing', EN: 'Clothing / textiles', AR: 'ملابس ومنسوجات' },
+  { value: 'automotive', EN: 'Automotive', AR: 'قطع سيارات' },
+  { value: 'industrial', EN: 'Industrial goods', AR: 'بضائع صناعية' },
+  { value: 'food', EN: 'Food items', AR: 'مواد غذائية' },
+  { value: 'chemicals', EN: 'Chemicals', AR: 'مواد كيميائية' },
 ];
 
 const sortOptions = [
-  { value: 'best', label: 'Best match' },
-  { value: 'price_low', label: 'Lowest price' },
-  { value: 'rating_high', label: 'Highest rating' },
-  { value: 'distance', label: 'Closest first' },
-  { value: 'newest', label: 'Newest listings' },
+  { value: 'best', EN: 'Best match', AR: 'الأنسب' },
+  { value: 'price_low', EN: 'Lowest price', AR: 'الأقل سعرًا' },
+  { value: 'rating_high', EN: 'Highest rating', AR: 'الأعلى تقييمًا' },
+  { value: 'distance', EN: 'Closest first', AR: 'الأقرب أولًا' },
+  { value: 'newest', EN: 'Newest listings', AR: 'الأحدث' },
 ];
 
 const ownerRatingOptions = [
-  { value: '', label: 'Any rating' },
-  { value: '4', label: '4.0+ stars' },
-  { value: '4.5', label: '4.5+ stars' },
-  { value: '5', label: '5.0 only' },
+  { value: '', EN: 'Any rating', AR: 'أي تقييم' },
+  { value: '4', EN: '4.0+ stars', AR: '4.0+ نجوم' },
+  { value: '4.5', EN: '4.5+ stars', AR: '4.5+ نجوم' },
+  { value: '5', EN: '5.0 only', AR: '5.0 فقط' },
 ];
 
 // Parse "lat,long" or "lat long" from gps field
@@ -99,7 +113,8 @@ const distanceKm = (coord1, coord2) => {
 
 const IndexPage = () => {
   usePageTitle('Find storage');
-  const { t, formatPrice } = usePrefs();
+  const { t, lang, formatPrice } = usePrefs();
+  const LM = labelMaps[lang] || labelMaps.EN;
 
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -673,7 +688,7 @@ const IndexPage = () => {
                       >
                         {warehouseTypeOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>
-                            {opt.label}
+                            {opt[lang] || opt.EN}
                           </option>
                         ))}
                       </select>
@@ -734,7 +749,7 @@ const IndexPage = () => {
                       >
                         {ownerRatingOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>
-                            {opt.label}
+                            {opt[lang] || opt.EN}
                           </option>
                         ))}
                       </select>
@@ -757,7 +772,7 @@ const IndexPage = () => {
                       >
                         {sortOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>
-                            {opt.label}
+                            {opt[lang] || opt.EN}
                           </option>
                         ))}
                       </select>
@@ -883,7 +898,7 @@ const IndexPage = () => {
                             toggleArrayFilter('equipment', opt.value)
                           }
                         />
-                        <span>{opt.label}</span>
+                        <span>{opt[lang] || opt.EN}</span>
                       </label>
                     ))}
                   </div>
@@ -918,7 +933,7 @@ const IndexPage = () => {
                             toggleArrayFilter('allowedGoods', opt.value)
                           }
                         />
-                        <span>{opt.label}</span>
+                        <span>{opt[lang] || opt.EN}</span>
                       </label>
                     ))}
                   </div>
@@ -1111,15 +1126,15 @@ const IndexPage = () => {
                     </div>
 
                     <div className="mt-2 flex items-baseline justify-between">
-                      <div className="text-sm font-semibold">
+                      <div className="text-sm font-bold text-primary">
                         {typeof place.pricePerDay === 'number'
-                          ? `JOD ${place.pricePerDay}`
+                          ? formatPrice(place.pricePerDay)
                           : typeof place.price === 'number'
-                          ? `JOD ${place.price}`
-                          : 'Price on request'}
+                          ? formatPrice(place.price)
+                          : t('home.priceOnRequest')}
                         <span className="text-xs font-normal text-gray-500">
                           {' '}
-                          / day
+                          {t('home.perDay')}
                         </span>
                       </div>
                     </div>
@@ -1259,7 +1274,7 @@ const IndexPage = () => {
                             key={wt}
                             className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-700"
                           >
-                            {labelMaps.warehouseType[wt] || wt}
+                            {LM.warehouseType[wt] || wt}
                           </span>
                         ))}
                         {place.warehouseType.length > 2 && (
