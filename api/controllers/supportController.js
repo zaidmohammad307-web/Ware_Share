@@ -1,4 +1,5 @@
 // api/controllers/supportController.js
+const mongoose = require('mongoose');
 const WaitlistEntry = require('../models/WaitlistEntry');
 const SupportTicket = require('../models/SupportTicket');
 const { sendMail, emailWrap } = require('../utils/mailer');
@@ -89,7 +90,19 @@ exports.reportIssue = async (req, res) => {
     const message = String(req.body.message || '').trim();
     const rawCategory = String(req.body.category || 'other').trim();
 
-    const ALLOWED = ['bug', 'booking', 'payment', 'safety', 'listing', 'other'];
+    const ALLOWED = [
+      'bug',
+      'booking',
+      'payment',
+      'safety',
+      'listing',
+      'claim',
+      'help',
+      'partnership',
+      'press',
+      'careers',
+      'other',
+    ];
     const category = ALLOWED.includes(rawCategory) ? rawCategory : 'other';
 
     if (!EMAIL_RE.test(email)) {
@@ -106,11 +119,14 @@ exports.reportIssue = async (req, res) => {
       });
     }
 
+    const source = String(req.body.source || '').trim().slice(0, 60) || null;
+
     const ticket = await SupportTicket.create({
       user: req.user?.id || null,
       name,
       email,
       category,
+      source,
       message: message.slice(0, 5000),
     });
 
@@ -138,5 +154,82 @@ exports.reportIssue = async (req, res) => {
       success: false,
       message: 'Something went wrong. Please try again.',
     });
+  }
+};
+
+/* ----------------------------------------
+   📋 SUPPORT TICKETS (admin only)
+---------------------------------------- */
+exports.listTickets = async (req, res) => {
+  try {
+    const { status, category } = req.query;
+
+    const filter = {};
+    if (status && ['open', 'in_progress', 'resolved'].includes(status)) {
+      filter.status = status;
+    }
+    if (category) filter.category = category;
+
+    const tickets = await SupportTicket.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(500)
+      .lean();
+
+    const counts = await SupportTicket.aggregate([
+      { $group: { _id: '$status', n: { $sum: 1 } } },
+    ]);
+
+    const byStatus = counts.reduce((acc, c) => {
+      acc[c._id] = c.n;
+      return acc;
+    }, {});
+
+    return res.status(200).json({
+      success: true,
+      tickets,
+      counts: {
+        open: byStatus.open || 0,
+        in_progress: byStatus.in_progress || 0,
+        resolved: byStatus.resolved || 0,
+        total: tickets.length,
+      },
+    });
+  } catch (err) {
+    console.error('listTickets error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.updateTicket = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, adminNote } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid ticket id' });
+    }
+
+    const ticket = await SupportTicket.findById(id);
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: 'Ticket not found' });
+    }
+
+    if (status) {
+      if (!['open', 'in_progress', 'resolved'].includes(status)) {
+        return res.status(400).json({ success: false, message: 'Invalid status' });
+      }
+      ticket.status = status;
+    }
+
+    if (adminNote !== undefined) {
+      ticket.adminNote = String(adminNote).trim().slice(0, 2000) || null;
+    }
+
+    await ticket.save();
+
+    return res.status(200).json({ success: true, ticket });
+  } catch (err) {
+    console.error('updateTicket error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };

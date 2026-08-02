@@ -38,7 +38,7 @@ const PAGES = {
           body: ['Send us the details and a human will reply by email.'],
         },
       ],
-      cta: { label: 'Report an issue', to: '/support/report' },
+      cta: { label: 'Report an issue', to: '/support/report?category=help&source=help-center' },
     },
     AR: {
       title: 'مركز المساعدة',
@@ -71,7 +71,7 @@ const PAGES = {
           body: ['أرسل لنا التفاصيل وسيرد عليك أحد فريقنا عبر البريد الإلكتروني.'],
         },
       ],
-      cta: { label: 'الإبلاغ عن مشكلة', to: '/support/report' },
+      cta: { label: 'الإبلاغ عن مشكلة', to: '/support/report?category=help&source=help-center' },
     },
   },
 
@@ -103,7 +103,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'Report a safety concern', to: '/support/report' },
+      cta: { label: 'Report a safety concern', to: '/support/report?category=safety&source=safety-guidelines' },
     },
     AR: {
       title: 'إرشادات السلامة والأمان',
@@ -132,7 +132,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'الإبلاغ عن مشكلة سلامة', to: '/support/report' },
+      cta: { label: 'الإبلاغ عن مشكلة سلامة', to: '/support/report?category=safety&source=safety-guidelines' },
     },
   },
 
@@ -225,7 +225,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'Start a claim', to: '/support/report' },
+      cta: { label: 'Start a claim', to: '/support/report?category=claim&source=insurance-claims' },
     },
     AR: {
       title: 'التأمين والمطالبات',
@@ -256,7 +256,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'ابدأ مطالبة', to: '/support/report' },
+      cta: { label: 'ابدأ مطالبة', to: '/support/report?category=claim&source=insurance-claims' },
     },
   },
 
@@ -473,7 +473,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'Contact partnerships', to: '/support/report' },
+      cta: { label: 'Contact partnerships', to: '/support/report?category=partnership&source=partners' },
     },
     AR: {
       title: 'حلول الشركاء والمؤسسات',
@@ -498,7 +498,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'تواصل مع فريق الشراكات', to: '/support/report' },
+      cta: { label: 'تواصل مع فريق الشراكات', to: '/support/report?category=partnership&source=partners' },
     },
   },
 
@@ -618,7 +618,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'Introduce yourself', to: '/support/report' },
+      cta: { label: 'Introduce yourself', to: '/support/report?category=careers&source=careers' },
     },
     AR: {
       title: 'الوظائف',
@@ -637,7 +637,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'عرّف بنفسك', to: '/support/report' },
+      cta: { label: 'عرّف بنفسك', to: '/support/report?category=careers&source=careers' },
     },
   },
 
@@ -659,7 +659,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'Contact us', to: '/support/report' },
+      cta: { label: 'Contact us', to: '/support/report?category=press&source=press' },
     },
     AR: {
       title: 'الصحافة والإعلام',
@@ -678,7 +678,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'تواصل معنا', to: '/support/report' },
+      cta: { label: 'تواصل معنا', to: '/support/report?category=press&source=press' },
     },
   },
 
@@ -825,7 +825,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'Contact us', to: '/support/report' },
+      cta: { label: 'Contact us', to: '/support/report?category=other&source=company-details' },
     },
     AR: {
       title: 'بيانات الشركة',
@@ -851,7 +851,7 @@ const PAGES = {
           ],
         },
       ],
-      cta: { label: 'تواصل معنا', to: '/support/report' },
+      cta: { label: 'تواصل معنا', to: '/support/report?category=other&source=company-details' },
     },
   },
 

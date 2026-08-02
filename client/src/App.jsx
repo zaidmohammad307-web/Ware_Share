@@ -18,6 +18,7 @@ import ReportIssuePage from './pages/ReportIssuePage';
 import LaunchPage from './pages/LaunchPage';
 import WaitlistAdminPage from './pages/WaitlistAdminPage';
 import SitemapPage from './pages/SitemapPage';
+import AdminSupportPage from './pages/AdminSupportPage';
 import { PreferencesProvider } from './providers/PreferencesProvider';
 import PlacePage from './pages/PlacePage';
 import SingleBookedPlace from './pages/SingleBookedPlace';
@@ -76,6 +77,7 @@ function App() {
               <Route path="/support/report" element={<ReportIssuePage />} />
               <Route path="/sitemap" element={<SitemapPage />} />
               <Route path="/admin/waitlist" element={<WaitlistAdminPage />} />
+              <Route path="/admin/support" element={<AdminSupportPage />} />
 
               <Route path="/account/bookings" element={<BookingsPage />} />
               <Route path="/account/bookings/:id" element={<SingleBookedPlace />} />

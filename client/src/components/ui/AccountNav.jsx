@@ -82,6 +82,12 @@ const AccountNav = () => {
           {t('nav.waitlist')}
         </Link>
       )}
+
+      {isAdmin && (
+        <Link className={linkClasses('support')} to="/admin/support">
+          {t('nav.support')}
+        </Link>
+      )}
     </nav>
   );
 };

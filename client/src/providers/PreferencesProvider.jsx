@@ -25,6 +25,7 @@ const STRINGS = {
     'nav.adminHosts': 'Admin host verification',
     'nav.adminDashboard': 'Admin dashboard',
     'nav.waitlist': 'Waitlist',
+    'nav.support': 'Support requests',
 
     // Home
     'home.title': 'Find storage on Wareshare',
@@ -130,6 +131,7 @@ const STRINGS = {
     'nav.adminHosts': 'التحقق من المضيفين',
     'nav.adminDashboard': 'لوحة الإدارة',
     'nav.waitlist': 'قائمة الانتظار',
+    'nav.support': 'طلبات الدعم',
 
     // Home
     'home.title': 'ابحث عن مساحة تخزين على وير شير',

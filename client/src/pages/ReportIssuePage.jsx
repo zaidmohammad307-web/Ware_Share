@@ -1,6 +1,6 @@
 // client/src/pages/ReportIssuePage.jsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import axiosInstance from '@/utils/axios';
@@ -8,24 +8,61 @@ import { useAuth, usePageTitle } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
 const CATEGORIES = [
-  { value: 'bug', label: 'App problem / bug' },
-  { value: 'booking', label: 'Booking issue' },
-  { value: 'payment', label: 'Payment issue' },
-  { value: 'safety', label: 'Safety concern' },
-  { value: 'listing', label: 'Problem with a listing' },
-  { value: 'other', label: 'Something else' },
+  { value: 'help', EN: 'General help request', AR: 'طلب مساعدة عام' },
+  { value: 'claim', EN: 'Insurance claim', AR: 'مطالبة تأمين' },
+  { value: 'bug', EN: 'App problem / bug', AR: 'مشكلة في التطبيق' },
+  { value: 'booking', EN: 'Booking issue', AR: 'مشكلة في الحجز' },
+  { value: 'payment', EN: 'Payment issue', AR: 'مشكلة في الدفع' },
+  { value: 'safety', EN: 'Safety concern', AR: 'مخاوف تتعلق بالسلامة' },
+  { value: 'listing', EN: 'Problem with a listing', AR: 'مشكلة في إعلان' },
+  { value: 'partnership', EN: 'Partnership enquiry', AR: 'استفسار شراكة' },
+  { value: 'press', EN: 'Press & media', AR: 'صحافة وإعلام' },
+  { value: 'careers', EN: 'Careers', AR: 'وظائف' },
+  { value: 'other', EN: 'Something else', AR: 'شيء آخر' },
 ];
+
+const VALID_CATEGORIES = CATEGORIES.map((c) => c.value);
+
+const STR = {
+  EN: {
+    received: 'Request received',
+    thanks: 'Thanks for letting us know. We will get back to you at',
+    backHome: 'Back to home',
+    fullName: 'Full name',
+    describe:
+      'Describe your request with as much detail as you can — include booking or listing links if relevant.',
+    sent: 'Request sent.',
+    failed: 'Could not send your request. Please try again.',
+  },
+  AR: {
+    received: 'تم استلام طلبك',
+    thanks: 'شكرًا لإخبارنا. سنعود إليك على',
+    backHome: 'العودة إلى الرئيسية',
+    fullName: 'الاسم الكامل',
+    describe:
+      'صف طلبك بأكبر قدر ممكن من التفاصيل — أرفق روابط الحجز أو الإعلان إن وُجدت.',
+    sent: 'تم إرسال الطلب.',
+    failed: 'تعذّر إرسال طلبك. يرجى المحاولة مرة أخرى.',
+  },
+};
 
 const ReportIssuePage = () => {
   usePageTitle('Report an issue');
 
   const { user } = useAuth();
-  const { t } = usePrefs();
+  const { t, lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
+
+  const [searchParams] = useSearchParams();
+  const presetCategory = searchParams.get('category');
+  const source = searchParams.get('source') || 'report-page';
 
   const [form, setForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    category: 'other',
+    category: VALID_CATEGORIES.includes(presetCategory)
+      ? presetCategory
+      : 'other',
     message: '',
   });
   const [submitting, setSubmitting] = useState(false);
@@ -39,12 +76,12 @@ const ReportIssuePage = () => {
 
     try {
       setSubmitting(true);
-      const { data } = await axiosInstance.post('/support/report', form);
-      toast.success(data.message || 'Report sent.');
+      const { data } = await axiosInstance.post('/support/report', { ...form, source });
+      toast.success(data.message || L.sent);
       setDone(true);
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || 'Could not send your report. Please try again.'
+        err?.response?.data?.message || L.failed
       );
     } finally {
       setSubmitting(false);
@@ -57,17 +94,17 @@ const ReportIssuePage = () => {
         <div className="mx-auto w-full max-w-xl rounded-2xl border bg-white p-8 text-center shadow-sm">
           <div className="text-4xl">✅</div>
           <h1 className="mt-3 text-xl font-semibold text-gray-900">
-            Report received
+            {L.received}
           </h1>
           <p className="mt-2 text-sm text-gray-600">
-            Thanks for letting us know. We will get back to you at{' '}
+            {L.thanks}{' '}
             <strong>{form.email}</strong>.
           </p>
           <Link
             to="/"
             className="mt-6 inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
           >
-            Back to home
+            {L.backHome}
           </Link>
         </div>
       </div>
@@ -91,7 +128,7 @@ const ReportIssuePage = () => {
               <input
                 type="text"
                 className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
-                placeholder="Full name"
+                placeholder={L.fullName}
                 value={form.name}
                 onChange={(e) => setField('name', e.target.value)}
               />
@@ -122,7 +159,7 @@ const ReportIssuePage = () => {
             >
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>
-                  {c.label}
+                  {c[lang] || c.EN}
                 </option>
               ))}
             </select>
@@ -137,7 +174,7 @@ const ReportIssuePage = () => {
               minLength={10}
               rows={6}
               className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
-              placeholder="Describe the issue with as much detail as you can — include booking or listing links if relevant."
+              placeholder={L.describe}
               value={form.message}
               onChange={(e) => setField('message', e.target.value)}
             />
