@@ -3,6 +3,7 @@ import { Navigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import axiosInstance from '@/utils/axios';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
 import AccountNav from '@/components/ui/AccountNav';
 import PhotosUploader from '@/components/ui/PhotosUploader';
@@ -18,37 +19,404 @@ import { formatGps, parseGpsFlexible } from '@/utils/gps';
  * which can cause inputs to lose focus ("have to re-click after each letter").
  */
 
+/**
+ * Local bilingual dictionary (EN / AR).
+ * Only display strings live here — submitted values never change.
+ */
+const STR = {
+  EN: {
+    // Page header
+    pageTitleAdd: 'Add new warehouse',
+    pageTitleEdit: 'Edit warehouse',
+    pageSubtitle: 'Follow the steps to create a clear, high-quality warehouse listing.',
+    stepWord: 'Step',
+    ofWord: 'of',
+
+    // Steps
+    stepBasic: 'Basic Info',
+    stepCapacity: 'Capacity & Pricing',
+    stepLocation: 'Location',
+    stepFacilities: 'Facilities',
+    stepServices: 'Services Offered',
+    stepAvailability: 'Availability & Rules',
+    stepImages: 'Images',
+    stepReview: 'Review & Publish',
+
+    // Navigation
+    back: 'Back',
+    continue: 'Continue',
+    publish: 'Publish warehouse',
+    completeStepFirst: 'Please complete this step before continuing.',
+
+    // Warehouse types
+    typeDry: 'Dry (Ambient)',
+    typeCold: 'Cold',
+    typeGeneral: 'Mixed / General',
+    typeDryDesc: 'Ambient storage for general goods.',
+    typeColdDesc: 'Temperature-controlled storage.',
+    typeGeneralDesc: 'Flexible storage for multiple categories.',
+
+    // Facilities
+    facCCTV: 'CCTV',
+    facForklift: 'Forklift',
+    facLoadingDock: 'Loading dock',
+    facAccess247: '24/7 access',
+    facTemperatureControl: 'Temperature control',
+    facTempHint: 'Cold storage / climate control features.',
+    facDefaultHint: 'Visible on your listing for renters.',
+
+    // Services
+    svcInsurance: 'Insurance available',
+    svcPacking: 'Packing available',
+    svcDelivery: 'Delivery available',
+    svcDeliveryHint: 'Transport / local delivery options.',
+    svcPackingHint: 'Picking, packing, labeling, and packaging.',
+    svcInsuranceHint: 'Insurance availability for stored goods.',
+
+    // Basic info
+    basicSubtitle: 'Start with a clear name, type, and a short description.',
+    warehouseName: 'Warehouse name',
+    warehouseNamePh: 'e.g. Cold storage warehouse in Amman',
+    warehouseType: 'Warehouse type',
+    shortDescription: 'Short description',
+    shortDescriptionPh: 'Describe what you store, typical goods, handling, and key notes.',
+
+    // Capacity & pricing
+    capacitySubtitle: 'Provide capacity and a clear pricing structure.',
+    totalAreaLabel: 'Total capacity (m²)',
+    availableAreaLabel: 'Available capacity (m²)',
+    palletCapacityLabel: 'Total capacity (pallets)',
+    legacyUnitsLabel: 'Available units (legacy)',
+    legacyUnitsHint: 'This keeps compatibility with your existing booking flow.',
+    pricePerUnit: 'Price per unit',
+    billingPeriod: 'Billing period',
+    perDay: 'Per day',
+    perMonth: 'Per month',
+    billingHint: 'Stored as daily price (backend-compatible).',
+    negotiable: 'Price is negotiable',
+    ph500: 'e.g. 500',
+    ph200: 'e.g. 200',
+    ph1200: 'e.g. 1200',
+    ph50: 'e.g. 50',
+    ph25: 'e.g. 25',
+    ph3: 'e.g. 3',
+    ph30: 'e.g. 30',
+
+    // Location
+    locationSubtitle: 'Pin your location on the map and confirm address details.',
+    mapLocation: 'Map location',
+    address: 'Address',
+    addressPh: 'Address will update from the map, but you can edit it.',
+    addressHint: 'If you edit the address manually, ensure it matches the pinned location.',
+    city: 'City',
+    cityPh: 'e.g. Amman',
+    country: 'Country',
+    countryPh: 'e.g. Jordan',
+
+    // Facilities section
+    facilitiesSubtitle: 'Select the facilities available at your warehouse.',
+    optionalNotes: 'Optional notes',
+    optionalNotesHint:
+      'You can add details about access procedures, dock scheduling, or temperature ranges in Rules.',
+
+    // Services section
+    servicesSubtitle: 'Select services you can provide as add-ons.',
+
+    // Availability & rules
+    availabilitySubtitle: 'Set availability start date and basic warehouse rules.',
+    availableFrom: 'Available from',
+    availableUntil: 'Available until (optional)',
+    availableUntilHint: 'Leave empty if always available.',
+    basicRules: 'Basic warehouse rules',
+    basicRulesPh:
+      'e.g. No hazardous materials. Access hours. Booking lead time. Pallet labeling requirements.',
+    advancedLegacy: 'Advanced (optional) legacy fields',
+    minBookingDays: 'Min booking days (optional)',
+    maxBookingDays: 'Max booking days (optional)',
+    legacyPerks: 'Legacy perks (optional)',
+
+    // Images
+    imagesSubtitle: (n) => `Upload and preview warehouse photos. At least ${n} images are required.`,
+    imagesHint: (n) => `Minimum: ${n} images. Recommended: 5+ (exterior, interior, access points).`,
+
+    // Review
+    reviewSubtitle: 'Double-check your listing details before publishing.',
+    summary: 'Summary',
+    summaryHint: 'This is what renters will see on your listing.',
+    sumCapacity: 'Capacity',
+    sumPricing: 'Pricing',
+    sumLocation: 'Location',
+    sumFacilities: 'Facilities',
+    sumServices: 'Services offered',
+    sumRules: 'Rules',
+    sumImages: 'Images',
+    unitM2: 'm²',
+    availableSuffix: 'available',
+    palletsWord: 'pallets',
+    perDayShort: '/ day',
+    negotiableShort: '(negotiable)',
+    uploadedWord: 'uploaded',
+    finalChecks: 'Final checks',
+    checkOk: 'OK',
+    chkName: 'Warehouse name',
+    chkType: 'Warehouse type',
+    chkDescription: 'Description',
+    chkPrice: 'Price',
+    chkLocation: 'Location',
+    chkAvailability: 'Availability',
+    chkRules: 'Rules',
+    chkImages: 'Images',
+
+    // Side panel
+    listingQuality: 'Listing quality',
+    listingQualityHint: 'Completing these increases renter trust and reduces booking issues.',
+    qualityNameType: 'Name + type',
+    qualityCapacityPrice: 'Capacity + price',
+    qualityMapAddress: 'Map + address',
+    qualityImages: 'Images',
+    done: 'Done',
+    pending: 'Pending',
+    quickTips: 'Quick tips',
+    tip1: 'Use a specific name (city + type).',
+    tip2: 'Ensure available capacity matches your operational reality.',
+    tip3: 'Pin the exact location; the address should match the map marker.',
+    tip4: 'Add facility/services that you truly offer to avoid disputes.',
+    tip5: 'Upload clear photos (access points + interior).',
+
+    // Validation & toasts
+    errType: 'Please select a warehouse type.',
+    errPrice: 'Enter a valid price per day.',
+    errCapacity: 'Provide total capacity (m² or pallets).',
+    errAvailableExceeds: 'Available capacity cannot exceed total capacity.',
+    errAddress: 'Address is required.',
+    errGps: 'Please set a valid location on the map.',
+    errCity: 'City is required.',
+    errCountry: 'Country is required.',
+    errPhotos: (n) => `Please upload at least ${n} images.`,
+    errTitle: 'Warehouse name is required.',
+    errDescription: 'Short description is required.',
+    errCheckIn: 'Available from date is required.',
+    errRules: 'Please add basic warehouse rules.',
+    toastLoadFailed: 'Failed to load warehouse data.',
+    toastFixFields: 'Please fix the highlighted fields before publishing.',
+    toastSaved: 'Warehouse saved successfully.',
+    toastSaveFailed: 'Failed to save warehouse.',
+  },
+
+  AR: {
+    // Page header
+    pageTitleAdd: 'إضافة مستودع جديد',
+    pageTitleEdit: 'تعديل المستودع',
+    pageSubtitle: 'اتبع الخطوات لإنشاء إعلان مستودع واضح وعالي الجودة.',
+    stepWord: 'الخطوة',
+    ofWord: 'من',
+
+    // Steps
+    stepBasic: 'المعلومات الأساسية',
+    stepCapacity: 'السعة والتسعير',
+    stepLocation: 'الموقع',
+    stepFacilities: 'المرافق',
+    stepServices: 'الخدمات المتاحة',
+    stepAvailability: 'التوفر والقواعد',
+    stepImages: 'الصور',
+    stepReview: 'المراجعة والنشر',
+
+    // Navigation
+    back: 'رجوع',
+    continue: 'متابعة',
+    publish: 'نشر المستودع',
+    completeStepFirst: 'يرجى إكمال هذه الخطوة قبل المتابعة.',
+
+    // Warehouse types
+    typeDry: 'جاف (درجة حرارة الغرفة)',
+    typeCold: 'مبرّد',
+    typeGeneral: 'مختلط / عام',
+    typeDryDesc: 'تخزين بدرجة حرارة الغرفة للبضائع العامة.',
+    typeColdDesc: 'تخزين مُتحكَّم بدرجة حرارته.',
+    typeGeneralDesc: 'تخزين مرن لفئات متعددة من البضائع.',
+
+    // Facilities
+    facCCTV: 'كاميرات مراقبة',
+    facForklift: 'رافعة شوكية',
+    facLoadingDock: 'رصيف تحميل',
+    facAccess247: 'دخول على مدار الساعة',
+    facTemperatureControl: 'التحكم بدرجة الحرارة',
+    facTempHint: 'مزايا التخزين المبرّد والتحكم بالمناخ.',
+    facDefaultHint: 'تظهر في إعلانك للمستأجرين.',
+
+    // Services
+    svcInsurance: 'تأمين متاح',
+    svcPacking: 'خدمة تغليف متاحة',
+    svcDelivery: 'خدمة توصيل متاحة',
+    svcDeliveryHint: 'خيارات النقل والتوصيل المحلي.',
+    svcPackingHint: 'التجهيز والتغليف ووضع الملصقات والتعبئة.',
+    svcInsuranceHint: 'توفّر التأمين على البضائع المخزّنة.',
+
+    // Basic info
+    basicSubtitle: 'ابدأ باسم واضح ونوع المستودع ووصف مختصر.',
+    warehouseName: 'اسم المستودع',
+    warehouseNamePh: 'مثال: مستودع تخزين مبرّد في عمّان',
+    warehouseType: 'نوع المستودع',
+    shortDescription: 'وصف مختصر',
+    shortDescriptionPh: 'اشرح ما يمكن تخزينه، وأنواع البضائع، وطريقة المناولة، وأي ملاحظات مهمة.',
+
+    // Capacity & pricing
+    capacitySubtitle: 'حدّد السعة وهيكل تسعير واضح.',
+    totalAreaLabel: 'السعة الإجمالية (م²)',
+    availableAreaLabel: 'السعة المتاحة (م²)',
+    palletCapacityLabel: 'السعة الإجمالية (طبليات)',
+    legacyUnitsLabel: 'الوحدات المتاحة (حقل قديم)',
+    legacyUnitsHint: 'يحافظ هذا على التوافق مع آلية الحجز الحالية لديك.',
+    pricePerUnit: 'السعر لكل وحدة',
+    billingPeriod: 'فترة الفوترة',
+    perDay: 'يومياً',
+    perMonth: 'شهرياً',
+    billingHint: 'يُحفظ كسعر يومي (متوافق مع الخادم).',
+    negotiable: 'السعر قابل للتفاوض',
+    ph500: 'مثال: 500',
+    ph200: 'مثال: 200',
+    ph1200: 'مثال: 1200',
+    ph50: 'مثال: 50',
+    ph25: 'مثال: 25',
+    ph3: 'مثال: 3',
+    ph30: 'مثال: 30',
+
+    // Location
+    locationSubtitle: 'حدّد موقعك على الخريطة وأكّد تفاصيل العنوان.',
+    mapLocation: 'الموقع على الخريطة',
+    address: 'العنوان',
+    addressPh: 'سيتم تحديث العنوان من الخريطة، ويمكنك تعديله.',
+    addressHint: 'إذا عدّلت العنوان يدوياً، تأكد من مطابقته للموقع المحدد على الخريطة.',
+    city: 'المدينة',
+    cityPh: 'مثال: عمّان',
+    country: 'الدولة',
+    countryPh: 'مثال: الأردن',
+
+    // Facilities section
+    facilitiesSubtitle: 'اختر المرافق المتوفرة في مستودعك.',
+    optionalNotes: 'ملاحظات اختيارية',
+    optionalNotesHint:
+      'يمكنك إضافة تفاصيل حول إجراءات الدخول، وجدولة أرصفة التحميل، أو نطاقات درجات الحرارة في قسم القواعد.',
+
+    // Services section
+    servicesSubtitle: 'اختر الخدمات التي يمكنك تقديمها كخدمات إضافية.',
+
+    // Availability & rules
+    availabilitySubtitle: 'حدّد تاريخ بدء التوفر والقواعد الأساسية للمستودع.',
+    availableFrom: 'متاح ابتداءً من',
+    availableUntil: 'متاح حتى (اختياري)',
+    availableUntilHint: 'اتركه فارغاً إذا كان متاحاً دائماً.',
+    basicRules: 'القواعد الأساسية للمستودع',
+    basicRulesPh:
+      'مثال: يُمنع تخزين المواد الخطرة. ساعات الدخول. مدة الإشعار المسبق للحجز. متطلبات ترقيم الطبليات.',
+    advancedLegacy: 'حقول متقدمة (اختيارية)',
+    minBookingDays: 'الحد الأدنى لأيام الحجز (اختياري)',
+    maxBookingDays: 'الحد الأقصى لأيام الحجز (اختياري)',
+    legacyPerks: 'مزايا إضافية (اختياري)',
+
+    // Images
+    imagesSubtitle: (n) => `ارفع صور المستودع وعاينها. مطلوب ${n} صور على الأقل.`,
+    imagesHint: (n) =>
+      `الحد الأدنى: ${n} صور. الموصى به: 5 صور فأكثر (الخارج، الداخل، مداخل الوصول).`,
+
+    // Review
+    reviewSubtitle: 'راجع تفاصيل إعلانك جيداً قبل النشر.',
+    summary: 'الملخص',
+    summaryHint: 'هذا ما سيراه المستأجرون في إعلانك.',
+    sumCapacity: 'السعة',
+    sumPricing: 'التسعير',
+    sumLocation: 'الموقع',
+    sumFacilities: 'المرافق',
+    sumServices: 'الخدمات المتاحة',
+    sumRules: 'القواعد',
+    sumImages: 'الصور',
+    unitM2: 'م²',
+    availableSuffix: 'متاحة',
+    palletsWord: 'طبلية',
+    perDayShort: '/ يوم',
+    negotiableShort: '(قابل للتفاوض)',
+    uploadedWord: 'صورة مرفوعة',
+    finalChecks: 'الفحوصات النهائية',
+    checkOk: 'مكتمل',
+    chkName: 'اسم المستودع',
+    chkType: 'نوع المستودع',
+    chkDescription: 'الوصف',
+    chkPrice: 'السعر',
+    chkLocation: 'الموقع',
+    chkAvailability: 'التوفر',
+    chkRules: 'القواعد',
+    chkImages: 'الصور',
+
+    // Side panel
+    listingQuality: 'جودة الإعلان',
+    listingQualityHint: 'إكمال هذه العناصر يزيد ثقة المستأجرين ويقلل مشاكل الحجز.',
+    qualityNameType: 'الاسم والنوع',
+    qualityCapacityPrice: 'السعة والسعر',
+    qualityMapAddress: 'الخريطة والعنوان',
+    qualityImages: 'الصور',
+    done: 'مكتمل',
+    pending: 'قيد الإنجاز',
+    quickTips: 'نصائح سريعة',
+    tip1: 'استخدم اسماً محدداً (المدينة + النوع).',
+    tip2: 'تأكد من أن السعة المتاحة تعكس الواقع التشغيلي لديك.',
+    tip3: 'حدّد الموقع بدقة؛ ويجب أن يطابق العنوان علامة الخريطة.',
+    tip4: 'أضف المرافق والخدمات التي تقدّمها فعلاً لتجنّب النزاعات.',
+    tip5: 'ارفع صوراً واضحة (مداخل الوصول والداخل).',
+
+    // Validation & toasts
+    errType: 'يرجى اختيار نوع المستودع.',
+    errPrice: 'أدخل سعراً يومياً صالحاً.',
+    errCapacity: 'يرجى تحديد السعة الإجمالية (م² أو طبليات).',
+    errAvailableExceeds: 'لا يمكن أن تتجاوز السعة المتاحة السعة الإجمالية.',
+    errAddress: 'العنوان مطلوب.',
+    errGps: 'يرجى تحديد موقع صالح على الخريطة.',
+    errCity: 'المدينة مطلوبة.',
+    errCountry: 'الدولة مطلوبة.',
+    errPhotos: (n) => `يرجى رفع ${n} صور على الأقل.`,
+    errTitle: 'اسم المستودع مطلوب.',
+    errDescription: 'الوصف المختصر مطلوب.',
+    errCheckIn: 'تاريخ بدء التوفر مطلوب.',
+    errRules: 'يرجى إضافة القواعد الأساسية للمستودع.',
+    toastLoadFailed: 'تعذّر تحميل بيانات المستودع.',
+    toastFixFields: 'يرجى تصحيح الحقول المحددة قبل النشر.',
+    toastSaved: 'تم حفظ المستودع بنجاح.',
+    toastSaveFailed: 'تعذّر حفظ المستودع.',
+  },
+};
+
+const getLang = (lang) => (lang === 'AR' ? 'AR' : 'EN');
+
 const WAREHOUSE_TYPES = [
-  { value: 'dry', label: 'Dry (Ambient)' },
-  { value: 'cold', label: 'Cold' },
-  { value: 'general', label: 'Mixed / General' },
+  { value: 'dry', labelKey: 'typeDry', descKey: 'typeDryDesc' },
+  { value: 'cold', labelKey: 'typeCold', descKey: 'typeColdDesc' },
+  { value: 'general', labelKey: 'typeGeneral', descKey: 'typeGeneralDesc' },
 ];
 
 const FACILITIES = [
-  { key: 'CCTV', label: 'CCTV' },
-  { key: 'forklift', label: 'Forklift' },
-  { key: 'loadingDock', label: 'Loading dock' },
-  { key: 'access247', label: '24/7 access' },
-  { key: 'temperatureControl', label: 'Temperature control' },
+  { key: 'CCTV', labelKey: 'facCCTV' },
+  { key: 'forklift', labelKey: 'facForklift' },
+  { key: 'loadingDock', labelKey: 'facLoadingDock' },
+  { key: 'access247', labelKey: 'facAccess247' },
+  { key: 'temperatureControl', labelKey: 'facTemperatureControl' },
 ];
 
 const SERVICES_OFFERED = [
-  { key: 'insurance', label: 'Insurance available' },
-  { key: 'packing', label: 'Packing available' },
-  { key: 'delivery', label: 'Delivery available' },
+  { key: 'insurance', labelKey: 'svcInsurance' },
+  { key: 'packing', labelKey: 'svcPacking' },
+  { key: 'delivery', labelKey: 'svcDelivery' },
 ];
 
 const MIN_PHOTOS_REQUIRED = 3;
 
 const stepList = [
-  { id: 'basic', title: 'Basic Info' },
-  { id: 'capacity', title: 'Capacity & Pricing' },
-  { id: 'location', title: 'Location' },
-  { id: 'facilities', title: 'Facilities' },
-  { id: 'services', title: 'Services Offered' },
-  { id: 'availability', title: 'Availability & Rules' },
-  { id: 'images', title: 'Images' },
-  { id: 'review', title: 'Review & Publish' },
+  { id: 'basic', titleKey: 'stepBasic' },
+  { id: 'capacity', titleKey: 'stepCapacity' },
+  { id: 'location', titleKey: 'stepLocation' },
+  { id: 'facilities', titleKey: 'stepFacilities' },
+  { id: 'services', titleKey: 'stepServices' },
+  { id: 'availability', titleKey: 'stepAvailability' },
+  { id: 'images', titleKey: 'stepImages' },
+  { id: 'review', titleKey: 'stepReview' },
 ];
 
 const emptyForm = {
@@ -150,7 +518,7 @@ const FieldError = ({ errors, name }) => {
   return <p className="mt-1 text-sm text-red-600">{msg}</p>;
 };
 
-const Stepper = ({ activeStep, stepIndex, validateStep, goStep }) => (
+const Stepper = ({ activeStep, stepIndex, validateStep, goStep, L }) => (
   <div className="rounded-2xl border bg-white p-3 shadow-sm">
     <div className="flex flex-wrap gap-2">
       {stepList.map((s, idx) => {
@@ -168,7 +536,7 @@ const Stepper = ({ activeStep, stepIndex, validateStep, goStep }) => (
               }
               const { ok } = validateStep(activeStep);
               if (!ok) {
-                toast.error('Please complete this step before continuing.');
+                toast.error(L.completeStepFirst);
                 return;
               }
               goStep(s.id);
@@ -192,7 +560,7 @@ const Stepper = ({ activeStep, stepIndex, validateStep, goStep }) => (
             >
               {idx + 1}
             </span>
-            <span>{s.title}</span>
+            <span>{L[s.titleKey]}</span>
           </button>
         );
       })}
@@ -200,7 +568,7 @@ const Stepper = ({ activeStep, stepIndex, validateStep, goStep }) => (
   </div>
 );
 
-const NavButtons = ({ stepIndex, onBack, onNext, showPublish = false }) => (
+const NavButtons = ({ stepIndex, onBack, onNext, showPublish = false, L }) => (
   <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
     <button
       type="button"
@@ -208,7 +576,7 @@ const NavButtons = ({ stepIndex, onBack, onNext, showPublish = false }) => (
       disabled={stepIndex === 0}
       className="rounded-xl border bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm disabled:opacity-50"
     >
-      Back
+      {L.back}
     </button>
 
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -218,7 +586,7 @@ const NavButtons = ({ stepIndex, onBack, onNext, showPublish = false }) => (
           onClick={onNext}
           className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm"
         >
-          Continue
+          {L.continue}
         </button>
       )}
 
@@ -227,14 +595,14 @@ const NavButtons = ({ stepIndex, onBack, onNext, showPublish = false }) => (
           type="submit"
           className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm"
         >
-          Publish warehouse
+          {L.publish}
         </button>
       )}
     </div>
   </div>
 );
 
-const WarehouseTypeSelector = ({ warehouseType, setMainType }) => {
+const WarehouseTypeSelector = ({ warehouseType, setMainType, L }) => {
   const selected = Array.isArray(warehouseType) ? warehouseType : [];
 
   const currentMain = (() => {
@@ -259,14 +627,8 @@ const WarehouseTypeSelector = ({ warehouseType, setMainType }) => {
             }`}
           >
             <div>
-              <p className="text-sm font-semibold text-gray-900">{opt.label}</p>
-              <p className="mt-1 text-xs text-gray-500">
-                {opt.value === 'dry'
-                  ? 'Ambient storage for general goods.'
-                  : opt.value === 'cold'
-                    ? 'Temperature-controlled storage.'
-                    : 'Flexible storage for multiple categories.'}
-              </p>
+              <p className="text-sm font-semibold text-gray-900">{L[opt.labelKey]}</p>
+              <p className="mt-1 text-xs text-gray-500">{L[opt.descKey]}</p>
             </div>
             <span
               className={`h-5 w-5 rounded-full border-2 ${
@@ -289,6 +651,8 @@ const SummaryRow = ({ label, value }) => (
 
 const PlacesFormPage = () => {
   const { id } = useParams();
+  const { lang } = usePrefs();
+  const L = STR[getLang(lang)] || STR.EN;
 
   const [redirect, setRedirect] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -517,13 +881,13 @@ const PlacesFormPage = () => {
       const wt = Array.isArray(formData.warehouseType)
         ? formData.warehouseType
         : [];
-      if (wt.length < 1) nextErrors.warehouseType = 'Please select a warehouse type.';
+      if (wt.length < 1) nextErrors.warehouseType = L.errType;
     };
 
     const requirePrice = () => {
       // We keep stable backend fields: pricePerDay is used (preferred), price legacy stays
       if (!isFiniteNumber(formData.pricePerDay) || Number(formData.pricePerDay) <= 0) {
-        nextErrors.pricePerDay = 'Enter a valid price per day.';
+        nextErrors.pricePerDay = L.errPrice;
       }
     };
 
@@ -531,8 +895,8 @@ const PlacesFormPage = () => {
       const hasArea = isFiniteNumber(formData.totalArea) && Number(formData.totalArea) > 0;
       const hasPallet = isFiniteNumber(formData.palletCapacity) && Number(formData.palletCapacity) > 0;
       if (!hasArea && !hasPallet) {
-        nextErrors.totalArea = 'Provide total capacity (m² or pallets).';
-        nextErrors.palletCapacity = 'Provide total capacity (m² or pallets).';
+        nextErrors.totalArea = L.errCapacity;
+        nextErrors.palletCapacity = L.errCapacity;
       }
       if (
         isFiniteNumber(formData.totalArea) &&
@@ -540,27 +904,27 @@ const PlacesFormPage = () => {
         Number(formData.totalArea) > 0 &&
         Number(formData.availableArea) > Number(formData.totalArea)
       ) {
-        nextErrors.availableArea = 'Available capacity cannot exceed total capacity.';
+        nextErrors.availableArea = L.errAvailableExceeds;
       }
     };
 
     const requireLocation = () => {
-      if (!address) nextErrors.address = 'Address is required.';
-      if (!gpsOk) nextErrors.gps = 'Please set a valid location on the map.';
-      if (!normalizeString(formData.city)) nextErrors.city = 'City is required.';
-      if (!normalizeString(formData.zone)) nextErrors.zone = 'Country is required.';
+      if (!address) nextErrors.address = L.errAddress;
+      if (!gpsOk) nextErrors.gps = L.errGps;
+      if (!normalizeString(formData.city)) nextErrors.city = L.errCity;
+      if (!normalizeString(formData.zone)) nextErrors.zone = L.errCountry;
     };
 
     const requireImages = () => {
       if (!Array.isArray(addedPhotos) || addedPhotos.length < MIN_PHOTOS_REQUIRED) {
-        nextErrors.addedPhotos = `Please upload at least ${MIN_PHOTOS_REQUIRED} images.`;
+        nextErrors.addedPhotos = L.errPhotos(MIN_PHOTOS_REQUIRED);
       }
     };
 
     if (stepId === 'basic') {
-      if (!title) nextErrors.title = 'Warehouse name is required.';
+      if (!title) nextErrors.title = L.errTitle;
       requireWarehouseType();
-      if (!description) nextErrors.description = 'Short description is required.';
+      if (!description) nextErrors.description = L.errDescription;
     }
 
     if (stepId === 'capacity') {
@@ -574,9 +938,9 @@ const PlacesFormPage = () => {
 
     if (stepId === 'availability') {
       const from = normalizeString(formData.checkIn);
-      if (!from) nextErrors.checkIn = 'Available from date is required.';
+      if (!from) nextErrors.checkIn = L.errCheckIn;
       const rules = normalizeString(formData.extraInfo);
-      if (!rules) nextErrors.extraInfo = 'Please add basic warehouse rules.';
+      if (!rules) nextErrors.extraInfo = L.errRules;
     }
 
     if (stepId === 'images') {
@@ -585,16 +949,16 @@ const PlacesFormPage = () => {
 
     if (stepId === 'review') {
       // full validation gate
-      if (!title) nextErrors.title = 'Warehouse name is required.';
-      if (!description) nextErrors.description = 'Short description is required.';
+      if (!title) nextErrors.title = L.errTitle;
+      if (!description) nextErrors.description = L.errDescription;
       requireWarehouseType();
       requireCapacity();
       requirePrice();
       requireLocation();
       const from = normalizeString(formData.checkIn);
-      if (!from) nextErrors.checkIn = 'Available from date is required.';
+      if (!from) nextErrors.checkIn = L.errCheckIn;
       const rules = normalizeString(formData.extraInfo);
-      if (!rules) nextErrors.extraInfo = 'Please add basic warehouse rules.';
+      if (!rules) nextErrors.extraInfo = L.errRules;
       requireImages();
     }
 
@@ -640,7 +1004,7 @@ const PlacesFormPage = () => {
         setAddedPhotos(Array.isArray(place.photos) ? place.photos : []);
       })
       .catch(() => {
-        toast.error('Failed to load warehouse data.');
+        toast.error(L.toastLoadFailed);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -684,7 +1048,7 @@ const PlacesFormPage = () => {
     const { ok, nextErrors } = validateStep('review');
     setErrors(nextErrors);
     if (!ok) {
-      toast.error('Please fix the highlighted fields before publishing.');
+      toast.error(L.toastFixFields);
       return;
     }
 
@@ -695,10 +1059,10 @@ const PlacesFormPage = () => {
       } else {
         await axiosInstance.post('/places/add-places', payload);
       }
-      toast.success('Warehouse saved successfully.');
+      toast.success(L.toastSaved);
       setRedirect(true);
     } catch (error) {
-      toast.error(error?.response?.data?.message || 'Failed to save warehouse.');
+      toast.error(error?.response?.data?.message || L.toastSaveFailed);
     }
   };
 
@@ -717,14 +1081,12 @@ const PlacesFormPage = () => {
       <form className="mx-auto max-w-5xl px-4 pb-10" onSubmit={savePlace}>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">{id ? 'Edit warehouse' : 'Add new warehouse'}</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Follow the steps to create a clear, high-quality warehouse listing.
-            </p>
+            <h1 className="text-2xl font-semibold">{id ? L.pageTitleEdit : L.pageTitleAdd}</h1>
+            <p className="mt-1 text-sm text-gray-500">{L.pageSubtitle}</p>
           </div>
 
           <div className="text-sm text-gray-600">
-            Step <span className="font-semibold">{stepIndex + 1}</span> of{' '}
+            {L.stepWord} <span className="font-semibold">{stepIndex + 1}</span> {L.ofWord}{' '}
             <span className="font-semibold">{stepList.length}</span>
           </div>
         </div>
@@ -735,6 +1097,7 @@ const PlacesFormPage = () => {
             stepIndex={stepIndex}
             validateStep={validateStep}
             goStep={goStep}
+            L={L}
           />
         </div>
 
@@ -743,38 +1106,36 @@ const PlacesFormPage = () => {
           <div className="space-y-6">
             {/* 1) BASIC INFO */}
             {activeStep === 'basic' && (
-              <SectionCard
-                title="Basic Info"
-                subtitle="Start with a clear name, type, and a short description."
-              >
+              <SectionCard title={L.stepBasic} subtitle={L.basicSubtitle}>
                 <div className="grid gap-4">
                   <div>
-                    <FieldLabel>Warehouse name</FieldLabel>
+                    <FieldLabel>{L.warehouseName}</FieldLabel>
                     <input
                       type="text"
                       value={formData.title}
                       onChange={(e) => setField('title', e.target.value)}
-                      placeholder="e.g. Cold storage warehouse in Amman"
+                      placeholder={L.warehouseNamePh}
                       required
                     />
                     <FieldError errors={errors} name="title" />
                   </div>
 
                   <div>
-                    <FieldLabel>Warehouse type</FieldLabel>
+                    <FieldLabel>{L.warehouseType}</FieldLabel>
                     <WarehouseTypeSelector
                       warehouseType={formData.warehouseType}
                       setMainType={setMainWarehouseType}
+                      L={L}
                     />
                     <FieldError errors={errors} name="warehouseType" />
                   </div>
 
                   <div>
-                    <FieldLabel>Short description</FieldLabel>
+                    <FieldLabel>{L.shortDescription}</FieldLabel>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setField('description', e.target.value)}
-                      placeholder="Describe what you store, typical goods, handling, and key notes."
+                      placeholder={L.shortDescriptionPh}
                       className="min-h-[120px]"
                       required
                     />
@@ -786,72 +1147,67 @@ const PlacesFormPage = () => {
 
             {/* 2) CAPACITY & PRICING */}
             {activeStep === 'capacity' && (
-              <SectionCard
-                title="Capacity & Pricing"
-                subtitle="Provide capacity and a clear pricing structure."
-              >
+              <SectionCard title={L.stepCapacity} subtitle={L.capacitySubtitle}>
                 <div className="grid gap-5">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <FieldLabel>Total capacity (m²)</FieldLabel>
+                      <FieldLabel>{L.totalAreaLabel}</FieldLabel>
                       <input
                         type="number"
                         value={formData.totalArea}
                         onChange={(e) => setField('totalArea', e.target.value)}
-                        placeholder="e.g. 500"
+                        placeholder={L.ph500}
                         min="0"
                       />
                       <FieldError errors={errors} name="totalArea" />
                     </div>
 
                     <div>
-                      <FieldLabel>Available capacity (m²)</FieldLabel>
+                      <FieldLabel>{L.availableAreaLabel}</FieldLabel>
                       <input
                         type="number"
                         value={formData.availableArea}
                         onChange={(e) => setField('availableArea', e.target.value)}
-                        placeholder="e.g. 200"
+                        placeholder={L.ph200}
                         min="0"
                       />
                       <FieldError errors={errors} name="availableArea" />
                     </div>
 
                     <div>
-                      <FieldLabel>Total capacity (pallets)</FieldLabel>
+                      <FieldLabel>{L.palletCapacityLabel}</FieldLabel>
                       <input
                         type="number"
                         value={formData.palletCapacity}
                         onChange={(e) => setField('palletCapacity', e.target.value)}
-                        placeholder="e.g. 1200"
+                        placeholder={L.ph1200}
                         min="0"
                       />
                       <FieldError errors={errors} name="palletCapacity" />
                     </div>
 
                     <div>
-                      <FieldLabel>Available units (legacy)</FieldLabel>
+                      <FieldLabel>{L.legacyUnitsLabel}</FieldLabel>
                       <input
                         type="number"
                         value={formData.maxGuests}
                         onChange={(e) => setField('maxGuests', e.target.value)}
-                        placeholder="e.g. 50"
+                        placeholder={L.ph50}
                         min="0"
                       />
-                      <p className="mt-1 text-xs text-gray-500">
-                        This keeps compatibility with your existing booking flow.
-                      </p>
+                      <p className="mt-1 text-xs text-gray-500">{L.legacyUnitsHint}</p>
                     </div>
                   </div>
 
                   <div className="rounded-2xl border bg-gray-50 p-4">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                       <div className="flex-1">
-                        <FieldLabel>Price per unit</FieldLabel>
+                        <FieldLabel>{L.pricePerUnit}</FieldLabel>
                         <input
                           type="number"
                           value={formData.pricePerDay}
                           onChange={(e) => setField('pricePerDay', e.target.value)}
-                          placeholder="e.g. 25"
+                          placeholder={L.ph25}
                           min="0"
                           required
                         />
@@ -859,17 +1215,15 @@ const PlacesFormPage = () => {
                       </div>
 
                       <div className="sm:w-48">
-                        <FieldLabel>Billing period</FieldLabel>
+                        <FieldLabel>{L.billingPeriod}</FieldLabel>
                         <select
                           value={formData.priceUnit}
                           onChange={(e) => setField('priceUnit', e.target.value)}
                         >
-                          <option value="day">Per day</option>
-                          <option value="month">Per month</option>
+                          <option value="day">{L.perDay}</option>
+                          <option value="month">{L.perMonth}</option>
                         </select>
-                        <p className="mt-1 text-xs text-gray-500">
-                          Stored as daily price (backend-compatible).
-                        </p>
+                        <p className="mt-1 text-xs text-gray-500">{L.billingHint}</p>
                       </div>
                     </div>
 
@@ -881,7 +1235,7 @@ const PlacesFormPage = () => {
                         onChange={() => toggleCheckbox('negotiablePrice')}
                       />
                       <label htmlFor="negotiablePrice" className="text-sm font-medium text-gray-800">
-                        Price is negotiable
+                        {L.negotiable}
                       </label>
                     </div>
                   </div>
@@ -891,13 +1245,10 @@ const PlacesFormPage = () => {
 
             {/* 3) LOCATION */}
             {activeStep === 'location' && (
-              <SectionCard
-                title="Location"
-                subtitle="Pin your location on the map and confirm address details."
-              >
+              <SectionCard title={L.stepLocation} subtitle={L.locationSubtitle}>
                 <div className="grid gap-5">
                   <div>
-                    <FieldLabel>Map location</FieldLabel>
+                    <FieldLabel>{L.mapLocation}</FieldLabel>
                     <LocationPicker
                       gpsValue={formData.gps}
                       addressValue={formData.address}
@@ -912,40 +1263,38 @@ const PlacesFormPage = () => {
                   </div>
 
                   <div>
-                    <FieldLabel>Address</FieldLabel>
+                    <FieldLabel>{L.address}</FieldLabel>
                     <input
                       type="text"
                       value={formData.address}
                       onChange={(e) => setField('address', e.target.value)}
-                      placeholder="Address will update from the map, but you can edit it."
+                      placeholder={L.addressPh}
                       required
                     />
                     <FieldError errors={errors} name="address" />
-                    <p className="mt-1 text-xs text-gray-500">
-                      If you edit the address manually, ensure it matches the pinned location.
-                    </p>
+                    <p className="mt-1 text-xs text-gray-500">{L.addressHint}</p>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <FieldLabel>City</FieldLabel>
+                      <FieldLabel>{L.city}</FieldLabel>
                       <input
                         type="text"
                         value={formData.city}
                         onChange={(e) => setField('city', e.target.value)}
-                        placeholder="e.g. Amman"
+                        placeholder={L.cityPh}
                         required
                       />
                       <FieldError errors={errors} name="city" />
                     </div>
 
                     <div>
-                      <FieldLabel>Country</FieldLabel>
+                      <FieldLabel>{L.country}</FieldLabel>
                       <input
                         type="text"
                         value={formData.zone}
                         onChange={(e) => setField('zone', e.target.value)}
-                        placeholder="e.g. Jordan"
+                        placeholder={L.countryPh}
                         required
                       />
                       <FieldError errors={errors} name="zone" />
@@ -957,10 +1306,7 @@ const PlacesFormPage = () => {
 
             {/* 4) FACILITIES */}
             {activeStep === 'facilities' && (
-              <SectionCard
-                title="Facilities"
-                subtitle="Select the facilities available at your warehouse."
-              >
+              <SectionCard title={L.stepFacilities} subtitle={L.facilitiesSubtitle}>
                 <div className="grid gap-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     {FACILITIES.map((f) => {
@@ -975,11 +1321,9 @@ const PlacesFormPage = () => {
                           }`}
                         >
                           <div>
-                            <p className="text-sm font-semibold text-gray-900">{f.label}</p>
+                            <p className="text-sm font-semibold text-gray-900">{L[f.labelKey]}</p>
                             <p className="mt-1 text-xs text-gray-500">
-                              {f.key === 'temperatureControl'
-                                ? 'Cold storage / climate control features.'
-                                : 'Visible on your listing for renters.'}
+                              {f.key === 'temperatureControl' ? L.facTempHint : L.facDefaultHint}
                             </p>
                           </div>
                           <span
@@ -993,10 +1337,8 @@ const PlacesFormPage = () => {
                   </div>
 
                   <div className="rounded-2xl border bg-gray-50 p-4">
-                    <p className="text-sm font-medium text-gray-800">Optional notes</p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      You can add details about access procedures, dock scheduling, or temperature ranges in Rules.
-                    </p>
+                    <p className="text-sm font-medium text-gray-800">{L.optionalNotes}</p>
+                    <p className="mt-1 text-xs text-gray-500">{L.optionalNotesHint}</p>
                   </div>
                 </div>
               </SectionCard>
@@ -1004,10 +1346,7 @@ const PlacesFormPage = () => {
 
             {/* 5) SERVICES OFFERED */}
             {activeStep === 'services' && (
-              <SectionCard
-                title="Services Offered"
-                subtitle="Select services you can provide as add-ons."
-              >
+              <SectionCard title={L.stepServices} subtitle={L.servicesSubtitle}>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {SERVICES_OFFERED.map((s) => {
                     const checked = !!servicesState[s.key];
@@ -1021,13 +1360,13 @@ const PlacesFormPage = () => {
                         }`}
                       >
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{s.label}</p>
+                          <p className="text-sm font-semibold text-gray-900">{L[s.labelKey]}</p>
                           <p className="mt-1 text-xs text-gray-500">
                             {s.key === 'delivery'
-                              ? 'Transport / local delivery options.'
+                              ? L.svcDeliveryHint
                               : s.key === 'packing'
-                                ? 'Picking, packing, labeling, and packaging.'
-                                : 'Insurance availability for stored goods.'}
+                                ? L.svcPackingHint
+                                : L.svcInsuranceHint}
                           </p>
                         </div>
                         <span
@@ -1044,14 +1383,11 @@ const PlacesFormPage = () => {
 
             {/* 6) AVAILABILITY & RULES */}
             {activeStep === 'availability' && (
-              <SectionCard
-                title="Availability & Rules"
-                subtitle="Set availability start date and basic warehouse rules."
-              >
+              <SectionCard title={L.stepAvailability} subtitle={L.availabilitySubtitle}>
                 <div className="grid gap-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <FieldLabel>Available from</FieldLabel>
+                      <FieldLabel>{L.availableFrom}</FieldLabel>
                       <input
                         type="date"
                         value={formData.checkIn}
@@ -1062,22 +1398,22 @@ const PlacesFormPage = () => {
                     </div>
 
                     <div>
-                      <FieldLabel>Available until (optional)</FieldLabel>
+                      <FieldLabel>{L.availableUntil}</FieldLabel>
                       <input
                         type="date"
                         value={formData.checkOut}
                         onChange={(e) => setField('checkOut', e.target.value)}
                       />
-                      <p className="mt-1 text-xs text-gray-500">Leave empty if always available.</p>
+                      <p className="mt-1 text-xs text-gray-500">{L.availableUntilHint}</p>
                     </div>
                   </div>
 
                   <div>
-                    <FieldLabel>Basic warehouse rules</FieldLabel>
+                    <FieldLabel>{L.basicRules}</FieldLabel>
                     <textarea
                       value={formData.extraInfo}
                       onChange={(e) => setField('extraInfo', e.target.value)}
-                      placeholder="e.g. No hazardous materials. Access hours. Booking lead time. Pallet labeling requirements."
+                      placeholder={L.basicRulesPh}
                       className="min-h-[140px]"
                       required
                     />
@@ -1086,34 +1422,34 @@ const PlacesFormPage = () => {
 
                   <details className="rounded-2xl border bg-white p-4">
                     <summary className="cursor-pointer text-sm font-semibold text-gray-900">
-                      Advanced (optional) legacy fields
+                      {L.advancedLegacy}
                     </summary>
                     <div className="mt-4 grid gap-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <FieldLabel>Min booking days (optional)</FieldLabel>
+                          <FieldLabel>{L.minBookingDays}</FieldLabel>
                           <input
                             type="number"
                             value={formData.minBookingDays}
                             onChange={(e) => setField('minBookingDays', e.target.value)}
                             min="0"
-                            placeholder="e.g. 3"
+                            placeholder={L.ph3}
                           />
                         </div>
                         <div>
-                          <FieldLabel>Max booking days (optional)</FieldLabel>
+                          <FieldLabel>{L.maxBookingDays}</FieldLabel>
                           <input
                             type="number"
                             value={formData.maxBookingDays}
                             onChange={(e) => setField('maxBookingDays', e.target.value)}
                             min="0"
-                            placeholder="e.g. 30"
+                            placeholder={L.ph30}
                           />
                         </div>
                       </div>
 
                       <div>
-                        <FieldLabel>Legacy perks (optional)</FieldLabel>
+                        <FieldLabel>{L.legacyPerks}</FieldLabel>
                         <Perks
                           selected={Array.isArray(formData.perks) ? formData.perks : []}
                           handleFormData={(e) => {
@@ -1143,14 +1479,14 @@ const PlacesFormPage = () => {
             {/* 7) IMAGES */}
             {activeStep === 'images' && (
               <SectionCard
-                title="Images"
-                subtitle={`Upload and preview warehouse photos. At least ${MIN_PHOTOS_REQUIRED} images are required.`}
+                title={L.stepImages}
+                subtitle={L.imagesSubtitle(MIN_PHOTOS_REQUIRED)}
               >
                 <div>
                   <PhotosUploader addedPhotos={addedPhotos} setAddedPhotos={setAddedPhotos} />
                   <FieldError errors={errors} name="addedPhotos" />
                   <p className="mt-2 text-xs text-gray-500">
-                    Minimum: {MIN_PHOTOS_REQUIRED} images. Recommended: 5+ (exterior, interior, access points).
+                    {L.imagesHint(MIN_PHOTOS_REQUIRED)}
                   </p>
                 </div>
               </SectionCard>
@@ -1158,55 +1494,60 @@ const PlacesFormPage = () => {
 
             {/* 8) REVIEW & PUBLISH */}
             {activeStep === 'review' && (
-              <SectionCard
-                title="Review & Publish"
-                subtitle="Double-check your listing details before publishing."
-              >
+              <SectionCard title={L.stepReview} subtitle={L.reviewSubtitle}>
                 <div className="grid gap-5">
                   <div className="rounded-2xl border bg-white">
                     <div className="px-5 py-4">
-                      <h3 className="text-base font-semibold text-gray-900">Summary</h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        This is what renters will see on your listing.
-                      </p>
+                      <h3 className="text-base font-semibold text-gray-900">{L.summary}</h3>
+                      <p className="mt-1 text-sm text-gray-500">{L.summaryHint}</p>
                     </div>
                     <div className="px-5 pb-2">
-                      <SummaryRow label="Warehouse name" value={normalizeString(formData.title)} />
+                      <SummaryRow label={L.warehouseName} value={normalizeString(formData.title)} />
                       <SummaryRow
-                        label="Warehouse type"
+                        label={L.warehouseType}
                         value={
                           Array.isArray(formData.warehouseType) && formData.warehouseType.length
-                            ? formData.warehouseType.join(', ')
+                            ? formData.warehouseType
+                                .map((t) => {
+                                  const opt = WAREHOUSE_TYPES.find((o) => o.value === t);
+                                  return opt ? L[opt.labelKey] : t;
+                                })
+                                .join(', ')
                             : ''
                         }
                       />
-                      <SummaryRow label="Short description" value={normalizeString(formData.description)} />
                       <SummaryRow
-                        label="Capacity"
+                        label={L.shortDescription}
+                        value={normalizeString(formData.description)}
+                      />
+                      <SummaryRow
+                        label={L.sumCapacity}
                         value={[
-                          isFiniteNumber(formData.totalArea) ? `${Number(formData.totalArea)} m²` : '',
+                          isFiniteNumber(formData.totalArea)
+                            ? `${Number(formData.totalArea)} ${L.unitM2}`
+                            : '',
                           isFiniteNumber(formData.availableArea)
-                            ? `${Number(formData.availableArea)} m² available`
+                            ? `${Number(formData.availableArea)} ${L.unitM2} ${L.availableSuffix}`
                             : '',
                           isFiniteNumber(formData.palletCapacity)
-                            ? `${Number(formData.palletCapacity)} pallets`
+                            ? `${Number(formData.palletCapacity)} ${L.palletsWord}`
                             : '',
                         ]
                           .filter(Boolean)
                           .join(' • ')}
                       />
                       <SummaryRow
-                        label="Pricing"
+                        label={L.sumPricing}
                         value={
                           isFiniteNumber(formData.pricePerDay)
-                            ? `${Number(formData.pricePerDay)} / day${
-                                formData.negotiablePrice ? ' (negotiable)' : ''
+                            ? `${Number(formData.pricePerDay)} ${L.perDayShort}${
+                                formData.negotiablePrice ? ` ${L.negotiableShort}` : ''
                               }`
                             : ''
                         }
                       />
                       <SummaryRow
-                        label="Location"
+                        label={L.sumLocation}
                         value={[
                           normalizeString(formData.address),
                           normalizeString(formData.city),
@@ -1216,62 +1557,71 @@ const PlacesFormPage = () => {
                           .join(' • ')}
                       />
                       <SummaryRow
-                        label="Facilities"
+                        label={L.sumFacilities}
                         value={FACILITIES.filter((f) => !!facilityState[f.key])
-                          .map((f) => f.label)
+                          .map((f) => L[f.labelKey])
                           .join(', ')}
                       />
                       <SummaryRow
-                        label="Services offered"
+                        label={L.sumServices}
                         value={SERVICES_OFFERED.filter((s) => !!servicesState[s.key])
-                          .map((s) => s.label)
+                          .map((s) => L[s.labelKey])
                           .join(', ')}
                       />
                       <SummaryRow
-                        label="Available from"
+                        label={L.availableFrom}
                         value={normalizeString(formData.checkIn)}
                       />
                       <SummaryRow
-                        label="Rules"
+                        label={L.sumRules}
                         value={normalizeString(formData.extraInfo)}
                       />
                       <SummaryRow
-                        label="Images"
-                        value={Array.isArray(addedPhotos) ? `${addedPhotos.length} uploaded` : '0 uploaded'}
+                        label={L.sumImages}
+                        value={
+                          Array.isArray(addedPhotos)
+                            ? `${addedPhotos.length} ${L.uploadedWord}`
+                            : `0 ${L.uploadedWord}`
+                        }
                       />
                     </div>
                   </div>
 
                   {/* Inline validation callouts */}
                   <div className="rounded-2xl border bg-gray-50 p-4">
-                    <p className="text-sm font-semibold text-gray-900">Final checks</p>
+                    <p className="text-sm font-semibold text-gray-900">{L.finalChecks}</p>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
                       <li className={errors.title ? 'text-red-700' : ''}>
-                        Warehouse name {errors.title ? `— ${errors.title}` : '— OK'}
+                        {L.chkName} {errors.title ? `— ${errors.title}` : `— ${L.checkOk}`}
                       </li>
                       <li className={errors.warehouseType ? 'text-red-700' : ''}>
-                        Warehouse type {errors.warehouseType ? `— ${errors.warehouseType}` : '— OK'}
+                        {L.chkType}{' '}
+                        {errors.warehouseType ? `— ${errors.warehouseType}` : `— ${L.checkOk}`}
                       </li>
                       <li className={errors.description ? 'text-red-700' : ''}>
-                        Description {errors.description ? `— ${errors.description}` : '— OK'}
+                        {L.chkDescription}{' '}
+                        {errors.description ? `— ${errors.description}` : `— ${L.checkOk}`}
                       </li>
                       <li className={errors.pricePerDay ? 'text-red-700' : ''}>
-                        Price {errors.pricePerDay ? `— ${errors.pricePerDay}` : '— OK'}
+                        {L.chkPrice}{' '}
+                        {errors.pricePerDay ? `— ${errors.pricePerDay}` : `— ${L.checkOk}`}
                       </li>
                       <li className={errors.gps || errors.address || errors.city || errors.zone ? 'text-red-700' : ''}>
-                        Location{' '}
+                        {L.chkLocation}{' '}
                         {errors.gps || errors.address || errors.city || errors.zone
                           ? `— ${errors.gps || errors.address || errors.city || errors.zone}`
-                          : '— OK'}
+                          : `— ${L.checkOk}`}
                       </li>
                       <li className={errors.checkIn ? 'text-red-700' : ''}>
-                        Availability {errors.checkIn ? `— ${errors.checkIn}` : '— OK'}
+                        {L.chkAvailability}{' '}
+                        {errors.checkIn ? `— ${errors.checkIn}` : `— ${L.checkOk}`}
                       </li>
                       <li className={errors.extraInfo ? 'text-red-700' : ''}>
-                        Rules {errors.extraInfo ? `— ${errors.extraInfo}` : '— OK'}
+                        {L.chkRules} {errors.extraInfo ? `— ${errors.extraInfo}` : `— ${L.checkOk}`}
                       </li>
                       <li className={errors.addedPhotos ? 'text-red-700' : ''}>
-                        Images {errors.addedPhotos ? `— ${errors.addedPhotos}` : '— OK'}
+                        {L.chkImages}{' '}
+                        {errors.addedPhotos ? `— ${errors.addedPhotos}` : `— ${L.checkOk}`}
                       </li>
                     </ul>
                   </div>
@@ -1284,53 +1634,54 @@ const PlacesFormPage = () => {
               onBack={goBack}
               onNext={goNext}
               showPublish={activeStep === 'review'}
+              L={L}
             />
           </div>
 
           {/* SIDE PANEL */}
           <div className="space-y-6">
             <div className="rounded-2xl border bg-white p-5 shadow-sm">
-              <h3 className="text-base font-semibold text-gray-900">Listing quality</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Completing these increases renter trust and reduces booking issues.
-              </p>
+              <h3 className="text-base font-semibold text-gray-900">{L.listingQuality}</h3>
+              <p className="mt-1 text-sm text-gray-500">{L.listingQualityHint}</p>
 
               <div className="mt-4 space-y-3 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">Name + type</span>
+                  <span className="text-gray-700">{L.qualityNameType}</span>
                   <span className="font-semibold text-gray-900">
                     {normalizeString(formData.title) &&
                     Array.isArray(formData.warehouseType) &&
                     formData.warehouseType.length
-                      ? 'Done'
-                      : 'Pending'}
+                      ? L.done
+                      : L.pending}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">Capacity + price</span>
+                  <span className="text-gray-700">{L.qualityCapacityPrice}</span>
                   <span className="font-semibold text-gray-900">
                     {(isFiniteNumber(formData.totalArea) ||
                       isFiniteNumber(formData.palletCapacity)) &&
                     isFiniteNumber(formData.pricePerDay)
-                      ? 'Done'
-                      : 'Pending'}
+                      ? L.done
+                      : L.pending}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">Map + address</span>
+                  <span className="text-gray-700">{L.qualityMapAddress}</span>
                   <span className="font-semibold text-gray-900">
-                    {parseGpsFlexible(formData.gps) && normalizeString(formData.address) ? 'Done' : 'Pending'}
+                    {parseGpsFlexible(formData.gps) && normalizeString(formData.address)
+                      ? L.done
+                      : L.pending}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">Images</span>
+                  <span className="text-gray-700">{L.qualityImages}</span>
                   <span className="font-semibold text-gray-900">
                     {Array.isArray(addedPhotos) && addedPhotos.length >= MIN_PHOTOS_REQUIRED
-                      ? 'Done'
-                      : 'Pending'}
+                      ? L.done
+                      : L.pending}
                   </span>
                 </div>
               </div>

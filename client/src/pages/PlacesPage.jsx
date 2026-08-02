@@ -9,9 +9,40 @@ import Spinner from '@/components/ui/Spinner';
 import { usePageTitle } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
+const STR = {
+  EN: {
+    loadFailed: 'Failed to load your warehouses.',
+    statusFailed: 'Could not update status. Please try again.',
+    deleteFailed: 'Could not delete listing. Please try again.',
+    confirmDelete: (name) => `Are you sure you want to delete “${name}”?`,
+    thisListing: 'this listing',
+    emptyTitle: 'You don’t have any warehouses listed yet.',
+    emptySub:
+      'Create your first listing and start monetizing your spare warehouse space.',
+    createListing: 'Create a listing',
+    warehouse: 'Warehouse',
+    available: 'available',
+    perDay: '/ day',
+  },
+  AR: {
+    loadFailed: 'تعذّر تحميل مستودعاتك.',
+    statusFailed: 'تعذّر تحديث الحالة. يرجى المحاولة مرة أخرى.',
+    deleteFailed: 'تعذّر حذف الإعلان. يرجى المحاولة مرة أخرى.',
+    confirmDelete: (name) => `هل أنت متأكد أنك تريد حذف "${name}"؟`,
+    thisListing: 'هذا الإعلان',
+    emptyTitle: 'ليس لديك أي مستودعات معروضة بعد.',
+    emptySub: 'أنشئ إعلانك الأول وابدأ في تحقيق دخل من مساحتك التخزينية الفائضة.',
+    createListing: 'أنشئ إعلانًا',
+    warehouse: 'مستودع',
+    available: 'متاحة',
+    perDay: '/ يوم',
+  },
+};
+
 const PlacesPage = () => {
   usePageTitle('Your warehouses');
-  const { t } = usePrefs();
+  const { t, lang, formatPrice } = usePrefs();
+  const L = STR[lang] || STR.EN;
 
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +54,7 @@ const PlacesPage = () => {
         const { data } = await axiosInstance.get('/places/user-places');
         setPlaces(data || []);
       } catch (error) {
-        toast.error('Failed to load your warehouses.');
+        toast.error(L.loadFailed);
       } finally {
         setLoading(false);
       }
@@ -49,8 +80,7 @@ const PlacesPage = () => {
       );
     } catch (err) {
       toast.error(
-        err?.response?.data?.message ||
-          'Could not update status. Please try again.'
+        err?.response?.data?.message || L.statusFailed
       );
     } finally {
       setActionLoadingId(null);
@@ -59,7 +89,7 @@ const PlacesPage = () => {
 
   const handleDelete = async (place) => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete “${place.title || 'this listing'}”?`
+      L.confirmDelete(place.title || L.thisListing)
     );
     if (!confirmed) return;
 
@@ -70,8 +100,7 @@ const PlacesPage = () => {
       setPlaces((prev) => prev.filter((p) => p._id !== place._id));
     } catch (err) {
       toast.error(
-        err?.response?.data?.message ||
-          'Could not delete listing. Please try again.'
+        err?.response?.data?.message || L.deleteFailed
       );
     } finally {
       setActionLoadingId(null);
@@ -123,16 +152,16 @@ const PlacesPage = () => {
         {places.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center">
             <p className="mb-2 text-sm font-medium text-gray-800">
-              You don’t have any warehouses listed yet.
+              {L.emptyTitle}
             </p>
             <p className="mb-4 text-xs text-gray-500">
-              Create your first listing and start monetizing your spare warehouse space.
+              {L.emptySub}
             </p>
             <Link
               to="/account/places/new"
               className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              Create a listing
+              {L.createListing}
             </Link>
           </div>
         ) : (
@@ -167,7 +196,7 @@ const PlacesPage = () => {
                           to={`/place/${place._id}`}
                           className="text-sm font-semibold text-gray-900 hover:underline line-clamp-2"
                         >
-                          {place.title || 'Warehouse'}
+                          {place.title || L.warehouse}
                         </Link>
                         <div className="mt-0.5 text-[11px] text-gray-500">
                           {place.city && <span>{place.city}</span>}
@@ -195,15 +224,15 @@ const PlacesPage = () => {
                           <strong className="font-semibold text-gray-800">
                             {place.availableArea} m²
                           </strong>{' '}
-                          available
+                          {L.available}
                         </span>
                       )}
                       {typeof place.pricePerDay === 'number' && (
                         <span>
                           <strong className="font-semibold text-gray-800">
-                            JOD {place.pricePerDay}
+                            {formatPrice(place.pricePerDay)}
                           </strong>{' '}
-                          / day
+                          {L.perDay}
                         </span>
                       )}
                     </div>
@@ -255,7 +284,7 @@ const PlacesPage = () => {
                           isBusy ? 'opacity-60 cursor-not-allowed' : ''
                         }`}
                       >
-                        Delete
+                        {t('common.delete')}
                       </button>
                     </div>
                   </div>

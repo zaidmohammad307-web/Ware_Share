@@ -2,8 +2,23 @@ import React from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import AccountNav from '../components/ui/AccountNav';
 import ChatBox from '../components/ui/ChatBox';
+import { usePrefs } from '@/providers/PreferencesProvider';
+
+const STR = {
+  EN: {
+    headerTitle: 'Place chat',
+    headerSubtitle: 'Chat with the other party before booking.',
+  },
+  AR: {
+    headerTitle: 'محادثة المستودع',
+    headerSubtitle: 'تحدّث مع الطرف الآخر قبل الحجز.',
+  },
+};
 
 const PlaceChatPage = () => {
+  const { lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
+
   const { placeId } = useParams();
   const [sp] = useSearchParams();
   const renterId = sp.get('renterId');
@@ -16,8 +31,8 @@ const PlaceChatPage = () => {
           mode="place"
           placeId={placeId}
           renterId={renterId && renterId !== 'undefined' ? renterId : null}
-          headerTitle="Place chat"
-          headerSubtitle="Chat with the other party before booking."
+          headerTitle={L.headerTitle}
+          headerSubtitle={L.headerSubtitle}
         />
       </div>
     </div>

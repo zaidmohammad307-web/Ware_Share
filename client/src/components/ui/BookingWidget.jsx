@@ -51,6 +51,162 @@ const CITY_GROUP_MAP = {
   aqaba: 'south',
 };
 
+// ---- Local bilingual strings (display only) ----
+const STR = {
+  EN: {
+    daysTotal: (d) => `${d} days · Total:`,
+    selectDates: 'Select dates',
+
+    // Insurance
+    addInsurance: 'Add insurance',
+    declaredValue: 'Declared value (JOD)',
+    declaredHint: (min, max, force) =>
+      `Min: ${min} · Max: ${max} · If value > ${force}, tier is forced to high.`,
+    tier: 'Tier',
+    tierStandard: 'Standard',
+    tierHigh: 'High value',
+    tierForcedNote: 'Tier is forced to high due to declared value.',
+    insurancePreview: 'Insurance preview',
+    fee: 'Fee:',
+
+    // Packing
+    addPacking: 'Add packing',
+    packingType: 'Packing type',
+    packingBasic: 'Basic',
+    packingStandard: 'Standard',
+    packingFragile: 'Fragile',
+    unitsType: 'Units type',
+    unitsBoxes: 'Boxes',
+    unitsPallets: 'Pallets',
+    unitsCount: 'Units count',
+
+    // Delivery
+    addDelivery: 'Add delivery',
+    deliveryType: 'Delivery type',
+    pickupToWarehouse: 'Pickup → Warehouse',
+    warehouseToDropoff: 'Warehouse → Drop-off',
+    roundTrip: 'Round trip',
+    noCityWarning:
+      'This warehouse has no city set, so delivery may not be available.',
+    pickupCity: 'Pickup city',
+    pickupCityPlaceholder: 'e.g., Amman',
+    dropoffCity: 'Drop-off city',
+    dropoffCityPlaceholder: 'e.g., Zarqa',
+    pickupAddress: 'Pickup address (optional)',
+    dropoffAddress: 'Drop-off address (optional)',
+    addressPlaceholder: 'Street, building, landmarks...',
+    timeWindow: 'Time window',
+    morning: 'Morning',
+    afternoon: 'Afternoon',
+    evening: 'Evening',
+
+    // Summary
+    basePrice: 'Base booking price',
+    insuranceFee: 'Insurance fee',
+    packingFee: 'Packing fee',
+    deliveryFee: 'Delivery fee',
+    total: 'Total',
+    requestWarehouse: 'Request this warehouse',
+
+    // Toasts
+    errDates: 'Please select valid dates',
+    errUnits: "Units can't be less than 1",
+    errName: "Name can't be empty",
+    errPhone: "Phone can't be empty",
+    errDeclaredNumber: 'Declared value must be a number',
+    errDeclaredRange: (min, max) =>
+      `Declared value must be between ${min} and ${max}`,
+    errTier: 'Please select a valid insurance tier',
+    errPackingType: 'Please select a valid packing type',
+    errUnitsType: 'Please select a valid packing units type',
+    errUnitsCount: 'Packing units count must be greater than 0',
+    errDeliveryNoCity:
+      'Delivery is not available because this warehouse has no city set.',
+    errDeliveryType: 'Please select a valid delivery type',
+    errPickupCity: 'Pickup city is required',
+    errDropoffCity: 'Drop-off city is required',
+    errBothCities: 'Pickup and drop-off cities are required',
+    successSent: 'Request sent to the warehouse owner.',
+    errSendFailed: 'Failed to send booking request.',
+  },
+
+  AR: {
+    daysTotal: (d) => `${d} يوم · الإجمالي:`,
+    selectDates: 'اختر التواريخ',
+
+    // Insurance
+    addInsurance: 'إضافة تأمين',
+    declaredValue: 'القيمة المصرّح بها (دينار أردني)',
+    declaredHint: (min, max, force) =>
+      `الحد الأدنى: ${min} · الحد الأقصى: ${max} · إذا تجاوزت القيمة ${force} يتم اعتماد الفئة المرتفعة إلزاميًا.`,
+    tier: 'فئة التغطية',
+    tierStandard: 'قياسية',
+    tierHigh: 'قيمة مرتفعة',
+    tierForcedNote: 'تم اعتماد الفئة المرتفعة بسبب القيمة المصرّح بها.',
+    insurancePreview: 'معاينة التأمين',
+    fee: 'الرسوم:',
+
+    // Packing
+    addPacking: 'إضافة تغليف',
+    packingType: 'نوع التغليف',
+    packingBasic: 'أساسي',
+    packingStandard: 'قياسي',
+    packingFragile: 'للبضائع القابلة للكسر',
+    unitsType: 'نوع الوحدات',
+    unitsBoxes: 'صناديق',
+    unitsPallets: 'منصات',
+    unitsCount: 'عدد الوحدات',
+
+    // Delivery
+    addDelivery: 'إضافة توصيل',
+    deliveryType: 'نوع التوصيل',
+    pickupToWarehouse: 'من نقطة الاستلام ← المستودع',
+    warehouseToDropoff: 'من المستودع ← نقطة التسليم',
+    roundTrip: 'ذهاب وإياب',
+    noCityWarning:
+      'لم يتم تحديد مدينة لهذا المستودع، لذا قد لا يكون التوصيل متاحًا.',
+    pickupCity: 'مدينة الاستلام',
+    pickupCityPlaceholder: 'مثال: عمّان',
+    dropoffCity: 'مدينة التسليم',
+    dropoffCityPlaceholder: 'مثال: الزرقاء',
+    pickupAddress: 'عنوان الاستلام (اختياري)',
+    dropoffAddress: 'عنوان التسليم (اختياري)',
+    addressPlaceholder: 'الشارع، المبنى، أقرب معلم...',
+    timeWindow: 'الفترة الزمنية',
+    morning: 'صباحًا',
+    afternoon: 'بعد الظهر',
+    evening: 'مساءً',
+
+    // Summary
+    basePrice: 'سعر الحجز الأساسي',
+    insuranceFee: 'رسوم التأمين',
+    packingFee: 'رسوم التغليف',
+    deliveryFee: 'رسوم التوصيل',
+    total: 'الإجمالي',
+    requestWarehouse: 'اطلب هذا المستودع',
+
+    // Toasts
+    errDates: 'يرجى اختيار تواريخ صحيحة',
+    errUnits: 'لا يمكن أن يقل عدد الوحدات عن 1',
+    errName: 'الاسم مطلوب',
+    errPhone: 'رقم الهاتف مطلوب',
+    errDeclaredNumber: 'يجب أن تكون القيمة المصرّح بها رقمًا',
+    errDeclaredRange: (min, max) =>
+      `يجب أن تكون القيمة المصرّح بها بين ${min} و ${max}`,
+    errTier: 'يرجى اختيار فئة تأمين صحيحة',
+    errPackingType: 'يرجى اختيار نوع تغليف صحيح',
+    errUnitsType: 'يرجى اختيار نوع وحدات تغليف صحيح',
+    errUnitsCount: 'يجب أن يكون عدد وحدات التغليف أكبر من 0',
+    errDeliveryNoCity: 'التوصيل غير متاح لأن هذا المستودع بدون مدينة محددة.',
+    errDeliveryType: 'يرجى اختيار نوع توصيل صحيح',
+    errPickupCity: 'مدينة الاستلام مطلوبة',
+    errDropoffCity: 'مدينة التسليم مطلوبة',
+    errBothCities: 'مدينتا الاستلام والتسليم مطلوبتان',
+    successSent: 'تم إرسال الطلب إلى مالك المستودع.',
+    errSendFailed: 'تعذّر إرسال طلب الحجز.',
+  },
+};
+
 const normalizeCity = (city) => String(city || '').trim().toLowerCase();
 const roundTo2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
@@ -113,7 +269,8 @@ const BookingWidget = ({ place }) => {
   const [redirect, setRedirect] = useState('');
 
   const { user } = useAuth();
-  const { t } = usePrefs();
+  const { t, lang, formatPrice } = usePrefs();
+  const L = STR[lang] || STR.EN;
   const { noOfGuests, name, phone } = bookingData;
   const { _id: id, pricePerDay, price, availableArea } = place;
 
@@ -279,13 +436,13 @@ const BookingWidget = ({ place }) => {
     }
 
     if (daysPreview < 1) {
-      return toast.error('Please select valid dates');
+      return toast.error(L.errDates);
     } else if (noOfGuests < 1) {
-      return toast.error("Units can't be less than 1");
+      return toast.error(L.errUnits);
     } else if (name.trim() === '') {
-      return toast.error("Name can't be empty");
+      return toast.error(L.errName);
     } else if (phone.trim() === '') {
-      return toast.error("Phone can't be empty");
+      return toast.error(L.errPhone);
     }
 
     // Insurance client-side validation (preview only)
@@ -295,59 +452,57 @@ const BookingWidget = ({ place }) => {
       const MAX = Number(insuranceConstants.MAX_DECLARED_VALUE);
 
       if (!Number.isFinite(dv)) {
-        return toast.error('Declared value must be a number');
+        return toast.error(L.errDeclaredNumber);
       }
       if (dv < MIN || dv > MAX) {
-        return toast.error(`Declared value must be between ${MIN} and ${MAX}`);
+        return toast.error(L.errDeclaredRange(MIN, MAX));
       }
       if (!['standard', 'high'].includes(insurance.insuranceTier)) {
-        return toast.error('Please select a valid insurance tier');
+        return toast.error(L.errTier);
       }
     }
 
     // Packing client-side validation (preview only)
     if (packing.packingSelected) {
       if (!['basic', 'standard', 'fragile'].includes(packing.packingType)) {
-        return toast.error('Please select a valid packing type');
+        return toast.error(L.errPackingType);
       }
       if (!['boxes', 'pallets'].includes(packing.packingUnitsType)) {
-        return toast.error('Please select a valid packing units type');
+        return toast.error(L.errUnitsType);
       }
       const count = Number(packing.packingUnitsCount);
       if (!Number.isFinite(count) || count <= 0) {
-        return toast.error('Packing units count must be greater than 0');
+        return toast.error(L.errUnitsCount);
       }
     }
 
     // Delivery client-side validation (preview only)
     if (delivery.deliverySelected) {
       if (!place?.city) {
-        return toast.error(
-          'Delivery is not available because this warehouse has no city set.'
-        );
+        return toast.error(L.errDeliveryNoCity);
       }
       if (
         !['pickup_to_warehouse', 'warehouse_to_dropoff', 'round_trip'].includes(
           delivery.deliveryType
         )
       ) {
-        return toast.error('Please select a valid delivery type');
+        return toast.error(L.errDeliveryType);
       }
       if (
         delivery.deliveryType === 'pickup_to_warehouse' &&
         !delivery.pickupCity.trim()
       ) {
-        return toast.error('Pickup city is required');
+        return toast.error(L.errPickupCity);
       }
       if (
         delivery.deliveryType === 'warehouse_to_dropoff' &&
         !delivery.dropoffCity.trim()
       ) {
-        return toast.error('Drop-off city is required');
+        return toast.error(L.errDropoffCity);
       }
       if (delivery.deliveryType === 'round_trip') {
         if (!delivery.pickupCity.trim() || !delivery.dropoffCity.trim()) {
-          return toast.error('Pickup and drop-off cities are required');
+          return toast.error(L.errBothCities);
         }
       }
     }
@@ -407,11 +562,9 @@ const BookingWidget = ({ place }) => {
       const bookingId = response.data.booking._id;
 
       setRedirect(`/account/bookings/${bookingId}`);
-      toast.success('Request sent to the warehouse owner.');
+      toast.success(L.successSent);
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || 'Failed to send booking request.'
-      );
+      toast.error(error?.response?.data?.message || L.errSendFailed);
     }
   };
 
@@ -431,11 +584,11 @@ const BookingWidget = ({ place }) => {
       <div className="text-2xl font-semibold">
         {daysPreview > 0 ? (
           <>
-            {daysPreview} days · Total:{' '}
-            <span className="font-bold">JOD{totalPricePreview}</span>
+            {L.daysTotal(daysPreview)}{' '}
+            <span className="font-bold">{formatPrice(totalPricePreview)}</span>
           </>
         ) : (
-          <span className="font-bold">Select dates</span>
+          <span className="font-bold">{L.selectDates}</span>
         )}
       </div>
 
@@ -514,14 +667,14 @@ const BookingWidget = ({ place }) => {
               }))
             }
           />
-          Add insurance
+          {L.addInsurance}
         </label>
 
         {insurance.insuranceSelected && (
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700">
-                Declared value (JOD)
+                {L.declaredValue}
               </label>
               <input
                 type="number"
@@ -537,16 +690,17 @@ const BookingWidget = ({ place }) => {
                 className="mt-1 w-full rounded-md border p-2 text-sm"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Min: {insuranceConstants.MIN_DECLARED_VALUE} · Max:{' '}
-                {insuranceConstants.MAX_DECLARED_VALUE} · If value &gt;{' '}
-                {insuranceConstants.FORCE_HIGH_TIER_VALUE}, tier is forced to
-                high.
+                {L.declaredHint(
+                  insuranceConstants.MIN_DECLARED_VALUE,
+                  insuranceConstants.MAX_DECLARED_VALUE,
+                  insuranceConstants.FORCE_HIGH_TIER_VALUE
+                )}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Tier
+                {L.tier}
               </label>
               <select
                 value={insurance.insuranceTier}
@@ -559,20 +713,21 @@ const BookingWidget = ({ place }) => {
                 className="mt-1 w-full rounded-md border p-2 text-sm"
                 disabled={insuranceTierForcedPreview === 'high' && insurance.insuranceTier !== 'high'}
               >
-                <option value="standard">Standard</option>
-                <option value="high">High</option>
+                <option value="standard">{L.tierStandard}</option>
+                <option value="high">{L.tierHigh}</option>
               </select>
               {insuranceTierForcedPreview === 'high' && (
-                <p className="mt-1 text-xs text-amber-700">
-                  Tier is forced to high due to declared value.
-                </p>
+                <p className="mt-1 text-xs text-amber-700">{L.tierForcedNote}</p>
               )}
             </div>
 
             <div className="rounded-xl bg-white p-3 text-sm">
-              <div className="font-semibold">Insurance preview</div>
+              <div className="font-semibold">{L.insurancePreview}</div>
               <div className="mt-1 text-gray-600">
-                Fee: <span className="font-semibold">JOD{insuranceFeePreview}</span>
+                {L.fee}{' '}
+                <span className="font-semibold">
+                  {formatPrice(insuranceFeePreview)}
+                </span>
               </div>
             </div>
           </div>
@@ -592,14 +747,14 @@ const BookingWidget = ({ place }) => {
               }))
             }
           />
-          Add Packing
+          {L.addPacking}
         </label>
 
         {packing.packingSelected && (
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Packing type
+                {L.packingType}
               </label>
               <select
                 value={packing.packingType}
@@ -608,15 +763,15 @@ const BookingWidget = ({ place }) => {
                 }
                 className="mt-1 w-full rounded-md border p-2 text-sm"
               >
-                <option value="basic">Basic</option>
-                <option value="standard">Standard</option>
-                <option value="fragile">Fragile</option>
+                <option value="basic">{L.packingBasic}</option>
+                <option value="standard">{L.packingStandard}</option>
+                <option value="fragile">{L.packingFragile}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Units type
+                {L.unitsType}
               </label>
               <select
                 value={packing.packingUnitsType}
@@ -628,14 +783,14 @@ const BookingWidget = ({ place }) => {
                 }
                 className="mt-1 w-full rounded-md border p-2 text-sm"
               >
-                <option value="boxes">Boxes</option>
-                <option value="pallets">Pallets</option>
+                <option value="boxes">{L.unitsBoxes}</option>
+                <option value="pallets">{L.unitsPallets}</option>
               </select>
             </div>
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700">
-                Units count
+                {L.unitsCount}
               </label>
               <input
                 type="number"
@@ -667,14 +822,14 @@ const BookingWidget = ({ place }) => {
               }))
             }
           />
-          Add Delivery
+          {L.addDelivery}
         </label>
 
         {delivery.deliverySelected && (
           <div className="mt-3 grid grid-cols-1 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Delivery type
+                {L.deliveryType}
               </label>
               <select
                 value={delivery.deliveryType}
@@ -686,15 +841,12 @@ const BookingWidget = ({ place }) => {
                 }
                 className="mt-1 w-full rounded-md border p-2 text-sm"
               >
-                <option value="pickup_to_warehouse">Pickup → Warehouse</option>
-                <option value="warehouse_to_dropoff">Warehouse → Drop-off</option>
-                <option value="round_trip">Round trip</option>
+                <option value="pickup_to_warehouse">{L.pickupToWarehouse}</option>
+                <option value="warehouse_to_dropoff">{L.warehouseToDropoff}</option>
+                <option value="round_trip">{L.roundTrip}</option>
               </select>
               {!place?.city ? (
-                <p className="mt-1 text-xs text-amber-700">
-                  This warehouse has no city set, so delivery may not be
-                  available.
-                </p>
+                <p className="mt-1 text-xs text-amber-700">{L.noCityWarning}</p>
               ) : null}
             </div>
 

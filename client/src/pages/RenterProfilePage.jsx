@@ -2,6 +2,36 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axiosInstance from '@/utils/axios';
+import { usePrefs } from '@/providers/PreferencesProvider';
+
+const STR = {
+  EN: {
+    title: 'Renter profile',
+    subtitle: 'Public ratings and feedback from hosts.',
+    reviewsCount: (n) => `(${n} review${n === 1 ? '' : 's'})`,
+    id: 'ID',
+    loading: 'Loading...',
+    missingIdBefore: 'Renter id is missing in the URL. Fix your route to include an id, for example:',
+    reviewsTitle: 'Renter reviews',
+    noReviews: 'No renter reviews yet.',
+    from: 'From:',
+    host: 'Host',
+    viewWarehouse: 'View related warehouse',
+  },
+  AR: {
+    title: 'ملف المستأجر',
+    subtitle: 'التقييمات والملاحظات العامة من المضيفين.',
+    reviewsCount: (n) => `(${n} تقييم)`,
+    id: 'المعرّف',
+    loading: 'جارٍ التحميل...',
+    missingIdBefore: 'معرّف المستأجر غير موجود في الرابط. عدّل المسار ليتضمن معرّفًا، على سبيل المثال:',
+    reviewsTitle: 'تقييمات المستأجر',
+    noReviews: 'لا توجد تقييمات للمستأجر بعد.',
+    from: 'من:',
+    host: 'المضيف',
+    viewWarehouse: 'عرض المستودع المرتبط',
+  },
+};
 
 const normalizeId = (v) => {
   if (v === null || v === undefined) return null;
@@ -13,6 +43,8 @@ const normalizeId = (v) => {
 
 const RenterProfilePage = () => {
   const params = useParams();
+  const { lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
 
   // ✅ Robust: support different route param names
   // e.g. /renter/:renterId OR /renter/:id OR /renter/:userId
@@ -61,10 +93,8 @@ const RenterProfilePage = () => {
         <div className="rounded-2xl border bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-semibold">Renter profile</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Public ratings and feedback from hosts.
-              </p>
+              <h1 className="text-2xl font-semibold">{L.title}</h1>
+              <p className="mt-1 text-sm text-gray-500">{L.subtitle}</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
@@ -73,36 +103,36 @@ const RenterProfilePage = () => {
                   <span className="text-base">⭐</span>
                   <span className="font-semibold">{avgRating}</span>
                   <span className="text-gray-500">
-                    ({reviews.length} review{reviews.length === 1 ? '' : 's'})
+                    {L.reviewsCount(reviews.length)}
                   </span>
                 </div>
               )}
 
               {renterId && (
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
-                  ID: {renterId}
+                  {L.id}: {renterId}
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {loading && <p className="mt-4 text-sm text-gray-500">Loading...</p>}
+        {loading && <p className="mt-4 text-sm text-gray-500">{L.loading}</p>}
 
         {!loading && !renterId && (
           <div className="mt-6 rounded-2xl border bg-white p-4 text-sm text-red-600 shadow-sm">
-            Renter id is missing in the URL. Fix your route to include an id, for
-            example: <span className="font-semibold">/renter/:renterId</span>
+            {L.missingIdBefore}{' '}
+            <span className="font-semibold">/renter/:renterId</span>
           </div>
         )}
 
         {!loading && renterId && (
           <div className="mt-6 rounded-2xl border bg-white p-4 shadow-sm">
-            <h2 className="text-lg font-semibold">Renter reviews</h2>
+            <h2 className="text-lg font-semibold">{L.reviewsTitle}</h2>
 
             {reviews.length === 0 && (
               <div className="mt-3 rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
-                No renter reviews yet.
+                {L.noReviews}
               </div>
             )}
 
@@ -115,9 +145,9 @@ const RenterProfilePage = () => {
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-sm font-medium text-gray-900">
-                        From:{' '}
+                        {L.from}{' '}
                         <span className="font-semibold">
-                          {r.host?.name || 'Host'}
+                          {r.host?.name || L.host}
                         </span>
                       </div>
 
@@ -145,7 +175,7 @@ const RenterProfilePage = () => {
                           className="text-sm font-semibold text-primary hover:underline"
                           to={`/place/${r.place?._id || r.place}`}
                         >
-                          View related warehouse
+                          {L.viewWarehouse}
                         </Link>
                       </div>
                     )}

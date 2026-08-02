@@ -6,10 +6,30 @@ import Spinner from '@/components/ui/Spinner';
 import { useAuth } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
+const STR = {
+  EN: {
+    booking: 'Booking',
+    place: 'Place',
+    inquiryChat: 'Inquiry chat',
+    bookingChat: 'Booking chat',
+    renter: 'Renter',
+    conversation: 'Conversation',
+  },
+  AR: {
+    booking: 'حجز',
+    place: 'مستودع',
+    inquiryChat: 'محادثة استفسار',
+    bookingChat: 'محادثة حجز',
+    renter: 'المستأجر',
+    conversation: 'محادثة',
+  },
+};
+
 const ChatInboxPage = () => {
   const { user } = useAuth();
   const myId = user?._id || user?.id;
-  const { t } = usePrefs();
+  const { t, lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
 
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,15 +103,15 @@ const ChatInboxPage = () => {
           <div className="space-y-3">
             {threads.map((t, idx) => {
               const link = getThreadLink(t);
-              const title = t.place?.title || 'Conversation';
+              const title = t.place?.title || L.conversation;
               const address = t.place?.address || '';
               const lastText = t.lastMessage?.text || '';
               const when = formatWhen(t.lastMessage?.createdAt);
 
               const badge =
                 t.type === 'booking'
-                  ? { label: 'Booking', cls: 'bg-blue-50 text-blue-700' }
-                  : { label: 'Place', cls: 'bg-emerald-50 text-emerald-700' };
+                  ? { label: L.booking, cls: 'bg-blue-50 text-blue-700' }
+                  : { label: L.place, cls: 'bg-emerald-50 text-emerald-700' };
 
               const unread = t.unreadCount || 0;
 
@@ -145,17 +165,17 @@ const ChatInboxPage = () => {
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-500">
                         {t.type === 'place' && t.placeId && (
                           <span className="rounded-full bg-gray-50 px-2 py-0.5">
-                            Inquiry chat
+                            {L.inquiryChat}
                           </span>
                         )}
                         {t.type === 'booking' && t.bookingId && (
                           <span className="rounded-full bg-gray-50 px-2 py-0.5">
-                            Booking chat
+                            {L.bookingChat}
                           </span>
                         )}
                         {t.renterId && (
                           <span className="rounded-full bg-gray-50 px-2 py-0.5">
-                            Renter: {String(t.renterId).slice(0, 6)}…
+                            {L.renter}: {String(t.renterId).slice(0, 6)}…
                           </span>
                         )}
                       </div>

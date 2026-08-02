@@ -16,6 +16,150 @@ import {
 
 import axiosInstance from '@/utils/axios';
 import { useAuth } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
+
+const STR = {
+  EN: {
+    notAuthorized: 'Not authorized',
+    adminOnly: 'This page is restricted to administrators only.',
+    goToDashboard: 'Go to dashboard',
+    title: 'Admin Dashboard',
+    subtitle: 'Platform KPIs, charts, and risk flags.',
+    backToUser: 'Back to User Dashboard',
+    dateRange: 'Date range',
+    last7: 'Last 7 days',
+    last30: 'Last 30 days',
+    last90: 'Last 90 days',
+    custom: 'Custom',
+    status: 'Status',
+    all: 'All',
+    pending: 'pending',
+    approved: 'approved',
+    completed: 'completed',
+    cancelledDeclined: 'cancelled/declined',
+    search: 'Search',
+    searchPlaceholder: 'Warehouse title or booking ID',
+    refresh: 'Refresh',
+    loading: 'Loading admin dashboard…',
+    loadError: 'Failed to load admin dashboard data.',
+    loadToast: 'Failed to load admin dashboard.',
+    totalUsers: 'Total users',
+    totalWarehouses: 'Total warehouses',
+    bookingsRange: 'Bookings (range)',
+    activeBookings: 'Active bookings',
+    allTime: 'All-time',
+    dateFiltered: 'Date filtered',
+    pendingApproved: 'pending + approved',
+    completedLabel: 'Completed',
+    cancellationRate: 'Cancellation rate',
+    gmv: 'GMV',
+    excludesDeclined: 'Excludes declined',
+    insuredPct: 'Insured bookings %',
+    bookingsOverTime: 'Bookings over time',
+    countPerDay: 'Count per day',
+    gmvOverTime: 'GMV over time',
+    gmvSubtitle: 'Sum per day (excludes declined)',
+    addOnsRevenue: 'Add-ons revenue over time',
+    addOnsSubtitle: 'Insurance / Packing / Delivery (sum per day)',
+    insurance: 'Insurance',
+    packing: 'Packing',
+    delivery: 'Delivery',
+    utilization: 'Utilization',
+    utilizationSubtitle:
+      'Current + over time (proxy based on approved bookings created per day)',
+    current: 'Current:',
+    totalListedCapacity: 'Total listed capacity',
+    usedCapacity: 'Used capacity',
+    utilizationPct: 'Utilization %',
+    recentBookings: 'Recent bookings',
+    recentBookingsSubtitle: 'Renter / Owner / Status / Total / CreatedAt',
+    noBookings: 'No bookings found for the selected filters.',
+    thBooking: 'Booking',
+    thWarehouse: 'Warehouse',
+    thRenter: 'Renter',
+    thOwner: 'Owner',
+    thStatus: 'Status',
+    thTotal: 'Total',
+    thCreated: 'Created',
+    lowPerforming: 'Low-performing owners (signals)',
+    lowPerformingSubtitle: 'High cancellation rate within selected range',
+    noRiskSignals: 'No owner risk signals found for the selected range.',
+    thDeclined: 'Declined',
+    thCompleted: 'Completed',
+    thCancellationPct: 'Cancellation %',
+    owner: 'Owner',
+  },
+  AR: {
+    notAuthorized: 'غير مصرّح',
+    adminOnly: 'هذه الصفحة مخصّصة للمسؤولين فقط.',
+    goToDashboard: 'الذهاب إلى لوحة التحكم',
+    title: 'لوحة الإدارة',
+    subtitle: 'مؤشرات الأداء والرسوم البيانية وإشارات المخاطر.',
+    backToUser: 'العودة إلى لوحة المستخدم',
+    dateRange: 'النطاق الزمني',
+    last7: 'آخر 7 أيام',
+    last30: 'آخر 30 يومًا',
+    last90: 'آخر 90 يومًا',
+    custom: 'مخصّص',
+    status: 'الحالة',
+    all: 'الكل',
+    pending: 'معلّق',
+    approved: 'مقبول',
+    completed: 'مكتمل',
+    cancelledDeclined: 'ملغى/مرفوض',
+    search: 'بحث',
+    searchPlaceholder: 'اسم المستودع أو رقم الحجز',
+    refresh: 'تحديث',
+    loading: 'جارٍ تحميل لوحة الإدارة…',
+    loadError: 'تعذّر تحميل بيانات لوحة الإدارة.',
+    loadToast: 'تعذّر تحميل لوحة الإدارة.',
+    totalUsers: 'إجمالي المستخدمين',
+    totalWarehouses: 'إجمالي المستودعات',
+    bookingsRange: 'الحجوزات (ضمن النطاق)',
+    activeBookings: 'الحجوزات النشطة',
+    allTime: 'منذ البداية',
+    dateFiltered: 'مُصفّاة بالتاريخ',
+    pendingApproved: 'معلّق + مقبول',
+    completedLabel: 'مكتملة',
+    cancellationRate: 'نسبة الإلغاء',
+    gmv: 'إجمالي قيمة الحجوزات',
+    excludesDeclined: 'باستثناء المرفوضة',
+    insuredPct: 'نسبة الحجوزات المؤمّنة',
+    bookingsOverTime: 'الحجوزات عبر الزمن',
+    countPerDay: 'العدد لكل يوم',
+    gmvOverTime: 'إجمالي قيمة الحجوزات عبر الزمن',
+    gmvSubtitle: 'المجموع لكل يوم (باستثناء المرفوضة)',
+    addOnsRevenue: 'إيرادات الخدمات الإضافية عبر الزمن',
+    addOnsSubtitle: 'التأمين / التغليف / التوصيل (المجموع لكل يوم)',
+    insurance: 'التأمين',
+    packing: 'التغليف',
+    delivery: 'التوصيل',
+    utilization: 'معدل الاستغلال',
+    utilizationSubtitle:
+      'الحالي وعبر الزمن (تقدير مبني على الحجوزات المقبولة المنشأة يوميًا)',
+    current: 'الحالي:',
+    totalListedCapacity: 'إجمالي السعة المعروضة',
+    usedCapacity: 'السعة المستخدمة',
+    utilizationPct: 'نسبة الاستغلال',
+    recentBookings: 'أحدث الحجوزات',
+    recentBookingsSubtitle: 'المستأجر / المالك / الحالة / الإجمالي / تاريخ الإنشاء',
+    noBookings: 'لا توجد حجوزات مطابقة للفلاتر المحددة.',
+    thBooking: 'الحجز',
+    thWarehouse: 'المستودع',
+    thRenter: 'المستأجر',
+    thOwner: 'المالك',
+    thStatus: 'الحالة',
+    thTotal: 'الإجمالي',
+    thCreated: 'تاريخ الإنشاء',
+    lowPerforming: 'الملّاك ضعيفو الأداء (مؤشرات)',
+    lowPerformingSubtitle: 'نسبة إلغاء مرتفعة ضمن النطاق المحدد',
+    noRiskSignals: 'لا توجد مؤشرات مخاطر للملّاك ضمن النطاق المحدد.',
+    thDeclined: 'مرفوضة',
+    thCompleted: 'مكتملة',
+    thCancellationPct: 'نسبة الإلغاء',
+    owner: 'مالك',
+  },
+};
 
 const CHART_COLORS = [
   '#2563EB', // blue
@@ -93,13 +237,15 @@ function Card({ title, subtitle, right, children }) {
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
 
 function NotAuthorized() {
+  const { lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
   return (
     <div className="mt-24 rounded-2xl border bg-white p-6 text-sm text-gray-700 shadow-sm">
-      <div className="text-lg font-semibold text-gray-900">Not authorized</div>
-      <div className="mt-2">This page is restricted to administrators only.</div>
+      <div className="text-lg font-semibold text-gray-900">{L.notAuthorized}</div>
+      <div className="mt-2">{L.adminOnly}</div>
       <div className="mt-4">
         <Link className="font-semibold text-primary underline" to="/dashboard">
-          Go to dashboard
+          {L.goToDashboard}
         </Link>
       </div>
     </div>
@@ -108,6 +254,8 @@ function NotAuthorized() {
 
 const AdminDashboardPage = () => {
   const { user, loading } = useAuth();
+  const { lang, formatPrice } = usePrefs();
+  const L = STR[lang] || STR.EN;
 
   const isLoggedIn = Boolean(user);
   if (!loading && !isLoggedIn) return <Navigate to="/login" replace />;
@@ -175,8 +323,8 @@ const AdminDashboardPage = () => {
         setNotAuthorized(true);
         setError('');
       } else {
-        setError('Failed to load admin dashboard data.');
-        toast.error('Failed to load admin dashboard.');
+        setError(L.loadError);
+        toast.error(L.loadToast);
       }
       setSummary(null);
       setBookings(null);
@@ -202,11 +350,11 @@ const AdminDashboardPage = () => {
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <div className="text-sm text-gray-600">Platform KPIs, charts, and risk flags.</div>
+            <h1 className="text-3xl font-bold text-gray-900">{L.title}</h1>
+            <div className="text-sm text-gray-600">{L.subtitle}</div>
           </div>
           <Link to="/dashboard" className="font-semibold text-primary underline">
-            Back to User Dashboard
+            {L.backToUser}
           </Link>
         </div>
       </div>
@@ -214,7 +362,7 @@ const AdminDashboardPage = () => {
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <div className="mb-1 text-xs font-semibold text-gray-500">Date range</div>
+            <div className="mb-1 text-xs font-semibold text-gray-500">{L.dateRange}</div>
             <div className="flex items-center gap-2">
               <select
                 value={preset}
@@ -224,9 +372,9 @@ const AdminDashboardPage = () => {
                 }}
                 className="w-full rounded-xl border px-3 py-2 text-sm"
               >
-                <option value="7">Last 7 days</option>
-                <option value="30">Last 30 days</option>
-                <option value="90">Last 90 days</option>
+                <option value="7">{L.last7}</option>
+                <option value="30">{L.last30}</option>
+                <option value="90">{L.last90}</option>
               </select>
               <button
                 type="button"
@@ -236,7 +384,7 @@ const AdminDashboardPage = () => {
                   useCustom ? 'bg-primary text-white border-primary' : 'bg-gray-100'
                 )}
               >
-                Custom
+                {L.custom}
               </button>
             </div>
             {useCustom ? (
@@ -262,26 +410,26 @@ const AdminDashboardPage = () => {
           </div>
 
           <div>
-            <div className="mb-1 text-xs font-semibold text-gray-500">Status</div>
+            <div className="mb-1 text-xs font-semibold text-gray-500">{L.status}</div>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               className="w-full rounded-xl border px-3 py-2 text-sm"
             >
-              <option value="all">All</option>
-              <option value="pending">pending</option>
-              <option value="approved">approved</option>
-              <option value="completed">completed</option>
-              <option value="declined">cancelled/declined</option>
+              <option value="all">{L.all}</option>
+              <option value="pending">{L.pending}</option>
+              <option value="approved">{L.approved}</option>
+              <option value="completed">{L.completed}</option>
+              <option value="declined">{L.cancelledDeclined}</option>
             </select>
           </div>
 
           <div>
-            <div className="mb-1 text-xs font-semibold text-gray-500">Search</div>
+            <div className="mb-1 text-xs font-semibold text-gray-500">{L.search}</div>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Warehouse title or booking ID"
+              placeholder={L.searchPlaceholder}
               className="w-full rounded-xl border px-3 py-2 text-sm"
             />
           </div>
@@ -293,7 +441,7 @@ const AdminDashboardPage = () => {
               className="w-full rounded-xl border border-primary bg-primary px-4 py-2 text-sm font-semibold text-white"
               disabled={busy}
             >
-              Refresh
+              {L.refresh}
             </button>
           </div>
         </div>
@@ -301,28 +449,32 @@ const AdminDashboardPage = () => {
 
       {busy ? (
         <div className="rounded-2xl border bg-white p-4 text-sm text-gray-600 shadow-sm">
-          Loading admin dashboard…
+          {L.loading}
         </div>
       ) : error ? (
         <div className="rounded-2xl border bg-white p-4 text-sm text-gray-700 shadow-sm">{error}</div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPI label="Total users" value={k ? k.totalUsers : 0} sub="All-time" />
-        <KPI label="Total warehouses" value={k ? k.totalWarehouses : 0} sub="All-time" />
-        <KPI label="Bookings (range)" value={k ? k.totalBookings : 0} sub="Date filtered" />
-        <KPI label="Active bookings" value={k ? k.activeBookings : 0} sub="pending + approved" />
+        <KPI label={L.totalUsers} value={k ? k.totalUsers : 0} sub={L.allTime} />
+        <KPI label={L.totalWarehouses} value={k ? k.totalWarehouses : 0} sub={L.allTime} />
+        <KPI label={L.bookingsRange} value={k ? k.totalBookings : 0} sub={L.dateFiltered} />
+        <KPI label={L.activeBookings} value={k ? k.activeBookings : 0} sub={L.pendingApproved} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPI label="Completed" value={k ? k.completedBookings : 0} />
-        <KPI label="Cancellation rate" value={`${safeMoney(k?.cancellationRate ?? 0)}%`} />
-        <KPI label="GMV" value={`JOD ${safeMoney(k?.grossBookingValue ?? 0)}`} sub="Excludes declined" />
-        <KPI label="Insured bookings %" value={`${safeMoney(k?.insuredBookingsPercentage ?? 0)}%`} />
+        <KPI label={L.completedLabel} value={k ? k.completedBookings : 0} />
+        <KPI label={L.cancellationRate} value={`${safeMoney(k?.cancellationRate ?? 0)}%`} />
+        <KPI
+          label={L.gmv}
+          value={formatPrice(safeMoney(k?.grossBookingValue ?? 0))}
+          sub={L.excludesDeclined}
+        />
+        <KPI label={L.insuredPct} value={`${safeMoney(k?.insuredBookingsPercentage ?? 0)}%`} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Bookings over time" subtitle="Count per day">
+        <Card title={L.bookingsOverTime} subtitle={L.countPerDay}>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={summary?.charts?.bookingsOverTime || []}>
@@ -343,7 +495,7 @@ const AdminDashboardPage = () => {
           </div>
         </Card>
 
-        <Card title="GMV over time" subtitle="Sum per day (excludes declined)">
+        <Card title={L.gmvOverTime} subtitle={L.gmvSubtitle}>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={summary?.charts?.gmvOverTime || []}>
@@ -352,7 +504,7 @@ const AdminDashboardPage = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="gmv" name="GMV" fill={pickColor(0)} />
+                <Bar dataKey="gmv" name={L.gmv} fill={pickColor(0)} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -360,7 +512,7 @@ const AdminDashboardPage = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Add-ons revenue over time" subtitle="Insurance / Packing / Delivery (sum per day)">
+        <Card title={L.addOnsRevenue} subtitle={L.addOnsSubtitle}>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={summary?.charts?.addOnsRevenueOverTime || []}>

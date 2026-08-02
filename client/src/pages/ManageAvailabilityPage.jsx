@@ -18,13 +18,54 @@ import axiosInstance from '@/utils/axios';
 import AccountNav from '@/components/ui/AccountNav';
 import Spinner from '@/components/ui/Spinner';
 import { usePageTitle } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEKDAYS_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEKDAYS_AR = ['إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت', 'أحد'];
+
+const STR = {
+  EN: {
+    weekdays: WEEKDAYS_EN,
+    title: 'Availability',
+    warehouse: 'Warehouse',
+    instructions:
+      'Tap dates to block or unblock them. Blocked dates cannot be booked by renters. Days with existing bookings are locked.',
+    blockedByYou: 'Blocked by you',
+    booked: 'Booked',
+    blockedTip: 'Blocked — tap to unblock',
+    save: 'Save availability',
+    saving: 'Saving…',
+    back: '← Back to your warehouses',
+    backPlain: 'Back to your warehouses',
+    loadError: 'Failed to load availability. Please try again.',
+    saved: 'Availability saved.',
+    saveError: 'Could not save availability.',
+  },
+  AR: {
+    weekdays: WEEKDAYS_AR,
+    title: 'التوفر',
+    warehouse: 'مستودع',
+    instructions:
+      'اضغط على التواريخ لحجبها أو إلغاء حجبها. التواريخ المحجوبة لا يمكن للمستأجرين حجزها. الأيام التي تحتوي على حجوزات قائمة مقفلة.',
+    blockedByYou: 'محجوب من قِبلك',
+    booked: 'محجوز',
+    blockedTip: 'محجوب — اضغط لإلغاء الحجب',
+    save: 'حفظ التوفر',
+    saving: 'جارٍ الحفظ…',
+    back: '← العودة إلى مستودعاتك',
+    backPlain: 'العودة إلى مستودعاتك',
+    loadError: 'تعذّر تحميل التوفر. يرجى المحاولة مرة أخرى.',
+    saved: 'تم حفظ التوفر.',
+    saveError: 'تعذّر حفظ التوفر.',
+  },
+};
 
 const toYMD = (d) => format(d, 'yyyy-MM-dd');
 
 const ManageAvailabilityPage = () => {
   usePageTitle('Manage availability');
+  const { lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
 
   const { id } = useParams();
 
@@ -42,13 +83,12 @@ const ManageAvailabilityPage = () => {
         setLoading(true);
         setLoadError(null);
         const { data } = await axiosInstance.get(`/places/${id}/blocked-dates`);
-        setTitle(data.title || 'Warehouse');
+        setTitle(data.title || '');
         setBlocked(new Set(data.blockedDates || []));
         setBooked(new Set(data.bookedDates || []));
       } catch (err) {
         setLoadError(
-          err?.response?.data?.message ||
-            'Failed to load availability. Please try again.'
+          err?.response?.data?.message || L.loadError
         );
       } finally {
         setLoading(false);
@@ -87,10 +127,10 @@ const ManageAvailabilityPage = () => {
       await axiosInstance.put(`/places/${id}/blocked-dates`, {
         dates: Array.from(blocked),
       });
-      toast.success('Availability saved.');
+      toast.success(L.saved);
     } catch (err) {
       toast.error(
-        err?.response?.data?.message || 'Could not save availability.'
+        err?.response?.data?.message || L.saveError
       );
     } finally {
       setSaving(false);
@@ -113,7 +153,7 @@ const ManageAvailabilityPage = () => {
         <div className="mx-auto max-w-2xl px-4">
           <p className="text-red-600">{loadError}</p>
           <Link to="/account/places" className="text-sm text-primary underline">
-            Back to your warehouses
+            {L.backPlain}
           </Link>
         </div>
       </div>
@@ -127,13 +167,10 @@ const ManageAvailabilityPage = () => {
       <div className="mx-auto max-w-2xl px-4 pb-10">
         <div className="mb-1 flex items-center justify-between">
           <h1 className="text-xl font-semibold text-gray-900">
-            Availability — {title}
+            {L.title} — {title || L.warehouse}
           </h1>
         </div>
-        <p className="mb-4 text-sm text-gray-500">
-          Tap dates to block or unblock them. Blocked dates cannot be booked by
-          renters. Days with existing bookings are locked.
-        </p>
+        <p className="mb-4 text-sm text-gray-500">{L.instructions}</p>
 
         <div className="rounded-2xl border bg-white p-4 shadow-sm">
           {/* Month switcher */}
@@ -159,7 +196,7 @@ const ManageAvailabilityPage = () => {
 
           {/* Weekday header */}
           <div className="mb-1 grid grid-cols-7 text-center text-[11px] font-semibold text-gray-500">
-            {WEEKDAYS.map((w) => (
+            {L.weekdays.map((w) => (
               <div key={w}>{w}</div>
             ))}
           </div>
@@ -194,7 +231,7 @@ const ManageAvailabilityPage = () => {
                   className={cls}
                   onClick={() => inMonth && toggleDay(day)}
                   title={
-                    isBooked ? 'Booked' : isBlocked ? 'Blocked — tap to unblock' : ''
+                    isBooked ? L.booked : isBlocked ? L.blockedTip : ''
                   }
                 >
                   {format(day, 'd')}
@@ -207,11 +244,11 @@ const ManageAvailabilityPage = () => {
           <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-600">
             <div className="flex items-center gap-1">
               <span className="inline-block h-3 w-3 rounded bg-red-500" />
-              <span>Blocked by you</span>
+              <span>{L.blockedByYou}</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="inline-block h-3 w-3 rounded bg-blue-100" />
-              <span>Booked</span>
+              <span>{L.booked}</span>
             </div>
           </div>
         </div>
@@ -221,7 +258,7 @@ const ManageAvailabilityPage = () => {
             to="/account/places"
             className="text-sm font-medium text-gray-600 hover:underline"
           >
-            ← Back to your warehouses
+            {L.back}
           </Link>
           <button
             type="button"
@@ -229,7 +266,7 @@ const ManageAvailabilityPage = () => {
             disabled={saving}
             className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving ? 'Saving…' : 'Save availability'}
+            {saving ? L.saving : L.save}
           </button>
         </div>
       </div>

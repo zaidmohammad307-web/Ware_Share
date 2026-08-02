@@ -5,6 +5,36 @@ import { Link } from 'react-router-dom';
 import axiosInstance from '@/utils/axios';
 import { getSocket } from '@/utils/socket';
 import { useAuth } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
+
+const STR = {
+  EN: {
+    bookingTitle: 'Booking chat',
+    placeTitle: 'Place inquiry chat',
+    bookingSubtitle: 'Chat between renter and host for this booking.',
+    placeSubtitle: 'Chat with the host before booking.',
+    loadingMessages: 'Loading messages...',
+    noMessages: 'No messages yet. Say hello.',
+    inputPlaceholder: 'Type your message and press Enter',
+    send: 'Send',
+    viewHostProfile: 'View host profile',
+    viewRenterProfile: 'View renter profile',
+    me: 'Me',
+  },
+  AR: {
+    bookingTitle: 'محادثة الحجز',
+    placeTitle: 'محادثة الاستفسار عن المستودع',
+    bookingSubtitle: 'محادثة بين المستأجر والمضيف بخصوص هذا الحجز.',
+    placeSubtitle: 'تحدّث مع المضيف قبل الحجز.',
+    loadingMessages: 'جارٍ تحميل الرسائل...',
+    noMessages: 'لا توجد رسائل بعد. ابدأ بالتحية.',
+    inputPlaceholder: 'اكتب رسالتك ثم اضغط Enter',
+    send: 'إرسال',
+    viewHostProfile: 'عرض ملف المضيف',
+    viewRenterProfile: 'عرض ملف المستأجر',
+    me: 'أنا',
+  },
+};
 
 const normalizeId = (v) => {
   if (v === null || v === undefined) return null;
@@ -38,6 +68,8 @@ function pushUnique(prev, msg) {
 
 const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
   const { user } = useAuth();
+  const { lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
   const myId = user?._id;
 
   const [messages, setMessages] = useState([]);
@@ -145,7 +177,7 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
       _id: `pending-${Date.now()}`,
       _pending: true,
       text: trimmed,
-      sender: { _id: myId, name: user?.name || 'Me' },
+      sender: { _id: myId, name: user?.name || L.me },
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, optimistic]);
@@ -175,8 +207,8 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
       if (!hid || !rid) return null;
       const otherIsHost = String(me) === String(rid);
       return otherIsHost
-        ? { to: `/host/${hid}`, label: 'View host profile' }
-        : { to: `/renter/${rid}`, label: 'View renter profile' };
+        ? { to: `/host/${hid}`, label: L.viewHostProfile }
+        : { to: `/renter/${rid}`, label: L.viewRenterProfile };
     }
 
     if (mode === 'place') {
@@ -186,26 +218,24 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
 
       if (iAmHost) {
         if (!rid) return null;
-        return { to: `/renter/${rid}`, label: 'View renter profile' };
+        return { to: `/renter/${rid}`, label: L.viewRenterProfile };
       }
 
-      return { to: `/host/${hid}`, label: 'View host profile' };
+      return { to: `/host/${hid}`, label: L.viewHostProfile };
     }
 
     return null;
-  }, [mode, myId, hostId, renterIdResolved]);
+  }, [mode, myId, hostId, renterIdResolved, L]);
 
   return (
     <div className="rounded-2xl border bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">
-            {mode === 'booking' ? 'Booking chat' : 'Place inquiry chat'}
+            {mode === 'booking' ? L.bookingTitle : L.placeTitle}
           </h2>
           <p className="text-sm text-gray-500">
-            {mode === 'booking'
-              ? 'Chat between renter and host for this booking.'
-              : 'Chat with the host before booking.'}
+            {mode === 'booking' ? L.bookingSubtitle : L.placeSubtitle}
           </p>
         </div>
 
@@ -220,9 +250,9 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
       </div>
 
       <div className="h-[460px] overflow-y-auto p-4">
-        {loading && <p className="text-sm text-gray-500">Loading messages...</p>}
+        {loading && <p className="text-sm text-gray-500">{L.loadingMessages}</p>}
         {!loading && messages.length === 0 && (
-          <p className="text-sm text-gray-500">No messages yet. Say hello.</p>
+          <p className="text-sm text-gray-500">{L.noMessages}</p>
         )}
 
         <div className="space-y-3">
@@ -252,7 +282,11 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
                       mine ? 'text-white/80' : 'text-gray-500',
                     ].join(' ')}
                   >
-                    {m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}
+                    {m.createdAt
+                      ? new Date(m.createdAt).toLocaleString(
+                          lang === 'AR' ? 'ar-JO' : 'en-US'
+                        )
+                      : ''}
                   </div>
                 </div>
               </div>
@@ -270,14 +304,14 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
             if (e.key === 'Enter') send();
           }}
           className="w-full rounded-xl border px-3 py-2 text-sm"
-          placeholder="Type your message and press Enter"
+          placeholder={L.inputPlaceholder}
         />
         <button
           type="button"
           onClick={send}
           className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
         >
-          Send
+          {L.send}
         </button>
       </div>
     </div>

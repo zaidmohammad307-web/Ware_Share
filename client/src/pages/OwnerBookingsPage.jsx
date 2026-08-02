@@ -6,6 +6,121 @@ import { Link } from 'react-router-dom';
 
 import axiosInstance from '@/utils/axios';
 import AccountNav from '../components/ui/AccountNav';
+import { usePrefs } from '@/providers/PreferencesProvider';
+
+const STR = {
+  EN: {
+    title: 'Requests to my warehouses',
+    loading: 'Loading booking requests...',
+    empty:
+      'No requests yet. Once renters send requests, they will appear here.',
+    loadFailed: 'Failed to load booking requests.',
+    updateFailed: 'Failed to update booking status.',
+    updatedSuffix: (status) => `Booking ${status} successfully.`,
+    warehouse: 'Warehouse',
+    untitled: 'Untitled warehouse',
+    renter: 'Renter',
+    renterFallback: 'Renter',
+    viewProfile: 'View profile',
+    phone: 'Phone',
+    dates: 'Dates',
+    units: 'Units / pallet positions',
+    total: 'Total',
+    method: 'Method',
+    reviewRenter: 'Review renter',
+    stars: 'stars',
+    commentPlaceholder: 'Write a short comment (optional)',
+    submitted: 'Submitted',
+    submit: 'Submit',
+    reviewSuccess: 'Renter review submitted.',
+    reviewFailed: 'Failed to submit renter review.',
+    approve: 'Approve',
+    decline: 'Decline',
+    markCompleted: 'Mark as completed',
+    yes: 'Yes',
+    no: 'No',
+    insurance: 'Insurance',
+    packing: 'Packing',
+    delivery: 'Delivery',
+    status: {
+      pending: 'Pending',
+      approved: 'Approved',
+      declined: 'Declined',
+      completed: 'Completed',
+    },
+    addonStatus: {
+      requested: 'Requested',
+      confirmed: 'Confirmed',
+      done: 'Done',
+      cancelled: 'Cancelled',
+    },
+    paymentStatus: {
+      paid: 'Paid',
+      not_paid: 'Not paid',
+      not_yet: 'Not available yet',
+    },
+    paymentMethods: {
+      apple_pay: 'Apple Pay',
+      visa: 'Visa',
+      cash: 'Cash',
+    },
+  },
+  AR: {
+    title: 'طلبات على مستودعاتي',
+    loading: 'جارٍ تحميل طلبات الحجز...',
+    empty: 'لا توجد طلبات بعد. عندما يرسل المستأجرون طلباتهم ستظهر هنا.',
+    loadFailed: 'تعذّر تحميل طلبات الحجز.',
+    updateFailed: 'تعذّر تحديث حالة الحجز.',
+    updatedSuffix: () => 'تم تحديث حالة الحجز بنجاح.',
+    warehouse: 'المستودع',
+    untitled: 'مستودع بدون عنوان',
+    renter: 'المستأجر',
+    renterFallback: 'مستأجر',
+    viewProfile: 'عرض الملف الشخصي',
+    phone: 'الهاتف',
+    dates: 'التواريخ',
+    units: 'الوحدات / مواقع المنصات',
+    total: 'الإجمالي',
+    method: 'طريقة الدفع',
+    reviewRenter: 'تقييم المستأجر',
+    stars: 'نجوم',
+    commentPlaceholder: 'اكتب تعليقًا قصيرًا (اختياري)',
+    submitted: 'تم الإرسال',
+    submit: 'إرسال',
+    reviewSuccess: 'تم إرسال تقييم المستأجر.',
+    reviewFailed: 'تعذّر إرسال تقييم المستأجر.',
+    approve: 'قبول',
+    decline: 'رفض',
+    markCompleted: 'وضع علامة مكتمل',
+    yes: 'نعم',
+    no: 'لا',
+    insurance: 'التأمين',
+    packing: 'التغليف',
+    delivery: 'التوصيل',
+    status: {
+      pending: 'قيد الانتظار',
+      approved: 'مقبول',
+      declined: 'مرفوض',
+      completed: 'مكتمل',
+    },
+    addonStatus: {
+      requested: 'مطلوب',
+      confirmed: 'مؤكد',
+      done: 'منجز',
+      cancelled: 'ملغى',
+    },
+    paymentStatus: {
+      paid: 'مدفوع',
+      not_paid: 'غير مدفوع',
+      not_yet: 'غير متاح بعد',
+    },
+    paymentMethods: {
+      apple_pay: 'أبل باي',
+      visa: 'فيزا',
+      cash: 'نقدًا',
+    },
+  },
+};
 
 const normalizeId = (v) => {
   if (v === null || v === undefined) return null;
@@ -20,6 +135,9 @@ const normalizeId = (v) => {
 };
 
 const OwnerBookingsPage = () => {
+  const { lang, formatPrice } = usePrefs();
+  const L = STR[lang] || STR.EN;
+
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +149,7 @@ const OwnerBookingsPage = () => {
       const { data } = await axiosInstance.get('/bookings/owner');
       setBookings(data.bookings || []);
     } catch (error) {
-      toast.error('Failed to load booking requests.');
+      toast.error(L.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -44,13 +162,17 @@ const OwnerBookingsPage = () => {
   const updateStatus = async (bookingId, status) => {
     try {
       const { data } = await axiosInstance.put(`/bookings/${bookingId}/status`, { status });
-      toast.success(data.message || `Booking ${status} successfully.`);
+      toast.success(
+        lang === 'AR'
+          ? L.updatedSuffix(status)
+          : data.message || L.updatedSuffix(status)
+      );
 
       setBookings((prev) =>
         prev.map((b) => (b._id === bookingId ? { ...b, ...data.booking } : b))
       );
     } catch (error) {
-      toast.error('Failed to update booking status.');
+      toast.error(L.updateFailed);
     }
   };
 
@@ -72,14 +194,21 @@ const OwnerBookingsPage = () => {
   const getPaymentBadge = (paymentStatus) => {
     switch (paymentStatus) {
       case 'paid':
-        return { label: 'Paid', cls: 'bg-emerald-100 text-emerald-800' };
+        return { label: L.paymentStatus.paid, cls: 'bg-emerald-100 text-emerald-800' };
       case 'not_paid':
-        return { label: 'Not paid', cls: 'bg-amber-100 text-amber-800' };
+        return { label: L.paymentStatus.not_paid, cls: 'bg-amber-100 text-amber-800' };
       case 'not_yet':
       default:
-        return { label: 'Not available yet', cls: 'bg-gray-100 text-gray-700' };
+        return { label: L.paymentStatus.not_yet, cls: 'bg-gray-100 text-gray-700' };
     }
   };
+
+  const getStatusLabel = (status) => L.status[status] || status;
+
+  const getAddonStatusLabel = (status) => L.addonStatus[status] || status;
+
+  const getPaymentMethodLabel = (method) =>
+    L.paymentMethods[method] || String(method).replace('_', ' ');
 
   const handleRenterReviewChange = (bookingId, field, value) => {
     setRenterReviewForm((prev) => ({
@@ -103,14 +232,14 @@ const OwnerBookingsPage = () => {
         comment: form.comment,
       });
 
-      toast.success('Renter review submitted.');
+      toast.success(L.reviewSuccess);
 
       setRenterReviewForm((prev) => ({
         ...prev,
         [bookingId]: { ...form, submitted: true },
       }));
     } catch (error) {
-      const msg = error?.response?.data?.message || 'Failed to submit renter review.';
+      const msg = error?.response?.data?.message || L.reviewFailed;
       toast.error(msg);
     }
   };
@@ -119,26 +248,30 @@ const OwnerBookingsPage = () => {
     const parts = [];
 
     if (booking?.insuranceSelected) {
-      const fee = booking?.insuranceFee ?? 0;
-      parts.push(`Insurance: Yes (JOD ${fee})`);
+      const fee = Number(booking?.insuranceFee ?? 0) || 0;
+      parts.push(`${L.insurance}: ${L.yes} (${formatPrice(fee)})`);
     } else {
-      parts.push('Insurance: No');
+      parts.push(`${L.insurance}: ${L.no}`);
     }
 
     if (booking?.packingSelected) {
-      const fee = booking?.packingFee ?? 0;
+      const fee = Number(booking?.packingFee ?? 0) || 0;
       const status = booking?.packingStatus || 'requested';
-      parts.push(`Packing: Yes (JOD ${fee}) · ${status}`);
+      parts.push(
+        `${L.packing}: ${L.yes} (${formatPrice(fee)}) · ${getAddonStatusLabel(status)}`
+      );
     } else {
-      parts.push('Packing: No');
+      parts.push(`${L.packing}: ${L.no}`);
     }
 
     if (booking?.deliverySelected) {
-      const fee = booking?.deliveryFee ?? 0;
+      const fee = Number(booking?.deliveryFee ?? 0) || 0;
       const status = booking?.deliveryStatus || 'requested';
-      parts.push(`Delivery: Yes (JOD ${fee}) · ${status}`);
+      parts.push(
+        `${L.delivery}: ${L.yes} (${formatPrice(fee)}) · ${getAddonStatusLabel(status)}`
+      );
     } else {
-      parts.push('Delivery: No');
+      parts.push(`${L.delivery}: ${L.no}`);
     }
 
     return parts.join(' · ');
@@ -148,12 +281,12 @@ const OwnerBookingsPage = () => {
     <div className="mt-8">
       <AccountNav />
       <div className="mt-8">
-        <h1 className="mb-4 text-2xl font-semibold">Requests to my warehouses</h1>
+        <h1 className="mb-4 text-2xl font-semibold">{L.title}</h1>
 
-        {loading && <p>Loading booking requests...</p>}
+        {loading && <p>{L.loading}</p>}
 
         {!loading && bookings.length === 0 && (
-          <p className="text-gray-500">No requests yet. Once renters send requests, they will appear here.</p>
+          <p className="text-gray-500">{L.empty}</p>
         )}
 
         <div className="space-y-4">
@@ -164,7 +297,7 @@ const OwnerBookingsPage = () => {
 
             const renterIdResolved = normalizeId(booking.user);
             const renterName =
-              booking?.user?.name || booking?.name || 'Renter';
+              booking?.user?.name || booking?.name || L.renterFallback;
             const renterEmail = booking?.user?.email || null;
 
             return (
@@ -173,12 +306,12 @@ const OwnerBookingsPage = () => {
                 className="flex flex-col gap-4 rounded-2xl border bg-white p-4 shadow-sm md:flex-row md:items-start md:justify-between"
               >
                 <div className="flex-1">
-                  <div className="mb-1 text-sm font-medium text-gray-500">Warehouse</div>
-                  <div className="text-lg font-semibold">{booking.place?.title || 'Untitled warehouse'}</div>
+                  <div className="mb-1 text-sm font-medium text-gray-500">{L.warehouse}</div>
+                  <div className="text-lg font-semibold">{booking.place?.title || L.untitled}</div>
 
                   <div className="mt-2 grid grid-cols-1 gap-2 text-sm text-gray-700 md:grid-cols-2">
                     <div>
-                      <div className="font-medium text-gray-500">Renter</div>
+                      <div className="font-medium text-gray-500">{L.renter}</div>
                       <div className="flex flex-wrap items-center gap-2">
                         <div>{renterName}</div>
 
@@ -195,23 +328,25 @@ const OwnerBookingsPage = () => {
                             state={{ renterName }}
                             className="text-xs font-medium text-primary underline"
                           >
-                            View profile
+                            {L.viewProfile}
                           </Link>
                         )}
                       </div>
 
                       {renterEmail && <div className="text-xs text-gray-500">{renterEmail}</div>}
-                      <div className="text-xs text-gray-500">Phone: {booking.phone}</div>
+                      <div className="text-xs text-gray-500">{L.phone}: {booking.phone}</div>
                     </div>
 
                     <div>
-                      <div className="font-medium text-gray-500">Dates</div>
+                      <div className="font-medium text-gray-500">{L.dates}</div>
                       <div>
                         {booking.checkIn && format(new Date(booking.checkIn), 'dd MMM yyyy')} –{' '}
                         {booking.checkOut && format(new Date(booking.checkOut), 'dd MMM yyyy')}
                       </div>
-                      <div className="mt-1 text-xs text-gray-500">Units / pallet positions: {booking.noOfGuests}</div>
-                      <div className="mt-1 text-xs text-gray-500">Total: JOD {total}</div>
+                      <div className="mt-1 text-xs text-gray-500">{L.units}: {booking.noOfGuests}</div>
+                      <div className="mt-1 text-xs text-gray-500">
+                        {L.total}: {formatPrice(Number(total) || 0)}
+                      </div>
 
                       <div className="mt-1 text-xs text-gray-600">{renderAddonsSummary(booking)}</div>
 
@@ -220,7 +355,9 @@ const OwnerBookingsPage = () => {
                           {pay.label}
                         </span>
                         {booking.paymentMethod && booking.paymentStatus === 'paid' && (
-                          <span className="text-xs text-gray-600">Method: {booking.paymentMethod.replace('_', ' ')}</span>
+                          <span className="text-xs text-gray-600">
+                            {L.method}: {getPaymentMethodLabel(booking.paymentMethod)}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -228,7 +365,7 @@ const OwnerBookingsPage = () => {
 
                   {booking.status === 'completed' && (
                     <div className="mt-4 rounded-xl border bg-gray-50 p-3">
-                      <div className="text-sm font-semibold text-gray-700">Review renter</div>
+                      <div className="text-sm font-semibold text-gray-700">{L.reviewRenter}</div>
                       <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-center">
                         <select
                           value={form.rating}
@@ -238,7 +375,7 @@ const OwnerBookingsPage = () => {
                         >
                           {[5, 4, 3, 2, 1].map((r) => (
                             <option key={r} value={r}>
-                              {r} stars
+                              {r} {L.stars}
                             </option>
                           ))}
                         </select>
@@ -247,7 +384,7 @@ const OwnerBookingsPage = () => {
                           value={form.comment}
                           onChange={(e) => handleRenterReviewChange(booking._id, 'comment', e.target.value)}
                           className="w-full rounded-lg border px-3 py-2 text-sm"
-                          placeholder="Write a short comment (optional)"
+                          placeholder={L.commentPlaceholder}
                           disabled={form.submitted}
                         />
 
@@ -257,7 +394,7 @@ const OwnerBookingsPage = () => {
                           disabled={form.submitted}
                           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                         >
-                          {form.submitted ? 'Submitted' : 'Submit'}
+                          {form.submitted ? L.submitted : L.submit}
                         </button>
                       </div>
                     </div>
@@ -270,7 +407,7 @@ const OwnerBookingsPage = () => {
                       booking.status
                     )}`}
                   >
-                    {booking.status}
+                    {getStatusLabel(booking.status)}
                   </span>
 
                   <div className="flex flex-wrap gap-2">
@@ -280,13 +417,13 @@ const OwnerBookingsPage = () => {
                           onClick={() => updateStatus(booking._id, 'approved')}
                           className="rounded-lg bg-green-600 px-3 py-1 text-sm font-semibold text-white hover:bg-green-700"
                         >
-                          Approve
+                          {L.approve}
                         </button>
                         <button
                           onClick={() => updateStatus(booking._id, 'declined')}
                           className="rounded-lg bg-red-600 px-3 py-1 text-sm font-semibold text-white hover:bg-red-700"
                         >
-                          Decline
+                          {L.decline}
                         </button>
                       </>
                     )}
@@ -296,7 +433,7 @@ const OwnerBookingsPage = () => {
                         onClick={() => updateStatus(booking._id, 'completed')}
                         className="rounded-lg bg-blue-600 px-3 py-1 text-sm font-semibold text-white hover:bg-blue-700"
                       >
-                        Mark as completed
+                        {L.markCompleted}
                       </button>
                     )}
                   </div>

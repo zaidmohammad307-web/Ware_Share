@@ -5,10 +5,18 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks';
 import SearchBar from './SearchBar';
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
+import { usePrefs } from '@/providers/PreferencesProvider';
+
+const STR = {
+  EN: { tagline: 'Smart storage. Anywhere.' },
+  AR: { tagline: 'تخزين ذكي. في أي مكان.' },
+};
 
 const Header = () => {
   const auth = useAuth();
   const location = useLocation();
+  const { lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
 
   const [showSearchBar, setShowSearchBar] = useState(true);
   const [hasShadow, setHasShadow] = useState(false);
@@ -56,7 +64,7 @@ const Header = () => {
               WareShare
             </span>
             <span className="text-[11px] font-medium text-muted-foreground">
-              Smart storage. Anywhere.
+              {L.tagline}
             </span>
           </div>
         </Link>

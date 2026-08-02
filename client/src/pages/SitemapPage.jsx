@@ -2,76 +2,128 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
 
-const SECTIONS = [
-  {
-    heading: 'Marketplace',
-    links: [
-      { label: 'Find storage (home)', to: '/' },
-      { label: 'Coming soon / waitlist', to: '/launch' },
-      { label: 'Login', to: '/login' },
-      { label: 'Create an account', to: '/register' },
-    ],
+const STR = {
+  EN: {
+    pageTitle: 'Sitemap',
+    intro: 'Every page on WareShare.',
+    marketplace: 'Marketplace',
+    yourAccount: 'Your account',
+    helpSupport: 'Help & support',
+    forOwners: 'For warehouse owners',
+    about: 'About WareShare',
+    legal: 'Legal',
+    findStorage: 'Find storage (home)',
+    waitlist: 'Coming soon / waitlist',
+    login: 'Login',
+    createAccount: 'Create an account',
+    myProfile: 'My profile',
+    myBookings: 'My bookings',
+    myWarehouses: 'My warehouses',
+    ownerRequests: 'Requests to my warehouses',
+    messages: 'Messages',
+    dashboard: 'Dashboard',
+    createListing: 'Create a listing',
+    privacyPolicy: 'Privacy policy',
+    termsOfService: 'Terms of service',
   },
-  {
-    heading: 'Your account',
-    links: [
-      { label: 'My profile', to: '/account' },
-      { label: 'My bookings', to: '/account/bookings' },
-      { label: 'My warehouses', to: '/account/places' },
-      { label: 'Requests to my warehouses', to: '/account/owner/bookings' },
-      { label: 'Messages', to: '/account/chats' },
-      { label: 'Dashboard', to: '/dashboard' },
-    ],
+  AR: {
+    pageTitle: 'خريطة الموقع',
+    intro: 'جميع صفحات وير شير.',
+    marketplace: 'السوق',
+    yourAccount: 'حسابك',
+    helpSupport: 'المساعدة والدعم',
+    forOwners: 'لأصحاب المستودعات',
+    about: 'عن وير شير',
+    legal: 'الشؤون القانونية',
+    findStorage: 'ابحث عن مساحة تخزين (الرئيسية)',
+    waitlist: 'قريبًا / قائمة الانتظار',
+    login: 'تسجيل الدخول',
+    createAccount: 'إنشاء حساب',
+    myProfile: 'ملفي الشخصي',
+    myBookings: 'حجوزاتي',
+    myWarehouses: 'مستودعاتي',
+    ownerRequests: 'طلبات على مستودعاتي',
+    messages: 'الرسائل',
+    dashboard: 'لوحة التحكم',
+    createListing: 'أنشئ إعلانًا',
+    privacyPolicy: 'سياسة الخصوصية',
+    termsOfService: 'شروط الخدمة',
   },
-  {
-    heading: 'Help & support',
-    links: [
-      { label: 'Help Center', to: '/info/help-center' },
-      { label: 'Safety & security guidelines', to: '/info/safety-security' },
-      { label: 'Warehouse access & check-in', to: '/info/warehouse-access' },
-      { label: 'Insurance & claims', to: '/info/insurance-claims' },
-      { label: 'Report an issue', to: '/support/report' },
-    ],
-  },
-  {
-    heading: 'For warehouse owners',
-    links: [
-      { label: 'List your warehouse', to: '/info/list-your-warehouse' },
-      { label: 'Pricing & utilization tips', to: '/info/pricing-tips' },
-      { label: 'Operational best practices', to: '/info/best-practices' },
-      { label: 'Partner & enterprise solutions', to: '/info/partners' },
-      { label: 'Create a listing', to: '/account/places/new' },
-    ],
-  },
-  {
-    heading: 'About WareShare',
-    links: [
-      { label: 'Our mission', to: '/info/mission' },
-      { label: 'How the marketplace works', to: '/info/how-it-works' },
-      { label: 'Careers', to: '/info/careers' },
-      { label: 'Press & media', to: '/info/press' },
-      { label: 'ESG & sustainability', to: '/info/esg' },
-    ],
-  },
-  {
-    heading: 'Legal',
-    links: [
-      { label: 'Privacy policy', to: '/info/privacy' },
-      { label: 'Terms of service', to: '/info/terms' },
-      { label: 'Company details', to: '/info/company-details' },
-    ],
-  },
-];
+};
 
 const SitemapPage = () => {
   usePageTitle('Sitemap');
+  const { t, lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
+
+  const SECTIONS = [
+    {
+      heading: L.marketplace,
+      links: [
+        { label: L.findStorage, to: '/' },
+        { label: L.waitlist, to: '/launch' },
+        { label: L.login, to: '/login' },
+        { label: L.createAccount, to: '/register' },
+      ],
+    },
+    {
+      heading: L.yourAccount,
+      links: [
+        { label: L.myProfile, to: '/account' },
+        { label: L.myBookings, to: '/account/bookings' },
+        { label: L.myWarehouses, to: '/account/places' },
+        { label: L.ownerRequests, to: '/account/owner/bookings' },
+        { label: L.messages, to: '/account/chats' },
+        { label: L.dashboard, to: '/dashboard' },
+      ],
+    },
+    {
+      heading: L.helpSupport,
+      links: [
+        { label: t('footer.helpCenter'), to: '/info/help-center' },
+        { label: t('footer.safety'), to: '/info/safety-security' },
+        { label: t('footer.access'), to: '/info/warehouse-access' },
+        { label: t('footer.insurance'), to: '/info/insurance-claims' },
+        { label: t('footer.report'), to: '/support/report' },
+      ],
+    },
+    {
+      heading: L.forOwners,
+      links: [
+        { label: t('footer.listWarehouse'), to: '/info/list-your-warehouse' },
+        { label: t('footer.pricingTips'), to: '/info/pricing-tips' },
+        { label: t('footer.bestPractices'), to: '/info/best-practices' },
+        { label: t('footer.partners'), to: '/info/partners' },
+        { label: L.createListing, to: '/account/places/new' },
+      ],
+    },
+    {
+      heading: L.about,
+      links: [
+        { label: t('footer.mission'), to: '/info/mission' },
+        { label: t('footer.howItWorks'), to: '/info/how-it-works' },
+        { label: t('footer.careers'), to: '/info/careers' },
+        { label: t('footer.press'), to: '/info/press' },
+        { label: t('footer.esg'), to: '/info/esg' },
+      ],
+    },
+    {
+      heading: L.legal,
+      links: [
+        { label: L.privacyPolicy, to: '/info/privacy' },
+        { label: L.termsOfService, to: '/info/terms' },
+        { label: t('footer.companyDetails'), to: '/info/company-details' },
+      ],
+    },
+  ];
 
   return (
     <div className="mt-24 px-4 pb-16">
       <div className="mx-auto w-full max-w-3xl">
-        <h1 className="text-3xl font-semibold text-gray-900">Sitemap</h1>
-        <p className="mt-2 text-gray-600">Every page on WareShare.</p>
+        <h1 className="text-3xl font-semibold text-gray-900">{L.pageTitle}</h1>
+        <p className="mt-2 text-gray-600">{L.intro}</p>
 
         <div className="mt-8 grid gap-8 sm:grid-cols-2">
           {SECTIONS.map((s) => (

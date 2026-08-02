@@ -22,56 +22,483 @@ import { usePageTitle } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
 const labelMaps = {
-  warehouseType: {
-    general: 'General storage',
-    cold: 'Cold storage',
-    frozen: 'Frozen storage',
-    dry: 'Dry / ambient storage',
-    hazmat: 'Hazardous material storage',
-    bonded: 'Bonded warehouse',
-    fulfillment: 'Fulfillment center',
-    'cross-docking': 'Cross-docking facility',
+  EN: {
+    warehouseType: {
+      general: 'General storage',
+      cold: 'Cold storage',
+      frozen: 'Frozen storage',
+      dry: 'Dry / ambient storage',
+      hazmat: 'Hazardous material storage',
+      bonded: 'Bonded warehouse',
+      fulfillment: 'Fulfillment center',
+      'cross-docking': 'Cross-docking facility',
+    },
+    equipment: {
+      forklift: 'Forklift',
+      'electric-pallet-jack': 'Electric pallet jack',
+      'manual-pallet-jack': 'Manual pallet jack',
+      'reach-truck': 'Reach truck',
+      stacker: 'Stacker',
+      conveyor: 'Conveyor',
+      crane: 'Crane',
+      racks: 'Racks / shelves',
+      chillers: 'Chillers',
+      freezers: 'Freezers',
+      ventilation: 'Ventilation',
+      'loading-dock': 'Loading docks',
+      'dock-leveler': 'Dock leveler',
+      ramp: 'Ramp',
+      'roll-up-door': 'Roll-up doors',
+    },
+    truckAccess: {
+      '20ft': '20 ft container',
+      '40ft': '40 ft container',
+      trailer: 'Long trailer / truck',
+    },
+    services: {
+      'inventory-management': 'Inventory management',
+      'labeling-packaging': 'Labeling & packaging',
+      'picking-packing': 'Picking & packing',
+      'quality-inspection': 'Quality inspections',
+      transportation: 'Transportation',
+      'customs-clearance': 'Customs clearance',
+      'cross-docking': 'Cross-docking / transit handling',
+    },
+    allowedGoods: {
+      fmcg: 'FMCG',
+      electronics: 'Electronics',
+      pharma: 'Pharma',
+      clothing: 'Clothing / textiles',
+      automotive: 'Automotive',
+      industrial: 'Industrial goods',
+      food: 'Food items',
+      chemicals: 'Chemicals',
+    },
   },
-  equipment: {
-    forklift: 'Forklift',
-    'electric-pallet-jack': 'Electric pallet jack',
-    'manual-pallet-jack': 'Manual pallet jack',
-    'reach-truck': 'Reach truck',
-    stacker: 'Stacker',
-    conveyor: 'Conveyor',
-    crane: 'Crane',
-    racks: 'Racks / shelves',
-    chillers: 'Chillers',
-    freezers: 'Freezers',
-    ventilation: 'Ventilation',
-    'loading-dock': 'Loading docks',
-    'dock-leveler': 'Dock leveler',
-    ramp: 'Ramp',
-    'roll-up-door': 'Roll-up doors',
+
+  AR: {
+    warehouseType: {
+      general: 'تخزين عام',
+      cold: 'تخزين مبرّد',
+      frozen: 'تخزين مجمّد',
+      dry: 'تخزين جاف / بدرجة حرارة الغرفة',
+      hazmat: 'تخزين المواد الخطرة',
+      bonded: 'مستودع جمركي',
+      fulfillment: 'مركز تجهيز الطلبات',
+      'cross-docking': 'منشأة عبور وتحميل مباشر',
+    },
+    equipment: {
+      forklift: 'رافعة شوكية',
+      'electric-pallet-jack': 'مرفاع منصات كهربائي',
+      'manual-pallet-jack': 'مرفاع منصات يدوي',
+      'reach-truck': 'رافعة ريتش',
+      stacker: 'رافعة تكديس',
+      conveyor: 'سير ناقل',
+      crane: 'رافعة',
+      racks: 'رفوف / أرفف تخزين',
+      chillers: 'أجهزة تبريد',
+      freezers: 'أجهزة تجميد',
+      ventilation: 'تهوية',
+      'loading-dock': 'أرصفة تحميل',
+      'dock-leveler': 'معدّل ارتفاع الرصيف',
+      ramp: 'منحدر تحميل',
+      'roll-up-door': 'أبواب رول',
+    },
+    truckAccess: {
+      '20ft': 'حاوية 20 قدم',
+      '40ft': 'حاوية 40 قدم',
+      trailer: 'مقطورة / شاحنة طويلة',
+    },
+    services: {
+      'inventory-management': 'إدارة المخزون',
+      'labeling-packaging': 'الملصقات والتغليف',
+      'picking-packing': 'الانتقاء والتعبئة',
+      'quality-inspection': 'فحوصات الجودة',
+      transportation: 'النقل',
+      'customs-clearance': 'التخليص الجمركي',
+      'cross-docking': 'العبور والمناولة المباشرة',
+    },
+    allowedGoods: {
+      fmcg: 'السلع الاستهلاكية سريعة الدوران',
+      electronics: 'الإلكترونيات',
+      pharma: 'الأدوية',
+      clothing: 'الملابس والمنسوجات',
+      automotive: 'قطع السيارات',
+      industrial: 'البضائع الصناعية',
+      food: 'المواد الغذائية',
+      chemicals: 'المواد الكيميائية',
+    },
   },
-  truckAccess: {
-    '20ft': '20 ft container',
-    '40ft': '40 ft container',
-    trailer: 'Long trailer / truck',
+};
+
+const STR = {
+  EN: {
+    warehouse: 'Warehouse',
+    listSeparator: ', ',
+    shareFallbackTitle: 'Warehouse on WareShare',
+    linkCopied: 'Link copied to clipboard',
+    shareFailed: 'Could not share the link.',
+    listingGone: 'This warehouse listing no longer exists.',
+    loadFailed: 'Failed to load warehouse. Please try again.',
+    loadingWarehouse: 'Loading warehouse...',
+    warehouseNotFound: 'Warehouse not found.',
+
+    // Key facts
+    totalCapacity: 'Total capacity',
+    availableNow: 'Available now',
+    palletCapacity: 'Pallet capacity',
+    pallets: 'pallets',
+    storageDuration: 'Storage duration',
+    days: 'days',
+    min: 'Min',
+    max: 'Max',
+    basePrice: 'Base price',
+    priceOnRequest: 'Price on request',
+    perDay: '/ day',
+    warehouseTypeLabel: 'Warehouse type',
+    securityLevel: 'Security level',
+    securityHigh: 'High',
+    securityStandard: 'Standard',
+    securityBasic: 'Basic',
+
+    daysAvailable: (n) => `${n}/7 days available`,
+
+    // Badges
+    negotiable: 'Negotiable',
+    insuranceAvailable: 'Insurance available',
+    packingAvailable: 'Packing available',
+    deliveryAvailable: 'Delivery available',
+
+    // Feature bullets
+    cctv: 'CCTV surveillance',
+    guards: '24/7 security guards',
+    fireSuppression: 'Fire suppression system',
+    smokeDetectors: 'Smoke detectors',
+    tempControlled: 'Temperature-controlled capability',
+    loadingDocks: 'Loading docks',
+    forkliftAvailable: 'Forklift available',
+    racksInstalled: 'Racks installed',
+    parkingAvailable: 'Parking available',
+    foodGrade: 'Food-grade certified',
+    hazmatCert: 'Hazmat certified',
+    iso: (v) => `ISO: ${v}`,
+
+    // Best-for tags
+    bestForPrefix: 'Best for:',
+    tagEcommerce: 'E-commerce fulfillment',
+    tagFmcg: 'FMCG storage',
+    tagElectronics: 'Electronics',
+    tagPharma: 'Pharma',
+    tagHighVolume: 'High-volume',
+    tagColdChain: 'Cold chain',
+    tagSmes: 'SMEs',
+    tagImportExport: 'Import/Export',
+
+    // Calendar
+    weekdays: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
+    prevMonth: 'Previous month',
+    nextMonth: 'Next month',
+    unavailable: 'Unavailable',
+    today: 'Today',
+
+    // Hero
+    share: 'Share',
+    shareTitle: 'Share this warehouse',
+    locationFallback: 'Location',
+    host: 'Host',
+    startingFrom: 'Starting from',
+    negotiablePricing: 'Negotiable pricing',
+    contactHost: 'Contact host',
+    requestBooking: 'Request booking',
+    viewHostProfile: 'View host profile',
+
+    // Gallery
+    viewAllPhotos: (n) => `View all ${n} photo${n === 1 ? '' : 's'}`,
+    viewLocation: 'View location',
+    servicesAddons: 'Services & add-ons',
+    reviews: 'Reviews',
+
+    // At a glance
+    atAGlance: 'At a glance',
+    atAGlanceSub: 'Key warehouse information for quick evaluation.',
+    optionalPricing: 'Optional pricing components',
+    perPalletPerDay: 'Per pallet / day',
+    loadingFee: 'Loading / unloading fee',
+    tempControlSurcharge: 'Temperature control surcharge',
+
+    // Description
+    descriptionFeatures: 'Description & features',
+    noDescription: 'No description provided.',
+    highlights: 'Highlights',
+    equipment: 'Equipment',
+    truckAccess: 'Truck access',
+    allowedGoods: 'Allowed goods',
+    notesRules: 'Notes / rules',
+
+    // Location
+    location: 'Location',
+    locationSub: 'Map marker reflects the stored GPS coordinates.',
+    mapUnavailable:
+      'Map is not available for this warehouse (missing GPS coordinates).',
+    address: 'Address',
+    addressNotProvided: 'Address not provided',
+    addressNote: 'Exact address details may be confirmed during booking and chat.',
+
+    // Services
+    servicesSub:
+      'These indicate what the host can support. You can select add-ons during booking.',
+    insurance: 'Insurance',
+    packing: 'Packing',
+    delivery: 'Delivery',
+    insuranceYes: 'Available (coverage options during booking).',
+    packingYes: 'Available (labeling / packing / handling support).',
+    deliveryYes: 'Available (pickup / drop-off options during booking).',
+    notListed: 'Not listed as available.',
+    additionalServices: 'Additional services',
+    restrictions: 'Restrictions',
+
+    // Host
+    hostSection: 'Host',
+    hostSub: 'View the host profile and start a conversation before booking.',
+
+    // Reviews
+    reviewsSub: 'Feedback from renters who booked this warehouse.',
+    loadingReviews: 'Loading reviews...',
+    noReviews: 'No reviews yet. Be the first to book and review this warehouse.',
+    anonymous: 'Anonymous',
+    outOf5: (r) => `(${r} / 5)`,
+    seeAllReviews: 'See all reviews',
+    seeFewerReviews: 'See fewer reviews',
+    reviewCount: (n) => (n === 1 ? '1 review' : `${n} reviews`),
+
+    // Sidebar
+    bookingSummary: 'Booking summary',
+    addonsNote: 'Add-ons available during booking (insurance, packing, delivery).',
+    fixed: 'Fixed',
+    availability: 'Availability',
+    mostlyAvailable: 'Mostly available',
+    loadingAvailability: 'Loading availability...',
+    noBlockedDates: 'No blocked dates yet. Most days are available to book.',
+    bookingRules: 'Booking rules',
+    minimumBooking: 'Minimum booking',
+    maximumBooking: 'Maximum booking',
+    dayCount: (n) => `${n} day${n > 1 ? 's' : ''}`,
+    defaultTimes: 'Default times',
+    checkInLabel: (v) => `Check-in: ${v}`,
+    checkOutLabel: (v) => `Check-out: ${v}`,
+
+    months: [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ],
+    monthsShort: [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ],
   },
-  services: {
-    'inventory-management': 'Inventory management',
-    'labeling-packaging': 'Labeling & packaging',
-    'picking-packing': 'Picking & packing',
-    'quality-inspection': 'Quality inspections',
-    transportation: 'Transportation',
-    'customs-clearance': 'Customs clearance',
-    'cross-docking': 'Cross-docking / transit handling',
-  },
-  allowedGoods: {
-    fmcg: 'FMCG',
-    electronics: 'Electronics',
-    pharma: 'Pharma',
-    clothing: 'Clothing / textiles',
-    automotive: 'Automotive',
-    industrial: 'Industrial goods',
-    food: 'Food items',
-    chemicals: 'Chemicals',
+
+  AR: {
+    warehouse: 'مستودع',
+    listSeparator: '، ',
+    shareFallbackTitle: 'مستودع على وير شير',
+    linkCopied: 'تم نسخ الرابط',
+    shareFailed: 'تعذّرت مشاركة الرابط.',
+    listingGone: 'لم يعد هذا الإعلان متوفرًا.',
+    loadFailed: 'تعذّر تحميل بيانات المستودع. يرجى المحاولة مرة أخرى.',
+    loadingWarehouse: 'جارٍ تحميل المستودع...',
+    warehouseNotFound: 'لم يتم العثور على المستودع.',
+
+    // Key facts
+    totalCapacity: 'السعة الإجمالية',
+    availableNow: 'المتاح حاليًا',
+    palletCapacity: 'سعة المنصات',
+    pallets: 'منصة',
+    storageDuration: 'مدة التخزين',
+    days: 'يوم',
+    min: 'حد أدنى',
+    max: 'حد أقصى',
+    basePrice: 'السعر الأساسي',
+    priceOnRequest: 'السعر عند الطلب',
+    perDay: '/ يوم',
+    warehouseTypeLabel: 'نوع المستودع',
+    securityLevel: 'مستوى الأمان',
+    securityHigh: 'مرتفع',
+    securityStandard: 'قياسي',
+    securityBasic: 'أساسي',
+
+    daysAvailable: (n) => `${n}/7 أيام متاحة`,
+
+    // Badges
+    negotiable: 'قابل للتفاوض',
+    insuranceAvailable: 'التأمين متاح',
+    packingAvailable: 'التغليف متاح',
+    deliveryAvailable: 'التوصيل متاح',
+
+    // Feature bullets
+    cctv: 'مراقبة بكاميرات',
+    guards: 'حراسة أمنية على مدار الساعة',
+    fireSuppression: 'نظام إطفاء حريق',
+    smokeDetectors: 'كواشف دخان',
+    tempControlled: 'إمكانية التحكم بدرجة الحرارة',
+    loadingDocks: 'أرصفة تحميل',
+    forkliftAvailable: 'رافعة شوكية متوفرة',
+    racksInstalled: 'رفوف مركّبة',
+    parkingAvailable: 'مواقف متاحة',
+    foodGrade: 'معتمد للمواد الغذائية',
+    hazmatCert: 'معتمد للمواد الخطرة',
+    iso: (v) => `شهادة ISO: ${v}`,
+
+    // Best-for tags
+    bestForPrefix: 'الأنسب لـ:',
+    tagEcommerce: 'تجهيز طلبات التجارة الإلكترونية',
+    tagFmcg: 'تخزين السلع سريعة الدوران',
+    tagElectronics: 'الإلكترونيات',
+    tagPharma: 'الأدوية',
+    tagHighVolume: 'الكميات الكبيرة',
+    tagColdChain: 'سلسلة التبريد',
+    tagSmes: 'الشركات الصغيرة والمتوسطة',
+    tagImportExport: 'الاستيراد والتصدير',
+
+    // Calendar
+    weekdays: ['إث', 'ثل', 'أر', 'خم', 'جم', 'سب', 'أح'],
+    prevMonth: 'الشهر السابق',
+    nextMonth: 'الشهر التالي',
+    unavailable: 'غير متاح',
+    today: 'اليوم',
+
+    // Hero
+    share: 'مشاركة',
+    shareTitle: 'شارك هذا المستودع',
+    locationFallback: 'الموقع',
+    host: 'المضيف',
+    startingFrom: 'يبدأ من',
+    negotiablePricing: 'التسعير قابل للتفاوض',
+    contactHost: 'تواصل مع المضيف',
+    requestBooking: 'إرسال طلب حجز',
+    viewHostProfile: 'عرض ملف المضيف',
+
+    // Gallery
+    viewAllPhotos: (n) => `عرض جميع الصور (${n})`,
+    viewLocation: 'عرض الموقع',
+    servicesAddons: 'الخدمات والإضافات',
+    reviews: 'التقييمات',
+
+    // At a glance
+    atAGlance: 'نظرة سريعة',
+    atAGlanceSub: 'أبرز معلومات المستودع لتقييم سريع.',
+    optionalPricing: 'مكوّنات تسعير اختيارية',
+    perPalletPerDay: 'لكل منصة / يوم',
+    loadingFee: 'رسوم التحميل والتفريغ',
+    tempControlSurcharge: 'رسوم إضافية للتحكم بالحرارة',
+
+    // Description
+    descriptionFeatures: 'الوصف والمواصفات',
+    noDescription: 'لا يوجد وصف.',
+    highlights: 'أبرز المزايا',
+    equipment: 'المعدات',
+    truckAccess: 'وصول الشاحنات',
+    allowedGoods: 'البضائع المسموح بها',
+    notesRules: 'ملاحظات / قواعد',
+
+    // Location
+    location: 'الموقع',
+    locationSub: 'يعكس مؤشر الخريطة الإحداثيات المسجّلة.',
+    mapUnavailable: 'الخريطة غير متاحة لهذا المستودع (لا توجد إحداثيات).',
+    address: 'العنوان',
+    addressNotProvided: 'لم يتم إدخال العنوان',
+    addressNote: 'قد يتم تأكيد تفاصيل العنوان الدقيقة أثناء الحجز والمحادثة.',
+
+    // Services
+    servicesSub:
+      'تشير هذه الخدمات إلى ما يمكن للمضيف توفيره. يمكنك اختيار الإضافات أثناء الحجز.',
+    insurance: 'التأمين',
+    packing: 'التغليف',
+    delivery: 'التوصيل',
+    insuranceYes: 'متاح (تُحدَّد خيارات التغطية أثناء الحجز).',
+    packingYes: 'متاح (ملصقات / تغليف / مناولة).',
+    deliveryYes: 'متاح (خيارات الاستلام والتسليم أثناء الحجز).',
+    notListed: 'غير مدرج كخدمة متاحة.',
+    additionalServices: 'خدمات إضافية',
+    restrictions: 'القيود',
+
+    // Host
+    hostSection: 'المضيف',
+    hostSub: 'اطّلع على ملف المضيف وابدأ محادثة قبل الحجز.',
+
+    // Reviews
+    reviewsSub: 'آراء المستأجرين الذين حجزوا هذا المستودع.',
+    loadingReviews: 'جارٍ تحميل التقييمات...',
+    noReviews: 'لا توجد تقييمات بعد. كن أول من يحجز ويقيّم هذا المستودع.',
+    anonymous: 'مستخدم غير معروف',
+    outOf5: (r) => `(${r} / 5)`,
+    seeAllReviews: 'عرض جميع التقييمات',
+    seeFewerReviews: 'عرض عدد أقل',
+    reviewCount: (n) => (n === 1 ? 'تقييم واحد' : `${n} تقييمًا`),
+
+    // Sidebar
+    bookingSummary: 'ملخص الحجز',
+    addonsNote: 'تتوفر إضافات أثناء الحجز (تأمين، تغليف، توصيل).',
+    fixed: 'ثابت',
+    availability: 'التوفر',
+    mostlyAvailable: 'متاح في معظم الأيام',
+    loadingAvailability: 'جارٍ تحميل التوفر...',
+    noBlockedDates: 'لا توجد أيام محجوزة بعد. معظم الأيام متاحة للحجز.',
+    bookingRules: 'قواعد الحجز',
+    minimumBooking: 'الحد الأدنى للحجز',
+    maximumBooking: 'الحد الأقصى للحجز',
+    dayCount: (n) => `${n} يوم`,
+    defaultTimes: 'الأوقات الافتراضية',
+    checkInLabel: (v) => `الدخول: ${v}`,
+    checkOutLabel: (v) => `الخروج: ${v}`,
+
+    months: [
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
+    ],
+    monthsShort: [
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
+    ],
   },
 };
 
@@ -96,35 +523,32 @@ const toNum = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 
-const formatJOD = (n) => {
-  const num = toNum(n);
-  if (num === null) return null;
-  return `JOD ${num.toLocaleString()}`;
-};
-
 const PlacePage = () => {
   const { id } = useParams();
   const [place, setPlace] = useState(null);
   const [loading, setLoading] = useState(true);
   const [placeError, setPlaceError] = useState(null);
 
-  usePageTitle(place?.title || 'Warehouse');
-  const { formatPrice } = usePrefs();
+  const { formatPrice, lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
+  const maps = labelMaps[lang] || labelMaps.EN;
+
+  usePageTitle(place?.title || L.warehouse);
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
   const handleShare = async () => {
     const url = window.location.href;
-    const title = place?.title || 'Warehouse on WareShare';
+    const title = place?.title || L.shareFallbackTitle;
     try {
       if (navigator.share) {
         await navigator.share({ title, url });
         return;
       }
       await navigator.clipboard.writeText(url);
-      toast.success('Link copied to clipboard');
+      toast.success(L.linkCopied);
     } catch (err) {
       if (err?.name !== 'AbortError') {
-        toast.error('Could not share the link.');
+        toast.error(L.shareFailed);
       }
     }
   };
@@ -147,11 +571,7 @@ const PlacePage = () => {
         setPlace(data.place || data);
       } catch (err) {
         const status = err?.response?.status;
-        setPlaceError(
-          status === 404
-            ? 'This warehouse listing no longer exists.'
-            : 'Failed to load warehouse. Please try again.'
-        );
+        setPlaceError(status === 404 ? 'notFound' : 'loadFailed');
       } finally {
         setLoading(false);
       }
@@ -213,13 +633,13 @@ const PlacePage = () => {
     const palletCapacity = toNum(place.palletCapacity);
 
     if (totalArea !== null)
-      facts.push({ label: 'Total capacity', value: `${totalArea} m²`, icon: '📦' });
+      facts.push({ label: L.totalCapacity, value: `${totalArea} m²`, icon: '📦' });
     if (availableArea !== null)
-      facts.push({ label: 'Available now', value: `${availableArea} m²`, icon: '✅' });
+      facts.push({ label: L.availableNow, value: `${availableArea} m²`, icon: '✅' });
     if (palletCapacity !== null)
       facts.push({
-        label: 'Pallet capacity',
-        value: `${palletCapacity} pallets`,
+        label: L.palletCapacity,
+        value: `${palletCapacity} ${L.pallets}`,
         icon: '🧱',
       });
 
@@ -229,32 +649,34 @@ const PlacePage = () => {
     if (minDays !== null || maxDays !== null) {
       const v =
         minDays !== null && maxDays !== null
-          ? `${minDays}–${maxDays} days`
+          ? `${minDays}–${maxDays} ${L.days}`
           : minDays !== null
-          ? `Min ${minDays} days`
-          : `Max ${maxDays} days`;
-      facts.push({ label: 'Storage duration', value: v, icon: '🗓️' });
+          ? `${L.min} ${minDays} ${L.days}`
+          : `${L.max} ${maxDays} ${L.days}`;
+      facts.push({ label: L.storageDuration, value: v, icon: '🗓️' });
     }
 
     const primaryPrice = toNum(place.pricePerDay) ?? toNum(place.price) ?? null;
 
     if (primaryPrice !== null) {
       facts.push({
-        label: 'Base price',
-        value: `${formatJOD(primaryPrice)} / day`,
+        label: L.basePrice,
+        value: `${formatPrice(primaryPrice)} ${L.perDay}`,
         icon: '💰',
       });
     } else {
-      facts.push({ label: 'Base price', value: 'Price on request', icon: '💰' });
+      facts.push({ label: L.basePrice, value: L.priceOnRequest, icon: '💰' });
     }
 
     if (place.warehouseType?.length) {
       const types = place.warehouseType
-        .map((t) => labelMaps.warehouseType[t] || t)
+        .map((t) => maps.warehouseType[t] || t)
         .slice(0, 2);
       facts.push({
-        label: 'Warehouse type',
-        value: types.join(', ') + (place.warehouseType.length > 2 ? '…' : ''),
+        label: L.warehouseTypeLabel,
+        value:
+          types.join(L.listSeparator) +
+          (place.warehouseType.length > 2 ? '…' : ''),
         icon: '🏭',
       });
     }
@@ -265,15 +687,15 @@ const PlacePage = () => {
         (place.securityGuards ? 1 : 0) +
         (place.fireSuppression ? 1 : 0) +
         (place.smokeDetectors ? 1 : 0);
-      if (points >= 3) return 'High';
-      if (points >= 1) return 'Standard';
-      return 'Basic';
+      if (points >= 3) return L.securityHigh;
+      if (points >= 1) return L.securityStandard;
+      return L.securityBasic;
     })();
 
-    facts.push({ label: 'Security level', value: securityLevel, icon: '🛡️' });
+    facts.push({ label: L.securityLevel, value: securityLevel, icon: '🛡️' });
 
     return facts;
-  }, [place]);
+  }, [place, L, maps, formatPrice]);
 
   const availabilityHint = useMemo(() => {
     if (availabilityLoading) return null;
@@ -285,19 +707,19 @@ const PlacePage = () => {
       const key = format(d, 'yyyy-MM-dd');
       if (!unavailableSet.has(key)) availableCount += 1;
     }
-    return `${availableCount}/7 days available`;
-  }, [availabilityLoading, unavailableSet]);
+    return L.daysAvailable(availableCount);
+  }, [availabilityLoading, unavailableSet, L]);
 
   const badges = useMemo(() => {
     if (!place) return [];
     const arr = [];
 
     if (place.negotiablePrice) {
-      arr.push({ label: 'Negotiable', tone: 'success', icon: '🤝' });
+      arr.push({ label: L.negotiable, tone: 'success', icon: '🤝' });
     }
 
     if (place.insurance) {
-      arr.push({ label: 'Insurance available', tone: 'info', icon: '🛡️' });
+      arr.push({ label: L.insuranceAvailable, tone: 'info', icon: '🛡️' });
     }
 
     const hasPacking =
@@ -309,25 +731,25 @@ const PlacePage = () => {
       Array.isArray(place.services) && place.services.includes('transportation');
 
     if (hasPacking)
-      arr.push({ label: 'Packing available', tone: 'info', icon: '📦' });
+      arr.push({ label: L.packingAvailable, tone: 'info', icon: '📦' });
     if (hasDelivery)
-      arr.push({ label: 'Delivery available', tone: 'info', icon: '🚚' });
+      arr.push({ label: L.deliveryAvailable, tone: 'info', icon: '🚚' });
 
     return arr;
-  }, [place]);
+  }, [place, L]);
 
   const featuresBullets = useMemo(() => {
     if (!place) return [];
 
     const bullets = [];
 
-    if (place.CCTV) bullets.push({ icon: '🎥', label: 'CCTV surveillance' });
+    if (place.CCTV) bullets.push({ icon: '🎥', label: L.cctv });
     if (place.securityGuards)
-      bullets.push({ icon: '🛡️', label: '24/7 security guards' });
+      bullets.push({ icon: '🛡️', label: L.guards });
     if (place.fireSuppression)
-      bullets.push({ icon: '🧯', label: 'Fire suppression system' });
+      bullets.push({ icon: '🧯', label: L.fireSuppression });
     if (place.smokeDetectors)
-      bullets.push({ icon: '🔔', label: 'Smoke detectors' });
+      bullets.push({ icon: '🔔', label: L.smokeDetectors });
 
     const hasTempControl =
       (Array.isArray(place.warehouseType) &&
@@ -339,27 +761,27 @@ const PlacePage = () => {
           place.equipment.includes('freezers')));
 
     if (hasTempControl)
-      bullets.push({ icon: '❄️', label: 'Temperature-controlled capability' });
+      bullets.push({ icon: '❄️', label: L.tempControlled });
 
     if (
       toNum(place.loadingDocks) !== null ||
       (Array.isArray(place.equipment) && place.equipment.includes('loading-dock'))
     ) {
-      bullets.push({ icon: '🚪', label: 'Loading docks' });
+      bullets.push({ icon: '🚪', label: L.loadingDocks });
     }
 
     if (Array.isArray(place.equipment) && place.equipment.includes('forklift')) {
-      bullets.push({ icon: '🏗️', label: 'Forklift available' });
+      bullets.push({ icon: '🏗️', label: L.forkliftAvailable });
     }
 
-    if (place.rackAvailability) bullets.push({ icon: '🧱', label: 'Racks installed' });
-    if (place.parkingAvailable) bullets.push({ icon: '🅿️', label: 'Parking available' });
-    if (place.foodGradeCert) bullets.push({ icon: '🥫', label: 'Food-grade certified' });
-    if (place.hazmatCert) bullets.push({ icon: '☣️', label: 'Hazmat certified' });
-    if (place.ISOcert) bullets.push({ icon: '📜', label: `ISO: ${place.ISOcert}` });
+    if (place.rackAvailability) bullets.push({ icon: '🧱', label: L.racksInstalled });
+    if (place.parkingAvailable) bullets.push({ icon: '🅿️', label: L.parkingAvailable });
+    if (place.foodGradeCert) bullets.push({ icon: '🥫', label: L.foodGrade });
+    if (place.hazmatCert) bullets.push({ icon: '☣️', label: L.hazmatCert });
+    if (place.ISOcert) bullets.push({ icon: '📜', label: L.iso(place.ISOcert) });
 
     return bullets.slice(0, 10);
-  }, [place]);
+  }, [place, L]);
 
   const visibleReviews = useMemo(() => {
     if (!reviews || reviews.length === 0) return [];
@@ -374,32 +796,42 @@ const PlacePage = () => {
       Array.isArray(p?.services) &&
       p.services.includes('fulfillment')
     )
-      tags.push('E-commerce fulfillment');
+      tags.push(L.tagEcommerce);
 
     if (Array.isArray(p?.allowedGoods) && p.allowedGoods.includes('fmcg'))
-      tags.push('FMCG storage');
+      tags.push(L.tagFmcg);
     if (
       Array.isArray(p?.allowedGoods) &&
       p.allowedGoods.includes('electronics')
     )
-      tags.push('Electronics');
+      tags.push(L.tagElectronics);
     if (Array.isArray(p?.allowedGoods) && p.allowedGoods.includes('pharma'))
-      tags.push('Pharma');
+      tags.push(L.tagPharma);
 
     const pallets = toNum(p?.palletCapacity);
-    if (pallets !== null && pallets >= 500) tags.push('High-volume');
+    if (pallets !== null && pallets >= 500) tags.push(L.tagHighVolume);
 
     if (
       Array.isArray(p?.warehouseType) &&
       (p.warehouseType.includes('cold') || p.warehouseType.includes('frozen'))
     ) {
-      tags.push('Cold chain');
+      tags.push(L.tagColdChain);
     }
 
-    if (tags.length === 0) tags.push('SMEs', 'Import/Export');
+    if (tags.length === 0) tags.push(L.tagSmes, L.tagImportExport);
 
     return tags.slice(0, 4);
-  }, [place]);
+  }, [place, L]);
+
+  const formatMonthYear = (date) =>
+    lang === 'AR'
+      ? `${L.months[date.getMonth()]} ${date.getFullYear()}`
+      : format(date, 'MMMM yyyy');
+
+  const formatReviewDate = (date) =>
+    lang === 'AR'
+      ? `${date.getDate()} ${L.monthsShort[date.getMonth()]} ${date.getFullYear()}`
+      : format(date, 'dd MMM yyyy');
 
   const renderAvailabilityCalendar = () => {
     const startMonth = startOfMonth(calendarMonth);
@@ -453,14 +885,18 @@ const PlacePage = () => {
         <div className="mb-2 flex items-center justify-between text-xs font-semibold text-gray-700">
           <button
             type="button"
+            aria-label={L.prevMonth}
+            title={L.prevMonth}
             onClick={() => setCalendarMonth((prev) => addMonths(prev, -1))}
             className="rounded-full border border-gray-300 px-2 py-0.5 text-[11px] hover:bg-gray-100"
           >
             ‹
           </button>
-          <span>{format(calendarMonth, 'MMMM yyyy')}</span>
+          <span>{formatMonthYear(calendarMonth)}</span>
           <button
             type="button"
+            aria-label={L.nextMonth}
+            title={L.nextMonth}
             onClick={() => setCalendarMonth((prev) => addMonths(prev, 1))}
             className="rounded-full border border-gray-300 px-2 py-0.5 text-[11px] hover:bg-gray-100"
           >
@@ -469,13 +905,9 @@ const PlacePage = () => {
         </div>
 
         <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] text-gray-500">
-          <span>Mo</span>
-          <span>Tu</span>
-          <span>We</span>
-          <span>Th</span>
-          <span>Fr</span>
-          <span>Sa</span>
-          <span>Su</span>
+          {L.weekdays.map((w, i) => (
+            <span key={`${w}-${i}`}>{w}</span>
+          ))}
         </div>
 
         <div className="space-y-1">{rows}</div>
@@ -483,11 +915,11 @@ const PlacePage = () => {
         <div className="mt-3 flex items-center gap-3 text-[11px] text-gray-500">
           <div className="flex items-center gap-1">
             <span className="inline-block h-3 w-3 rounded-full bg-red-500" />
-            <span>Unavailable</span>
+            <span>{L.unavailable}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="inline-block h-3 w-3 rounded-full border border-primary" />
-            <span>Today</span>
+            <span>{L.today}</span>
           </div>
         </div>
       </div>
@@ -497,15 +929,22 @@ const PlacePage = () => {
   if (loading) {
     return (
       <div className="mt-24 px-4">
-        <p>Loading warehouse...</p>
+        <p>{L.loadingWarehouse}</p>
       </div>
     );
   }
 
   if (placeError || !place) {
+    const errorText =
+      placeError === 'notFound'
+        ? L.listingGone
+        : placeError === 'loadFailed'
+        ? L.loadFailed
+        : L.warehouseNotFound;
+
     return (
       <div className="mt-24 px-4">
-        <p className="text-red-600">{placeError || 'Warehouse not found.'}</p>
+        <p className="text-red-600">{errorText}</p>
       </div>
     );
   }
@@ -513,8 +952,8 @@ const PlacePage = () => {
   const primaryPrice = toNum(place.pricePerDay) ?? toNum(place.price) ?? null;
   const priceLabel =
     primaryPrice !== null
-      ? `${formatPrice(primaryPrice)} / day`
-      : 'Price on request';
+      ? `${formatPrice(primaryPrice)} ${L.perDay}`
+      : L.priceOnRequest;
 
   const locationLine = (() => {
     const parts = [];
@@ -530,8 +969,7 @@ const PlacePage = () => {
   const hasDelivery =
     Array.isArray(place.services) && place.services.includes('transportation');
 
-  const reviewCountLabel =
-    reviews?.length === 1 ? '1 review' : `${reviews?.length || 0} reviews`;
+  const reviewCountLabel = L.reviewCount(reviews?.length || 0);
 
   return (
     <div className="mt-20 px-4 pb-12">
@@ -549,17 +987,17 @@ const PlacePage = () => {
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-semibold text-gray-900 md:text-3xl">
-                  {place.title || 'Warehouse'}
+                  {place.title || L.warehouse}
                 </h1>
 
                 <button
                   type="button"
                   onClick={handleShare}
                   className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                  title="Share this warehouse"
+                  title={L.shareTitle}
                 >
                   <span className="text-sm">🔗</span>
-                  <span>Share</span>
+                  <span>{L.share}</span>
                 </button>
 
                 {badges.length > 0 && (
@@ -585,7 +1023,7 @@ const PlacePage = () => {
                 <div className="inline-flex items-center gap-2">
                   <span className="text-base">📍</span>
                   <span className="font-medium text-gray-800">
-                    {locationLine || place.address || 'Location'}
+                    {locationLine || place.address || L.locationFallback}
                   </span>
                 </div>
 
@@ -601,7 +1039,7 @@ const PlacePage = () => {
                   <div className="inline-flex items-center gap-2">
                     <span className="text-base">🏅</span>
                     <span className="font-semibold text-gray-900">
-                      Host {place.hostRating}
+                      {L.host} {place.hostRating}
                     </span>
                     <span className="text-gray-500">({place.hostRatingCount})</span>
                   </div>
@@ -621,7 +1059,7 @@ const PlacePage = () => {
                     key={t}
                     className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700"
                   >
-                    Best for: {t}
+                    {L.bestForPrefix} {t}
                   </span>
                 ))}
               </div>
@@ -629,11 +1067,11 @@ const PlacePage = () => {
 
             <div className="flex w-full flex-col items-start gap-2 md:w-auto md:items-end">
               <div className="rounded-xl bg-gray-50 px-4 py-3 text-left md:text-right">
-                <div className="text-xs font-semibold text-gray-500">Starting from</div>
+                <div className="text-xs font-semibold text-gray-500">{L.startingFrom}</div>
                 <div className="mt-1 text-xl font-semibold text-gray-900">{priceLabel}</div>
                 {place.negotiablePrice && (
                   <div className="mt-1 text-xs font-semibold text-emerald-700">
-                    Negotiable pricing
+                    {L.negotiablePricing}
                   </div>
                 )}
               </div>
@@ -643,14 +1081,14 @@ const PlacePage = () => {
                   to={`/place/${place._id}/chat`}
                   className="inline-flex items-center justify-center rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
                 >
-                  Contact host
+                  {L.contactHost}
                 </Link>
 
                 <a
                   href="#booking"
                   className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:opacity-95"
                 >
-                  Request booking
+                  {L.requestBooking}
                 </a>
               </div>
 
@@ -659,7 +1097,7 @@ const PlacePage = () => {
                   to={`/host/${place.owner}`}
                   className="text-sm font-semibold text-primary hover:underline"
                 >
-                  View host profile
+                  {L.viewHostProfile}
                 </Link>
               )}
             </div>
@@ -704,26 +1142,26 @@ const PlacePage = () => {
                 onClick={() => setLightboxIndex(0)}
                 className="text-sm font-semibold text-primary hover:underline"
               >
-                View all {place.photos.length} photo{place.photos.length === 1 ? '' : 's'}
+                {L.viewAllPhotos(place.photos.length)}
               </button>
               <div className="flex flex-wrap items-center gap-2">
                 <a
                   href="#location"
                   className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-200"
                 >
-                  View location
+                  {L.viewLocation}
                 </a>
                 <a
                   href="#services"
                   className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-200"
                 >
-                  Services & add-ons
+                  {L.servicesAddons}
                 </a>
                 <a
                   href="#reviews"
                   className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-200"
                 >
-                  Reviews
+                  {L.reviews}
                 </a>
               </div>
             </div>
@@ -737,15 +1175,13 @@ const PlacePage = () => {
             <section className="rounded-2xl border bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">At a glance</h2>
-                  <p className="mt-1 text-sm text-gray-600">
-                    Key warehouse information for quick evaluation.
-                  </p>
+                  <h2 className="text-lg font-semibold text-gray-900">{L.atAGlance}</h2>
+                  <p className="mt-1 text-sm text-gray-600">{L.atAGlanceSub}</p>
                 </div>
                 {place.warehouseType?.length > 0 && (
                   <div className="text-xs font-semibold text-gray-500">
                     {place.warehouseType
-                      .map((t) => labelMaps.warehouseType[t] || t)
+                      .map((t) => maps.warehouseType[t] || t)
                       .join(' • ')}
                   </div>
                 )}
@@ -769,24 +1205,24 @@ const PlacePage = () => {
                 toNum(place.loadingFee) !== null ||
                 toNum(place.tempControlFee) !== null) && (
                 <div className="mt-4 rounded-2xl border bg-white p-4">
-                  <div className="text-sm font-semibold text-gray-900">Optional pricing components</div>
+                  <div className="text-sm font-semibold text-gray-900">{L.optionalPricing}</div>
                   <div className="mt-2 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
                     {toNum(place.pricePerPallet) !== null && (
                       <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2">
-                        <span>Per pallet / day</span>
-                        <span className="font-semibold">{formatJOD(place.pricePerPallet)}</span>
+                        <span>{L.perPalletPerDay}</span>
+                        <span className="font-semibold">{formatPrice(place.pricePerPallet)}</span>
                       </div>
                     )}
                     {toNum(place.loadingFee) !== null && (
                       <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2">
-                        <span>Loading / unloading fee</span>
-                        <span className="font-semibold">{formatJOD(place.loadingFee)}</span>
+                        <span>{L.loadingFee}</span>
+                        <span className="font-semibold">{formatPrice(place.loadingFee)}</span>
                       </div>
                     )}
                     {toNum(place.tempControlFee) !== null && (
                       <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2">
-                        <span>Temperature control surcharge</span>
-                        <span className="font-semibold">{formatJOD(place.tempControlFee)}</span>
+                        <span>{L.tempControlSurcharge}</span>
+                        <span className="font-semibold">{formatPrice(place.tempControlFee)}</span>
                       </div>
                     )}
                   </div>
@@ -796,19 +1232,19 @@ const PlacePage = () => {
 
             {/* C. DESCRIPTION & FEATURES */}
             <section className="rounded-2xl border bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">Description & features</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{L.descriptionFeatures}</h2>
 
               {place.description ? (
                 <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-gray-700">
                   {place.description}
                 </p>
               ) : (
-                <p className="mt-3 text-sm text-gray-600">No description provided.</p>
+                <p className="mt-3 text-sm text-gray-600">{L.noDescription}</p>
               )}
 
               {featuresBullets.length > 0 && (
                 <div className="mt-5">
-                  <div className="text-sm font-semibold text-gray-900">Highlights</div>
+                  <div className="text-sm font-semibold text-gray-900">{L.highlights}</div>
                   <ul className="mt-3 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
                     {featuresBullets.map((b) => (
                       <li
@@ -829,22 +1265,22 @@ const PlacePage = () => {
                 <div className="mt-6 grid gap-6 md:grid-cols-2">
                   {place.equipment?.length > 0 && (
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">Equipment</div>
-                      {renderTagList(place.equipment, labelMaps.equipment)}
+                      <div className="text-sm font-semibold text-gray-900">{L.equipment}</div>
+                      {renderTagList(place.equipment, maps.equipment)}
                     </div>
                   )}
 
                   {place.truckAccess?.length > 0 && (
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">Truck access</div>
-                      {renderTagList(place.truckAccess, labelMaps.truckAccess)}
+                      <div className="text-sm font-semibold text-gray-900">{L.truckAccess}</div>
+                      {renderTagList(place.truckAccess, maps.truckAccess)}
                     </div>
                   )}
 
                   {place.allowedGoods?.length > 0 && (
                     <div className="md:col-span-2">
-                      <div className="text-sm font-semibold text-gray-900">Allowed goods</div>
-                      {renderTagList(place.allowedGoods, labelMaps.allowedGoods)}
+                      <div className="text-sm font-semibold text-gray-900">{L.allowedGoods}</div>
+                      {renderTagList(place.allowedGoods, maps.allowedGoods)}
                     </div>
                   )}
                 </div>
@@ -852,7 +1288,7 @@ const PlacePage = () => {
 
               {place.extraInfo && (
                 <div className="mt-6 rounded-2xl border bg-gray-50 p-4">
-                  <div className="text-sm font-semibold text-gray-900">Notes / rules</div>
+                  <div className="text-sm font-semibold text-gray-900">{L.notesRules}</div>
                   <p className="mt-2 whitespace-pre-line text-sm text-gray-700">{place.extraInfo}</p>
                 </div>
               )}
@@ -862,10 +1298,8 @@ const PlacePage = () => {
             <section id="location" className="rounded-2xl border bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Location</h2>
-                  <p className="mt-1 text-sm text-gray-600">
-                    Map marker reflects the stored GPS coordinates.
-                  </p>
+                  <h2 className="text-lg font-semibold text-gray-900">{L.location}</h2>
+                  <p className="mt-1 text-sm text-gray-600">{L.locationSub}</p>
                 </div>
                 {(place.city || place.zone) && (
                   <div className="text-sm font-semibold text-gray-700">
@@ -882,76 +1316,66 @@ const PlacePage = () => {
                 </div>
               ) : (
                 <div className="mt-4 rounded-2xl border bg-gray-50 p-4 text-sm text-gray-600">
-                  Map is not available for this warehouse (missing GPS coordinates).
+                  {L.mapUnavailable}
                 </div>
               )}
 
               <div className="mt-4 rounded-2xl bg-gray-50 p-4">
-                <div className="text-xs font-semibold text-gray-500">Address</div>
+                <div className="text-xs font-semibold text-gray-500">{L.address}</div>
                 <div className="mt-1 text-sm font-semibold text-gray-900">
-                  {place.address || 'Address not provided'}
+                  {place.address || L.addressNotProvided}
                 </div>
-                <div className="mt-2 text-xs text-gray-500">
-                  Exact address details may be confirmed during booking and chat.
-                </div>
+                <div className="mt-2 text-xs text-gray-500">{L.addressNote}</div>
               </div>
             </section>
 
             {/* E. SERVICES & ADD-ONS */}
             <section id="services" className="rounded-2xl border bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">Services & add-ons</h2>
-              <p className="mt-1 text-sm text-gray-600">
-                These indicate what the host can support. You can select add-ons during booking.
-              </p>
+              <h2 className="text-lg font-semibold text-gray-900">{L.servicesAddons}</h2>
+              <p className="mt-1 text-sm text-gray-600">{L.servicesSub}</p>
 
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <div className="rounded-2xl border bg-gray-50 p-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold text-gray-900">Insurance</div>
+                    <div className="text-sm font-semibold text-gray-900">{L.insurance}</div>
                     <div className="text-xl">🛡️</div>
                   </div>
                   <div className="mt-2 text-sm text-gray-700">
-                    {place.insurance
-                      ? 'Available (coverage options during booking).'
-                      : 'Not listed as available.'}
+                    {place.insurance ? L.insuranceYes : L.notListed}
                   </div>
                 </div>
 
                 <div className="rounded-2xl border bg-gray-50 p-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold text-gray-900">Packing</div>
+                    <div className="text-sm font-semibold text-gray-900">{L.packing}</div>
                     <div className="text-xl">📦</div>
                   </div>
                   <div className="mt-2 text-sm text-gray-700">
-                    {hasPacking
-                      ? 'Available (labeling / packing / handling support).'
-                      : 'Not listed as available.'}
+                    {hasPacking ? L.packingYes : L.notListed}
                   </div>
                 </div>
 
                 <div className="rounded-2xl border bg-gray-50 p-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold text-gray-900">Delivery</div>
+                    <div className="text-sm font-semibold text-gray-900">{L.delivery}</div>
                     <div className="text-xl">🚚</div>
                   </div>
                   <div className="mt-2 text-sm text-gray-700">
-                    {hasDelivery
-                      ? 'Available (pickup / drop-off options during booking).'
-                      : 'Not listed as available.'}
+                    {hasDelivery ? L.deliveryYes : L.notListed}
                   </div>
                 </div>
               </div>
 
               {place.services?.length > 0 && (
                 <div className="mt-5">
-                  <div className="text-sm font-semibold text-gray-900">Additional services</div>
-                  {renderTagList(place.services, labelMaps.services)}
+                  <div className="text-sm font-semibold text-gray-900">{L.additionalServices}</div>
+                  {renderTagList(place.services, maps.services)}
                 </div>
               )}
 
               {place.prohibitedGoods && (
                 <div className="mt-6 rounded-2xl border bg-gray-50 p-4">
-                  <div className="text-sm font-semibold text-gray-900">Restrictions</div>
+                  <div className="text-sm font-semibold text-gray-900">{L.restrictions}</div>
                   <div className="mt-2 whitespace-pre-line text-sm text-gray-700">
                     {place.prohibitedGoods}
                   </div>
@@ -963,10 +1387,8 @@ const PlacePage = () => {
             <section className="rounded-2xl border bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Host</h2>
-                  <p className="mt-1 text-sm text-gray-600">
-                    View the host profile and start a conversation before booking.
-                  </p>
+                  <h2 className="text-lg font-semibold text-gray-900">{L.hostSection}</h2>
+                  <p className="mt-1 text-sm text-gray-600">{L.hostSub}</p>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     {hasHostRating && (
@@ -981,7 +1403,7 @@ const PlacePage = () => {
                         to={`/host/${place.owner}`}
                         className="inline-flex items-center rounded-full border border-primary px-3 py-1 text-xs font-semibold text-primary transition hover:bg-primary hover:text-white"
                       >
-                        View host profile
+                        {L.viewHostProfile}
                       </Link>
                     )}
                   </div>
@@ -992,14 +1414,14 @@ const PlacePage = () => {
                     to={`/place/${place._id}/chat`}
                     className="inline-flex items-center justify-center rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
                   >
-                    Contact host
+                    {L.contactHost}
                   </Link>
 
                   <a
                     href="#booking"
                     className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:opacity-95"
                   >
-                    Request booking
+                    {L.requestBooking}
                   </a>
                 </div>
               </div>
@@ -1009,10 +1431,8 @@ const PlacePage = () => {
             <section id="reviews" className="rounded-2xl border bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Reviews</h2>
-                  <p className="mt-1 text-sm text-gray-600">
-                    Feedback from renters who booked this warehouse.
-                  </p>
+                  <h2 className="text-lg font-semibold text-gray-900">{L.reviews}</h2>
+                  <p className="mt-1 text-sm text-gray-600">{L.reviewsSub}</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -1026,13 +1446,11 @@ const PlacePage = () => {
               </div>
 
               {reviewsLoading && (
-                <p className="mt-4 text-sm text-gray-600">Loading reviews...</p>
+                <p className="mt-4 text-sm text-gray-600">{L.loadingReviews}</p>
               )}
 
               {!reviewsLoading && reviews.length === 0 && (
-                <p className="mt-4 text-sm text-gray-600">
-                  No reviews yet. Be the first to book and review this warehouse.
-                </p>
+                <p className="mt-4 text-sm text-gray-600">{L.noReviews}</p>
               )}
 
               {!reviewsLoading && reviews.length > 0 && (
@@ -1045,11 +1463,11 @@ const PlacePage = () => {
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="font-semibold text-gray-900">
-                            {review.user?.name || 'Anonymous'}
+                            {review.user?.name || L.anonymous}
                           </div>
                           <div className="text-xs font-semibold text-gray-500">
                             {review.createdAt &&
-                              format(new Date(review.createdAt), 'dd MMM yyyy')}
+                              formatReviewDate(new Date(review.createdAt))}
                           </div>
                         </div>
 
@@ -1058,7 +1476,7 @@ const PlacePage = () => {
                             {'⭐'.repeat(Number(review.rating) || 0)}
                           </span>{' '}
                           <span className="text-gray-600">
-                            ({review.rating} / 5)
+                            {L.outOf5(review.rating)}
                           </span>
                         </div>
 
@@ -1078,7 +1496,7 @@ const PlacePage = () => {
                         onClick={() => setShowAllReviews((v) => !v)}
                         className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50"
                       >
-                        {showAllReviews ? 'See fewer reviews' : 'See all reviews'}
+                        {showAllReviews ? L.seeFewerReviews : L.seeAllReviews}
                       </button>
                     </div>
                   )}
@@ -1094,17 +1512,17 @@ const PlacePage = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-xs font-semibold text-gray-500">
-                      Booking summary
+                      {L.bookingSummary}
                     </div>
                     <div className="mt-1 text-lg font-semibold text-gray-900">
                       {priceLabel}
                     </div>
                     <div className="mt-1 text-sm text-gray-600">
-                      Add-ons available during booking (insurance, packing, delivery).
+                      {L.addonsNote}
                     </div>
                   </div>
                   <div className="rounded-xl bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700">
-                    {place.negotiablePrice ? 'Negotiable' : 'Fixed'}
+                    {place.negotiablePrice ? L.negotiable : L.fixed}
                   </div>
                 </div>
 
@@ -1115,22 +1533,22 @@ const PlacePage = () => {
 
               <div className="rounded-2xl border bg-white p-4 shadow-sm">
                 <div className="mb-2 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900">Availability</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">{L.availability}</h3>
                   {!availabilityLoading && unavailableDates?.length === 0 && (
                     <span className="text-xs font-semibold text-emerald-700">
-                      Mostly available
+                      {L.mostlyAvailable}
                     </span>
                   )}
                 </div>
 
                 {availabilityLoading ? (
-                  <p className="text-xs text-gray-500">Loading availability...</p>
+                  <p className="text-xs text-gray-500">{L.loadingAvailability}</p>
                 ) : (
                   <>
                     {renderAvailabilityCalendar()}
                     {unavailableDates.length === 0 && (
                       <p className="mt-2 text-xs text-gray-500">
-                        No blocked dates yet. Most days are available to book.
+                        {L.noBlockedDates}
                       </p>
                     )}
                   </>
@@ -1142,35 +1560,33 @@ const PlacePage = () => {
                 toNum(place.minBookingDays) !== null ||
                 toNum(place.maxBookingDays) !== null) && (
                 <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-900">Booking rules</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">{L.bookingRules}</h3>
                   <div className="mt-2 space-y-2 text-sm text-gray-700">
                     {toNum(place.minBookingDays) !== null && (
                       <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2">
-                        <span>Minimum booking</span>
+                        <span>{L.minimumBooking}</span>
                         <span className="font-semibold">
-                          {place.minBookingDays} day
-                          {place.minBookingDays > 1 ? 's' : ''}
+                          {L.dayCount(place.minBookingDays)}
                         </span>
                       </div>
                     )}
                     {toNum(place.maxBookingDays) !== null && (
                       <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2">
-                        <span>Maximum booking</span>
+                        <span>{L.maximumBooking}</span>
                         <span className="font-semibold">
-                          {place.maxBookingDays} day
-                          {place.maxBookingDays > 1 ? 's' : ''}
+                          {L.dayCount(place.maxBookingDays)}
                         </span>
                       </div>
                     )}
                     {(place.checkIn || place.checkOut) && (
                       <div className="rounded-xl bg-gray-50 px-3 py-2">
                         <div className="text-xs font-semibold text-gray-500">
-                          Default times
+                          {L.defaultTimes}
                         </div>
                         <div className="mt-1 font-semibold text-gray-800">
-                          {place.checkIn ? `Check-in: ${place.checkIn}` : ''}
+                          {place.checkIn ? L.checkInLabel(place.checkIn) : ''}
                           {place.checkIn && place.checkOut ? ' • ' : ''}
-                          {place.checkOut ? `Check-out: ${place.checkOut}` : ''}
+                          {place.checkOut ? L.checkOutLabel(place.checkOut) : ''}
                         </div>
                       </div>
                     )}

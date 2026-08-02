@@ -6,9 +6,49 @@ import axiosInstance from '@/utils/axios';
 import { useAuth } from '@/hooks';
 import { ShieldCheck, AlertTriangle, Mail, Phone, Check, X } from 'lucide-react';
 import AccountNav from '@/components/ui/AccountNav';
+import { usePrefs } from '@/providers/PreferencesProvider';
+
+const STR = {
+  EN: {
+    loadFailed: 'Failed to load pending host verifications.',
+    decisionSaved: 'Decision saved',
+    updateFailed: 'Failed to update host verification status.',
+    notAuthorized: 'You are not authorized to view this page.',
+    title: 'Host verification requests',
+    subtitle: 'Review pending host applications and approve or reject them.',
+    loadingHosts: 'Loading pending hosts...',
+    noRequests: 'No pending host verification requests.',
+    pending: 'Pending',
+    company: 'Company:',
+    submittedAt: 'Submitted at:',
+    lastNote: 'Last note:',
+    document: 'Document',
+    approve: 'Approve',
+    reject: 'Reject',
+  },
+  AR: {
+    loadFailed: 'تعذّر تحميل طلبات التحقق المعلّقة.',
+    decisionSaved: 'تم حفظ القرار',
+    updateFailed: 'تعذّر تحديث حالة التحقق من المضيف.',
+    notAuthorized: 'لا تملك صلاحية لعرض هذه الصفحة.',
+    title: 'طلبات التحقق من المضيفين',
+    subtitle: 'راجع طلبات المضيفين المعلّقة ثم اقبلها أو ارفضها.',
+    loadingHosts: 'جارٍ تحميل المضيفين المعلّقين...',
+    noRequests: 'لا توجد طلبات تحقق معلّقة.',
+    pending: 'معلّق',
+    company: 'الشركة:',
+    submittedAt: 'تاريخ التقديم:',
+    lastNote: 'آخر ملاحظة:',
+    document: 'مستند',
+    approve: 'قبول',
+    reject: 'رفض',
+  },
+};
 
 const AdminHostVerificationPage = () => {
   const { user, setUser } = useAuth();
+  const { lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
   const [loading, setLoading] = useState(true);
   const [hosts, setHosts] = useState([]);
 
@@ -19,10 +59,7 @@ const AdminHostVerificationPage = () => {
       const { data } = await axiosInstance.get('/users/admin/hosts/pending');
       setHosts(data.hosts || []);
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message ||
-          'Failed to load pending host verifications.'
-      );
+      toast.error(err?.response?.data?.message || L.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -42,7 +79,7 @@ const AdminHostVerificationPage = () => {
         }
       );
 
-      toast.success(data.message || 'Decision saved');
+      toast.success(data.message || L.decisionSaved);
 
       // If the host we just updated is the currently logged-in user, sync it
       if (data.user && user && user._id === data.user._id && typeof setUser === 'function') {
@@ -52,10 +89,7 @@ const AdminHostVerificationPage = () => {
       // Remove this host from the list after decision
       setHosts((prev) => prev.filter((h) => h._id !== hostId));
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message ||
-          'Failed to update host verification status.'
-      );
+      toast.error(err?.response?.data?.message || L.updateFailed);
     }
   };
 
@@ -67,7 +101,7 @@ const AdminHostVerificationPage = () => {
       <div>
         <AccountNav />
         <div className="mt-24 text-center text-sm text-gray-500">
-          You are not authorized to view this page.
+          {L.notAuthorized}
         </div>
       </div>
     );
@@ -82,22 +116,20 @@ const AdminHostVerificationPage = () => {
           <div>
             <h1 className="flex items-center gap-2 text-lg font-semibold text-gray-800">
               <ShieldCheck className="h-5 w-5 text-emerald-600" />
-              Host verification requests
+              {L.title}
             </h1>
-            <p className="text-xs text-gray-500">
-              Review pending host applications and approve or reject them.
-            </p>
+            <p className="text-xs text-gray-500">{L.subtitle}</p>
           </div>
         </div>
 
         {loading ? (
           <div className="py-10 text-center text-sm text-gray-500">
-            Loading pending hosts...
+            {L.loadingHosts}
           </div>
         ) : hosts.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-10 text-sm text-gray-500">
             <AlertTriangle className="h-6 w-6 text-gray-400" />
-            <span>No pending host verification requests.</span>
+            <span>{L.noRequests}</span>
           </div>
         ) : (
           <div className="space-y-4">
@@ -116,7 +148,7 @@ const AdminHostVerificationPage = () => {
                     <div className="font-semibold text-gray-800">
                       {h.name}{' '}
                       <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] uppercase tracking-wide text-amber-800">
-                        Pending
+                        {L.pending}
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
@@ -132,19 +164,19 @@ const AdminHostVerificationPage = () => {
                       )}
                       {hp.companyName && (
                         <span className="inline-flex items-center gap-1">
-                          Company: {hp.companyName}
+                          {L.company} {hp.companyName}
                         </span>
                       )}
                     </div>
                     <div className="text-[11px] text-gray-500">
-                      Submitted at:{' '}
+                      {L.submittedAt}{' '}
                       {submittedAt
                         ? new Date(submittedAt).toLocaleString()
                         : '—'}
                     </div>
                     {h.hostVerificationNotes && (
                       <div className="text-[11px] text-red-500">
-                        Last note: {h.hostVerificationNotes}
+                        {L.lastNote} {h.hostVerificationNotes}
                       </div>
                     )}
                   </div>
@@ -161,7 +193,7 @@ const AdminHostVerificationPage = () => {
                             rel="noreferrer"
                             className="rounded-full bg-white px-2 py-1 text-blue-600 underline"
                           >
-                            {f.label || 'Document'}
+                            {f.label || L.document}
                           </a>
                         ))}
                       </div>
@@ -174,7 +206,7 @@ const AdminHostVerificationPage = () => {
                         className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
                       >
                         <Check className="h-3 w-3" />
-                        Approve
+                        {L.approve}
                       </button>
                       <button
                         type="button"
@@ -182,7 +214,7 @@ const AdminHostVerificationPage = () => {
                         className="inline-flex items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700"
                       >
                         <X className="h-3 w-3" />
-                        Reject
+                        {L.reject}
                       </button>
                     </div>
                   </div>
