@@ -854,7 +854,7 @@ const BookingWidget = ({ place }) => {
               delivery.deliveryType === 'round_trip') && (
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Pickup city
+                  {L.pickupCity}
                 </label>
                 <input
                   type="text"
@@ -866,7 +866,7 @@ const BookingWidget = ({ place }) => {
                     }))
                   }
                   className="mt-1 w-full rounded-md border p-2 text-sm"
-                  placeholder="e.g., Amman"
+                  placeholder={L.pickupCityPlaceholder}
                 />
               </div>
             )}
@@ -875,7 +875,7 @@ const BookingWidget = ({ place }) => {
               delivery.deliveryType === 'round_trip') && (
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Drop-off city
+                  {L.dropoffCity}
                 </label>
                 <input
                   type="text"
@@ -887,14 +887,14 @@ const BookingWidget = ({ place }) => {
                     }))
                   }
                   className="mt-1 w-full rounded-md border p-2 text-sm"
-                  placeholder="e.g., Zarqa"
+                  placeholder={L.dropoffCityPlaceholder}
                 />
               </div>
             )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Pickup address (optional)
+                {L.pickupAddress}
               </label>
               <input
                 type="text"
@@ -906,13 +906,13 @@ const BookingWidget = ({ place }) => {
                   }))
                 }
                 className="mt-1 w-full rounded-md border p-2 text-sm"
-                placeholder="Street, building, landmarks..."
+                placeholder={L.addressPlaceholder}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Drop-off address (optional)
+                {L.dropoffAddress}
               </label>
               <input
                 type="text"
@@ -924,13 +924,13 @@ const BookingWidget = ({ place }) => {
                   }))
                 }
                 className="mt-1 w-full rounded-md border p-2 text-sm"
-                placeholder="Street, building, landmarks..."
+                placeholder={L.addressPlaceholder}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Time window
+                {L.timeWindow}
               </label>
               <select
                 value={delivery.deliveryTimeWindow}
@@ -942,9 +942,9 @@ const BookingWidget = ({ place }) => {
                 }
                 className="mt-1 w-full rounded-md border p-2 text-sm"
               >
-                <option value="morning">Morning</option>
-                <option value="afternoon">Afternoon</option>
-                <option value="evening">Evening</option>
+                <option value="morning">{L.morning}</option>
+                <option value="afternoon">{L.afternoon}</option>
+                <option value="evening">{L.evening}</option>
               </select>
             </div>
           </div>
@@ -955,31 +955,41 @@ const BookingWidget = ({ place }) => {
       {daysPreview > 0 && (
         <div className="mt-4 rounded-xl border bg-white p-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-gray-600">Base booking price</span>
-            <span className="font-semibold">JOD{baseBookingPricePreview}</span>
+            <span className="text-gray-600">{L.basePrice}</span>
+            <span className="font-semibold">
+              {formatPrice(baseBookingPricePreview)}
+            </span>
           </div>
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-gray-600">Insurance fee</span>
-            <span className="font-semibold">JOD{insuranceFeePreview}</span>
+            <span className="text-gray-600">{L.insuranceFee}</span>
+            <span className="font-semibold">
+              {formatPrice(insuranceFeePreview)}
+            </span>
           </div>
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-gray-600">Packing fee</span>
-            <span className="font-semibold">JOD{packingFeePreview}</span>
+            <span className="text-gray-600">{L.packingFee}</span>
+            <span className="font-semibold">
+              {formatPrice(packingFeePreview)}
+            </span>
           </div>
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-gray-600">Delivery fee</span>
-            <span className="font-semibold">JOD{deliveryFeePreview}</span>
+            <span className="text-gray-600">{L.deliveryFee}</span>
+            <span className="font-semibold">
+              {formatPrice(deliveryFeePreview)}
+            </span>
           </div>
           <div className="mt-2 flex items-center justify-between border-t pt-2">
-            <span className="font-semibold">Total</span>
-            <span className="text-base font-bold">JOD{totalPricePreview}</span>
+            <span className="font-semibold">{L.total}</span>
+            <span className="text-base font-bold">
+              {formatPrice(totalPricePreview)}
+            </span>
           </div>
         </div>
       )}
 
       <button onClick={handleBooking} className="primary mt-4 w-full">
-        Request this warehouse
-        {daysPreview > 0 && <span> · JOD{totalPricePreview}</span>}
+        {L.requestWarehouse}
+        {daysPreview > 0 && <span> · {formatPrice(totalPricePreview)}</span>}
       </button>
     </div>
   );

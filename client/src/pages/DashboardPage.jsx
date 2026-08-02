@@ -19,6 +19,184 @@ import {
 
 import axiosInstance from '@/utils/axios';
 import { useAuth } from '@/hooks';
+import { usePrefs } from '@/providers/PreferencesProvider';
+
+const STR = {
+  EN: {
+    notAuthorized: 'Not authorized',
+    notAuthorizedBody: 'You are not authorized to view this.',
+    goToDashboard: 'Go to dashboard',
+    title: 'Dashboard',
+    subtitle: 'Renter + Host insights with filters and charts.',
+    openAdmin: 'Open Admin Dashboard',
+    tabOverview: 'Overview',
+    tabRenter: 'My Renting',
+    tabOwner: 'My Hosting',
+    dateRange: 'Date range',
+    last7: 'Last 7 days',
+    last30: 'Last 30 days',
+    last90: 'Last 90 days',
+    custom: 'Custom',
+    status: 'Status',
+    all: 'All',
+    pending: 'pending',
+    approved: 'approved',
+    completed: 'completed',
+    cancelledDeclined: 'cancelled/declined',
+    search: 'Search',
+    searchPlaceholder: 'Warehouse title or booking ID',
+    quickActions: 'Quick actions',
+    myBookings: 'My bookings',
+    hostingRequests: 'Hosting requests',
+    messages: 'Messages',
+    warehouseFilter: 'Warehouse filter (hosting)',
+    allMyWarehouses: 'All my warehouses',
+    loading: 'Loading dashboard data…',
+    errOverview: 'Failed to load overview.',
+    errOverviewToast: 'Failed to load dashboard overview.',
+    errRenter: 'Failed to load renting data.',
+    errRenterToast: 'Failed to load renting dashboard.',
+    errOwner: 'Failed to load hosting data.',
+    errOwnerToast: 'Failed to load hosting dashboard.',
+    statusUpdated: (s) => `Booking ${s} successfully.`,
+    statusUpdateFailed: 'Failed to update booking status.',
+    renterActive: 'Renter active',
+    approvedBookings: 'Approved bookings',
+    renterPending: 'Renter pending',
+    awaitingOwner: 'Awaiting owner action',
+    spentPaid: 'Spent (paid)',
+    paidOnly: 'Paid bookings only',
+    ownerPending: 'Owner pending',
+    requestsToYours: 'Requests to your warehouses',
+    bookingsOverTime: 'Bookings over time',
+    bookingsOverTimeSub: 'Count of bookings created per day',
+    statusBreakdown: 'Status breakdown',
+    statusBreakdownSub: 'Distribution of booking statuses',
+    totalBookings: 'Total bookings',
+    insuranceTotal: 'Insurance total',
+    packingDelivery: 'Packing + Delivery',
+    spendingOverTime: 'Spending over time',
+    paidPerDay: 'Paid totals per day',
+    addOnsOverTime: 'Add-ons totals over time',
+    addOnsSub: 'Insurance / Packing / Delivery',
+    insurance: 'Insurance',
+    packing: 'Packing',
+    delivery: 'Delivery',
+    myRenting: 'My Renting',
+    myRentingSub: 'Bookings you requested (filtered)',
+    range: 'Range:',
+    noBookings: 'No bookings found for the selected filters.',
+    warehouse: 'Warehouse',
+    statusLabel: 'Status:',
+    totalLabel: 'Total:',
+    openBooking: 'Open booking',
+    chat: 'Chat',
+    viewWarehouse: 'View warehouse',
+    pendingRequests: 'Pending requests',
+    completedBookings: 'Completed bookings',
+    grossEarned: 'Gross earned',
+    excludesDeclined: 'Excludes declined',
+    addOnsTotal: 'Add-ons total',
+    earningsOverTime: 'Earnings over time',
+    earningsPaid: 'Earnings (paid)',
+    myHosting: 'My Hosting',
+    myHostingSub: 'Requests and bookings to your warehouses (filtered)',
+    renterLabel: 'Renter:',
+    renter: 'Renter',
+    addOnsLabel: 'Add-ons:',
+    approve: 'Approve',
+    decline: 'Decline',
+    markCompleted: 'Mark completed',
+    ownerRequests: 'Owner requests',
+  },
+  AR: {
+    notAuthorized: 'غير مصرّح',
+    notAuthorizedBody: 'لا تملك صلاحية لعرض هذا المحتوى.',
+    goToDashboard: 'الذهاب إلى لوحة التحكم',
+    title: 'لوحة التحكم',
+    subtitle: 'مؤشرات الاستئجار والاستضافة مع الفلاتر والرسوم البيانية.',
+    openAdmin: 'فتح لوحة الإدارة',
+    tabOverview: 'نظرة عامة',
+    tabRenter: 'استئجاري',
+    tabOwner: 'استضافتي',
+    dateRange: 'النطاق الزمني',
+    last7: 'آخر 7 أيام',
+    last30: 'آخر 30 يومًا',
+    last90: 'آخر 90 يومًا',
+    custom: 'مخصّص',
+    status: 'الحالة',
+    all: 'الكل',
+    pending: 'معلّق',
+    approved: 'مقبول',
+    completed: 'مكتمل',
+    cancelledDeclined: 'ملغى/مرفوض',
+    search: 'بحث',
+    searchPlaceholder: 'اسم المستودع أو رقم الحجز',
+    quickActions: 'إجراءات سريعة',
+    myBookings: 'حجوزاتي',
+    hostingRequests: 'طلبات الاستضافة',
+    messages: 'الرسائل',
+    warehouseFilter: 'فلتر المستودع (الاستضافة)',
+    allMyWarehouses: 'كل مستودعاتي',
+    loading: 'جارٍ تحميل بيانات لوحة التحكم…',
+    errOverview: 'تعذّر تحميل النظرة العامة.',
+    errOverviewToast: 'تعذّر تحميل النظرة العامة للوحة التحكم.',
+    errRenter: 'تعذّر تحميل بيانات الاستئجار.',
+    errRenterToast: 'تعذّر تحميل لوحة الاستئجار.',
+    errOwner: 'تعذّر تحميل بيانات الاستضافة.',
+    errOwnerToast: 'تعذّر تحميل لوحة الاستضافة.',
+    statusUpdated: () => 'تم تحديث حالة الحجز بنجاح.',
+    statusUpdateFailed: 'تعذّر تحديث حالة الحجز.',
+    renterActive: 'حجوزات نشطة كمستأجر',
+    approvedBookings: 'الحجوزات المقبولة',
+    renterPending: 'حجوزات معلّقة كمستأجر',
+    awaitingOwner: 'بانتظار إجراء المالك',
+    spentPaid: 'المصروف (المدفوع)',
+    paidOnly: 'الحجوزات المدفوعة فقط',
+    ownerPending: 'طلبات معلّقة كمالك',
+    requestsToYours: 'طلبات على مستودعاتك',
+    bookingsOverTime: 'الحجوزات عبر الزمن',
+    bookingsOverTimeSub: 'عدد الحجوزات المنشأة يوميًا',
+    statusBreakdown: 'توزيع الحالات',
+    statusBreakdownSub: 'توزيع حالات الحجوزات',
+    totalBookings: 'إجمالي الحجوزات',
+    insuranceTotal: 'إجمالي التأمين',
+    packingDelivery: 'التغليف + التوصيل',
+    spendingOverTime: 'الإنفاق عبر الزمن',
+    paidPerDay: 'إجمالي المدفوع لكل يوم',
+    addOnsOverTime: 'إجمالي الخدمات الإضافية عبر الزمن',
+    addOnsSub: 'التأمين / التغليف / التوصيل',
+    insurance: 'التأمين',
+    packing: 'التغليف',
+    delivery: 'التوصيل',
+    myRenting: 'استئجاري',
+    myRentingSub: 'الحجوزات التي طلبتها (مُصفّاة)',
+    range: 'النطاق:',
+    noBookings: 'لا توجد حجوزات مطابقة للفلاتر المحددة.',
+    warehouse: 'مستودع',
+    statusLabel: 'الحالة:',
+    totalLabel: 'الإجمالي:',
+    openBooking: 'فتح الحجز',
+    chat: 'المحادثة',
+    viewWarehouse: 'عرض المستودع',
+    pendingRequests: 'الطلبات المعلّقة',
+    completedBookings: 'الحجوزات المكتملة',
+    grossEarned: 'إجمالي الأرباح',
+    excludesDeclined: 'باستثناء المرفوضة',
+    addOnsTotal: 'إجمالي الخدمات الإضافية',
+    earningsOverTime: 'الأرباح عبر الزمن',
+    earningsPaid: 'الأرباح (المدفوعة)',
+    myHosting: 'استضافتي',
+    myHostingSub: 'الطلبات والحجوزات على مستودعاتك (مُصفّاة)',
+    renterLabel: 'المستأجر:',
+    renter: 'مستأجر',
+    addOnsLabel: 'الخدمات الإضافية:',
+    approve: 'قبول',
+    decline: 'رفض',
+    markCompleted: 'وضع علامة مكتمل',
+    ownerRequests: 'طلبات المالك',
+  },
+};
 
 const CHART_COLORS = [
   '#2563EB', // blue
@@ -99,13 +277,15 @@ function Card({ title, subtitle, right, children }) {
 }
 
 function NotAuthorized({ message }) {
+  const { lang } = usePrefs();
+  const L = STR[lang] || STR.EN;
   return (
     <div className="mt-24 rounded-2xl border bg-white p-6 text-sm text-gray-700 shadow-sm">
-      <div className="text-lg font-semibold text-gray-900">Not authorized</div>
-      <div className="mt-2">{message || 'You are not authorized to view this.'}</div>
+      <div className="text-lg font-semibold text-gray-900">{L.notAuthorized}</div>
+      <div className="mt-2">{message || L.notAuthorizedBody}</div>
       <div className="mt-4">
         <Link className="font-semibold text-primary underline" to="/dashboard">
-          Go to dashboard
+          {L.goToDashboard}
         </Link>
       </div>
     </div>
@@ -114,6 +294,8 @@ function NotAuthorized({ message }) {
 
 const DashboardPage = () => {
   const { user, loading } = useAuth();
+  const { lang, formatPrice } = usePrefs();
+  const L = STR[lang] || STR.EN;
 
   const [tab, setTab] = useState('overview');
 
@@ -162,8 +344,8 @@ const DashboardPage = () => {
       setSummary(data);
     } catch (e) {
       setSummary(null);
-      setError('Failed to load overview.');
-      toast.error('Failed to load dashboard overview.');
+      setError(L.errOverview);
+      toast.error(L.errOverviewToast);
     } finally {
       setBusy(false);
     }
@@ -178,8 +360,8 @@ const DashboardPage = () => {
       setRenter(data);
     } catch (e) {
       setRenter(null);
-      setError('Failed to load renting data.');
-      toast.error('Failed to load renting dashboard.');
+      setError(L.errRenter);
+      toast.error(L.errRenterToast);
     } finally {
       setBusy(false);
     }
@@ -198,8 +380,8 @@ const DashboardPage = () => {
       setOwner(data);
     } catch (e) {
       setOwner(null);
-      setError('Failed to load hosting data.');
-      toast.error('Failed to load hosting dashboard.');
+      setError(L.errOwner);
+      toast.error(L.errOwnerToast);
     } finally {
       setBusy(false);
     }
@@ -227,13 +409,13 @@ const DashboardPage = () => {
       const { data } = await axiosInstance.put(`/bookings/${bookingId}/status`, {
         status: nextStatus,
       });
-      if (data?.success) toast.success(data.message || `Booking ${nextStatus} successfully.`);
-      else toast.error('Failed to update booking status.');
+      if (data?.success) toast.success(data.message || L.statusUpdated(nextStatus));
+      else toast.error(L.statusUpdateFailed);
 
       if (tab === 'overview') await fetchOverview();
       if (tab === 'owner') await fetchOwner();
     } catch (e) {
-      toast.error('Failed to update booking status.');
+      toast.error(L.statusUpdateFailed);
     }
   };
 
@@ -242,7 +424,7 @@ const DashboardPage = () => {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <div className="mb-1 text-xs font-semibold text-gray-500">Date range</div>
+            <div className="mb-1 text-xs font-semibold text-gray-500">{L.dateRange}</div>
             <div className="flex items-center gap-2">
               <select
                 value={preset}
@@ -252,9 +434,9 @@ const DashboardPage = () => {
                 }}
                 className="w-full rounded-xl border px-3 py-2 text-sm"
               >
-                <option value="7">Last 7 days</option>
-                <option value="30">Last 30 days</option>
-                <option value="90">Last 90 days</option>
+                <option value="7">{L.last7}</option>
+                <option value="30">{L.last30}</option>
+                <option value="90">{L.last90}</option>
               </select>
               <button
                 type="button"
@@ -264,7 +446,7 @@ const DashboardPage = () => {
                   useCustom ? 'bg-primary text-white border-primary' : 'bg-gray-100'
                 )}
               >
-                Custom
+                {L.custom}
               </button>
             </div>
             {useCustom ? (
@@ -290,26 +472,26 @@ const DashboardPage = () => {
           </div>
 
           <div>
-            <div className="mb-1 text-xs font-semibold text-gray-500">Status</div>
+            <div className="mb-1 text-xs font-semibold text-gray-500">{L.status}</div>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               className="w-full rounded-xl border px-3 py-2 text-sm"
             >
-              <option value="all">All</option>
-              <option value="pending">pending</option>
-              <option value="approved">approved</option>
-              <option value="completed">completed</option>
-              <option value="declined">cancelled/declined</option>
+              <option value="all">{L.all}</option>
+              <option value="pending">{L.pending}</option>
+              <option value="approved">{L.approved}</option>
+              <option value="completed">{L.completed}</option>
+              <option value="declined">{L.cancelledDeclined}</option>
             </select>
           </div>
 
           <div>
-            <div className="mb-1 text-xs font-semibold text-gray-500">Search</div>
+            <div className="mb-1 text-xs font-semibold text-gray-500">{L.search}</div>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Warehouse title or booking ID"
+              placeholder={L.searchPlaceholder}
               className="w-full rounded-xl border px-3 py-2 text-sm"
             />
           </div>

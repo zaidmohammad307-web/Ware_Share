@@ -521,27 +521,27 @@ const AdminDashboardPage = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="insurance" name="Insurance" stackId="a" fill={pickColor(1)} />
-                <Bar dataKey="packing" name="Packing" stackId="a" fill={pickColor(2)} />
-                <Bar dataKey="delivery" name="Delivery" stackId="a" fill={pickColor(3)} />
+                <Bar dataKey="insurance" name={L.insurance} stackId="a" fill={pickColor(1)} />
+                <Bar dataKey="packing" name={L.packing} stackId="a" fill={pickColor(2)} />
+                <Bar dataKey="delivery" name={L.delivery} stackId="a" fill={pickColor(3)} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
         <Card
-          title="Utilization"
-          subtitle="Current + over time (proxy based on approved bookings created per day)"
+          title={L.utilization}
+          subtitle={L.utilizationSubtitle}
           right={
             <div className="text-sm text-gray-700">
-              <span className="font-semibold">Current:</span> {safeMoney(util?.utilizationPercentage ?? 0)}%
+              <span className="font-semibold">{L.current}</span> {safeMoney(util?.utilizationPercentage ?? 0)}%
             </div>
           }
         >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <KPI label="Total listed capacity" value={safeMoney(util?.totalListedCapacity ?? 0)} />
-            <KPI label="Used capacity" value={safeMoney(util?.usedCapacity ?? 0)} />
-            <KPI label="Utilization %" value={`${safeMoney(util?.utilizationPercentage ?? 0)}%`} />
+            <KPI label={L.totalListedCapacity} value={safeMoney(util?.totalListedCapacity ?? 0)} />
+            <KPI label={L.usedCapacity} value={safeMoney(util?.usedCapacity ?? 0)} />
+            <KPI label={L.utilizationPct} value={`${safeMoney(util?.utilizationPercentage ?? 0)}%`} />
           </div>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -554,7 +554,7 @@ const AdminDashboardPage = () => {
                 <Line
                   type="monotone"
                   dataKey="utilization"
-                  name="Utilization %"
+                  name={L.utilizationPct}
                   stroke={pickColor(4)}
                   strokeWidth={2}
                   dot={false}
@@ -566,21 +566,21 @@ const AdminDashboardPage = () => {
         </Card>
       </div>
 
-      <Card title="Recent bookings" subtitle="Renter / Owner / Status / Total / CreatedAt">
+      <Card title={L.recentBookings} subtitle={L.recentBookingsSubtitle}>
         {(bookings?.bookings || []).length === 0 ? (
-          <div className="text-sm text-gray-600">No bookings found for the selected filters.</div>
+          <div className="text-sm text-gray-600">{L.noBookings}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="py-2 pr-3">Booking</th>
-                  <th className="py-2 pr-3">Warehouse</th>
-                  <th className="py-2 pr-3">Renter</th>
-                  <th className="py-2 pr-3">Owner</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2 pr-3">Total</th>
-                  <th className="py-2 pr-3">Created</th>
+                  <th className="py-2 pr-3">{L.thBooking}</th>
+                  <th className="py-2 pr-3">{L.thWarehouse}</th>
+                  <th className="py-2 pr-3">{L.thRenter}</th>
+                  <th className="py-2 pr-3">{L.thOwner}</th>
+                  <th className="py-2 pr-3">{L.thStatus}</th>
+                  <th className="py-2 pr-3">{L.thTotal}</th>
+                  <th className="py-2 pr-3">{L.thCreated}</th>
                 </tr>
               </thead>
               <tbody>
@@ -591,7 +591,7 @@ const AdminDashboardPage = () => {
                     <td className="py-2 pr-3">{b.renterEmail || '-'}</td>
                     <td className="py-2 pr-3">{b.ownerEmail || '-'}</td>
                     <td className="py-2 pr-3">{b.status}</td>
-                    <td className="py-2 pr-3">JOD {safeMoney(b.totalPrice)}</td>
+                    <td className="py-2 pr-3">{formatPrice(safeMoney(b.totalPrice))}</td>
                     <td className="py-2 pr-3">{b.createdAt ? new Date(b.createdAt).toLocaleString() : '-'}</td>
                   </tr>
                 ))}
@@ -601,26 +601,26 @@ const AdminDashboardPage = () => {
         )}
       </Card>
 
-      <Card title="Low-performing owners (signals)" subtitle="High cancellation rate within selected range">
+      <Card title={L.lowPerforming} subtitle={L.lowPerformingSubtitle}>
         {(risk?.lowPerformingOwners || []).length === 0 ? (
-          <div className="text-sm text-gray-600">No owner risk signals found for the selected range.</div>
+          <div className="text-sm text-gray-600">{L.noRiskSignals}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="py-2 pr-3">Owner</th>
-                  <th className="py-2 pr-3">Total</th>
-                  <th className="py-2 pr-3">Declined</th>
-                  <th className="py-2 pr-3">Completed</th>
-                  <th className="py-2 pr-3">Cancellation %</th>
+                  <th className="py-2 pr-3">{L.thOwner}</th>
+                  <th className="py-2 pr-3">{L.thTotal}</th>
+                  <th className="py-2 pr-3">{L.thDeclined}</th>
+                  <th className="py-2 pr-3">{L.thCompleted}</th>
+                  <th className="py-2 pr-3">{L.thCancellationPct}</th>
                 </tr>
               </thead>
               <tbody>
                 {(risk?.lowPerformingOwners || []).map((o) => (
                   <tr key={o.ownerId} className="border-b">
                     <td className="py-2 pr-3">
-                      <div className="font-semibold text-gray-900">{o.ownerName || 'Owner'}</div>
+                      <div className="font-semibold text-gray-900">{o.ownerName || L.owner}</div>
                       <div className="text-xs text-gray-600">{o.ownerEmail || ''}</div>
                     </td>
                     <td className="py-2 pr-3">{o.totalBookings}</td>

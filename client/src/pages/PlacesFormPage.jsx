@@ -1688,13 +1688,13 @@ const PlacesFormPage = () => {
             </div>
 
             <div className="rounded-2xl border bg-white p-5 shadow-sm">
-              <h3 className="text-base font-semibold text-gray-900">Quick tips</h3>
+              <h3 className="text-base font-semibold text-gray-900">{L.quickTips}</h3>
               <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-700">
-                <li>Use a specific name (city + type).</li>
-                <li>Ensure available capacity matches your operational reality.</li>
-                <li>Pin the exact location; the address should match the map marker.</li>
-                <li>Add facility/services that you truly offer to avoid disputes.</li>
-                <li>Upload clear photos (access points + interior).</li>
+                <li>{L.tip1}</li>
+                <li>{L.tip2}</li>
+                <li>{L.tip3}</li>
+                <li>{L.tip4}</li>
+                <li>{L.tip5}</li>
               </ul>
             </div>
           </div>
