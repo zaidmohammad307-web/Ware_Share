@@ -497,25 +497,25 @@ const DashboardPage = () => {
           </div>
 
           <div>
-            <div className="mb-1 text-xs font-semibold text-gray-500">Quick actions</div>
+            <div className="mb-1 text-xs font-semibold text-gray-500">{L.quickActions}</div>
             <div className="flex flex-wrap gap-2">
               <Link
                 to="/account/bookings"
                 className="rounded-xl border bg-gray-100 px-3 py-2 text-sm font-semibold"
               >
-                My bookings
+                {L.myBookings}
               </Link>
               <Link
                 to="/account/owner/bookings"
                 className="rounded-xl border bg-gray-100 px-3 py-2 text-sm font-semibold"
               >
-                Hosting requests
+                {L.hostingRequests}
               </Link>
               <Link
                 to="/account/chats"
                 className="rounded-xl border bg-gray-100 px-3 py-2 text-sm font-semibold"
               >
-                Messages
+                {L.messages}
               </Link>
             </div>
           </div>
@@ -523,14 +523,14 @@ const DashboardPage = () => {
 
         {tab === 'owner' ? (
           <div className="w-full lg:w-72">
-            <div className="mb-1 text-xs font-semibold text-gray-500">Warehouse filter (hosting)</div>
+            <div className="mb-1 text-xs font-semibold text-gray-500">{L.warehouseFilter}</div>
             <select
               value={ownerPlaceId}
               onChange={(e) => setOwnerPlaceId(e.target.value)}
               className="w-full rounded-xl border px-3 py-2 text-sm"
               disabled={!ownerPlaces?.length}
             >
-              <option value="all">All my warehouses</option>
+              <option value="all">{L.allMyWarehouses}</option>
               {(ownerPlaces || []).map((p) => (
                 <option key={p._id} value={p._id}>
                   {p.title} {p.city ? `(${p.city})` : ''}
@@ -565,20 +565,20 @@ const DashboardPage = () => {
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <div className="text-sm text-gray-600">Renter + Host insights with filters and charts.</div>
+            <h1 className="text-3xl font-bold text-gray-900">{L.title}</h1>
+            <div className="text-sm text-gray-600">{L.subtitle}</div>
           </div>
           {isAdmin ? (
             <Link to="/admin/dashboard" className="font-semibold text-primary underline">
-              Open Admin Dashboard
+              {L.openAdmin}
             </Link>
           ) : null}
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {tabBtn('overview', 'Overview')}
-          {tabBtn('renter', 'My Renting')}
-          {tabBtn('owner', 'My Hosting')}
+          {tabBtn('overview', L.tabOverview)}
+          {tabBtn('renter', L.tabRenter)}
+          {tabBtn('owner', L.tabOwner)}
         </div>
       </div>
 
@@ -586,7 +586,7 @@ const DashboardPage = () => {
 
       {busy ? (
         <div className="rounded-2xl border bg-white p-4 text-sm text-gray-600 shadow-sm">
-          Loading dashboard data…
+          {L.loading}
         </div>
       ) : error ? (
         <div className="rounded-2xl border bg-white p-4 text-sm text-gray-700 shadow-sm">{error}</div>
@@ -596,29 +596,29 @@ const DashboardPage = () => {
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KPI
-              label="Renter active"
+              label={L.renterActive}
               value={overviewKpis ? overviewKpis.renterActiveBookings : 0}
-              sub="Approved bookings"
+              sub={L.approvedBookings}
             />
             <KPI
-              label="Renter pending"
+              label={L.renterPending}
               value={overviewKpis ? overviewKpis.renterPendingBookings : 0}
-              sub="Awaiting owner action"
+              sub={L.awaitingOwner}
             />
             <KPI
-              label="Spent (paid)"
-              value={`JOD ${safeMoney(overviewKpis?.renterTotalSpent ?? 0)}`}
-              sub="Paid bookings only"
+              label={L.spentPaid}
+              value={formatPrice(safeMoney(overviewKpis?.renterTotalSpent ?? 0))}
+              sub={L.paidOnly}
             />
             <KPI
-              label="Owner pending"
+              label={L.ownerPending}
               value={overviewKpis ? overviewKpis.ownerPendingRequests : 0}
-              sub="Requests to your warehouses"
+              sub={L.requestsToYours}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Card title="Bookings over time" subtitle="Count of bookings created per day">
+            <Card title={L.bookingsOverTime} subtitle={L.bookingsOverTimeSub}>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={summary?.charts?.bookingsOverTime || []}>
@@ -639,7 +639,7 @@ const DashboardPage = () => {
               </div>
             </Card>
 
-            <Card title="Status breakdown" subtitle="Distribution of booking statuses">
+            <Card title={L.statusBreakdown} subtitle={L.statusBreakdownSub}>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
