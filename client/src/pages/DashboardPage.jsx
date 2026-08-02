@@ -669,17 +669,19 @@ const DashboardPage = () => {
       {tab === 'renter' ? (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <KPI label="Total bookings" value={renterTotals?.totalBookings ?? 0} />
-            <KPI label="Spent (paid)" value={`JOD ${safeMoney(renterTotals?.totalSpentPaid ?? 0)}`} />
-            <KPI label="Insurance total" value={`JOD ${safeMoney(renterTotals?.insuranceTotal ?? 0)}`} />
+            <KPI label={L.totalBookings} value={renterTotals?.totalBookings ?? 0} />
+            <KPI label={L.spentPaid} value={formatPrice(safeMoney(renterTotals?.totalSpentPaid ?? 0))} />
+            <KPI label={L.insuranceTotal} value={formatPrice(safeMoney(renterTotals?.insuranceTotal ?? 0))} />
             <KPI
-              label="Packing + Delivery"
-              value={`JOD ${safeMoney((renterTotals?.packingTotal ?? 0) + (renterTotals?.deliveryTotal ?? 0))}`}
+              label={L.packingDelivery}
+              value={formatPrice(
+                safeMoney((renterTotals?.packingTotal ?? 0) + (renterTotals?.deliveryTotal ?? 0))
+              )}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Card title="Spending over time" subtitle="Paid totals per day">
+            <Card title={L.spendingOverTime} subtitle={L.paidPerDay}>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={renterCharts?.spendingOverTime || []}>
@@ -688,13 +690,13 @@ const DashboardPage = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="amount" name="Spent (paid)" fill={pickColor(0)} />
+                    <Bar dataKey="amount" name={L.spentPaid} fill={pickColor(0)} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </Card>
 
-            <Card title="Add-ons totals over time" subtitle="Insurance / Packing / Delivery">
+            <Card title={L.addOnsOverTime} subtitle={L.addOnsSub}>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={renterCharts?.addOnsOverTime || []}>
@@ -703,9 +705,9 @@ const DashboardPage = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="insurance" name="Insurance" stackId="a" fill={pickColor(1)} />
-                    <Bar dataKey="packing" name="Packing" stackId="a" fill={pickColor(2)} />
-                    <Bar dataKey="delivery" name="Delivery" stackId="a" fill={pickColor(3)} />
+                    <Bar dataKey="insurance" name={L.insurance} stackId="a" fill={pickColor(1)} />
+                    <Bar dataKey="packing" name={L.packing} stackId="a" fill={pickColor(2)} />
+                    <Bar dataKey="delivery" name={L.delivery} stackId="a" fill={pickColor(3)} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -713,17 +715,17 @@ const DashboardPage = () => {
           </div>
 
           <Card
-            title="My Renting"
-            subtitle="Bookings you requested (filtered)"
+            title={L.myRenting}
+            subtitle={L.myRentingSub}
             right={
               <div className="text-sm text-gray-700">
-                <span className="font-semibold">Range:</span> {renter?.from || range.from} →{' '}
+                <span className="font-semibold">{L.range}</span> {renter?.from || range.from} →{' '}
                 {renter?.to || range.to}
               </div>
             }
           >
             {(renter?.bookings || []).length === 0 ? (
-              <div className="text-sm text-gray-600">No bookings found for the selected filters.</div>
+              <div className="text-sm text-gray-600">{L.noBookings}</div>
             ) : (
               <div className="space-y-3">
                 {(renter?.bookings || []).map((b) => (
@@ -738,16 +740,17 @@ const DashboardPage = () => {
                         ) : null}
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900">{b.warehouse?.title || 'Warehouse'}</div>
+                        <div className="font-semibold text-gray-900">{b.warehouse?.title || L.warehouse}</div>
                         <div className="text-xs text-gray-600">
                           {b.warehouse?.city || ''}
                           {b.warehouse?.city ? ' · ' : ''}
                           {String(b._id).slice(0, 8)}…
                         </div>
                         <div className="mt-1 text-xs text-gray-600">
-                          <span className="font-semibold">Status:</span> {b.status}{' '}
+                          <span className="font-semibold">{L.statusLabel}</span> {b.status}{' '}
                           <span className="mx-1">·</span>
-                          <span className="font-semibold">Total:</span> JOD {safeMoney(b.totalPrice)}
+                          <span className="font-semibold">{L.totalLabel}</span>{' '}
+                          {formatPrice(safeMoney(b.totalPrice))}
                         </div>
                       </div>
                     </div>
@@ -757,20 +760,20 @@ const DashboardPage = () => {
                         to={`/account/bookings/${b._id}`}
                         className="rounded-xl border bg-gray-100 px-3 py-2 text-sm font-semibold"
                       >
-                        Open booking
+                        {L.openBooking}
                       </Link>
                       <Link
                         to={`/account/bookings/${b._id}/chat`}
                         className="rounded-xl border bg-gray-100 px-3 py-2 text-sm font-semibold"
                       >
-                        Chat
+                        {L.chat}
                       </Link>
                       {b.warehouse?._id ? (
                         <Link
                           to={`/place/${b.warehouse._id}`}
                           className="rounded-xl border bg-gray-100 px-3 py-2 text-sm font-semibold"
                         >
-                          View warehouse
+                          {L.viewWarehouse}
                         </Link>
                       ) : null}
                     </div>
@@ -785,23 +788,27 @@ const DashboardPage = () => {
       {tab === 'owner' ? (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <KPI label="Pending requests" value={ownerTotals?.pendingRequests ?? 0} />
-            <KPI label="Completed bookings" value={ownerTotals?.completedBookings ?? 0} />
+            <KPI label={L.pendingRequests} value={ownerTotals?.pendingRequests ?? 0} />
+            <KPI label={L.completedBookings} value={ownerTotals?.completedBookings ?? 0} />
             <KPI
-              label="Gross earned"
-              value={`JOD ${safeMoney(ownerTotals?.totalGrossEarned ?? 0)}`}
-              sub="Excludes declined"
+              label={L.grossEarned}
+              value={formatPrice(safeMoney(ownerTotals?.totalGrossEarned ?? 0))}
+              sub={L.excludesDeclined}
             />
             <KPI
-              label="Add-ons total"
-              value={`JOD ${safeMoney(
-                (ownerTotals?.insuranceTotal ?? 0) + (ownerTotals?.packingTotal ?? 0) + (ownerTotals?.deliveryTotal ?? 0)
-              )}`}
+              label={L.addOnsTotal}
+              value={formatPrice(
+                safeMoney(
+                  (ownerTotals?.insuranceTotal ?? 0) +
+                    (ownerTotals?.packingTotal ?? 0) +
+                    (ownerTotals?.deliveryTotal ?? 0)
+                )
+              )}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Card title="Earnings over time" subtitle="Paid totals per day">
+            <Card title={L.earningsOverTime} subtitle={L.paidPerDay}>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={ownerCharts?.earningsOverTime || []}>
@@ -813,7 +820,7 @@ const DashboardPage = () => {
                     <Line
                       type="monotone"
                       dataKey="amount"
-                      name="Earnings (paid)"
+                      name={L.earningsPaid}
                       stroke={pickColor(0)}
                       strokeWidth={2}
                       dot={false}
@@ -824,7 +831,7 @@ const DashboardPage = () => {
               </div>
             </Card>
 
-            <Card title="Add-ons totals over time" subtitle="Insurance / Packing / Delivery">
+            <Card title={L.addOnsOverTime} subtitle={L.addOnsSub}>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={ownerCharts?.addOnsOverTime || []}>
@@ -833,18 +840,18 @@ const DashboardPage = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="insurance" name="Insurance" stackId="a" fill={pickColor(1)} />
-                    <Bar dataKey="packing" name="Packing" stackId="a" fill={pickColor(2)} />
-                    <Bar dataKey="delivery" name="Delivery" stackId="a" fill={pickColor(3)} />
+                    <Bar dataKey="insurance" name={L.insurance} stackId="a" fill={pickColor(1)} />
+                    <Bar dataKey="packing" name={L.packing} stackId="a" fill={pickColor(2)} />
+                    <Bar dataKey="delivery" name={L.delivery} stackId="a" fill={pickColor(3)} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </Card>
           </div>
 
-          <Card title="My Hosting" subtitle="Requests and bookings to your warehouses (filtered)">
+          <Card title={L.myHosting} subtitle={L.myHostingSub}>
             {(owner?.bookings || []).length === 0 ? (
-              <div className="text-sm text-gray-600">No bookings found for the selected filters.</div>
+              <div className="text-sm text-gray-600">{L.noBookings}</div>
             ) : (
               <div className="space-y-3">
                 {(owner?.bookings || []).map((b) => (
@@ -859,19 +866,25 @@ const DashboardPage = () => {
                         ) : null}
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900">{b.warehouse?.title || 'Warehouse'}</div>
+                        <div className="font-semibold text-gray-900">{b.warehouse?.title || L.warehouse}</div>
                         <div className="text-xs text-gray-600">
-                          <span className="font-semibold">Renter:</span> {b.renter?.name || 'Renter'}
+                          <span className="font-semibold">{L.renterLabel}</span>{' '}
+                          {b.renter?.name || L.renter}
                           {b.renter?.email ? ` (${b.renter.email})` : ''}
                         </div>
                         <div className="mt-1 text-xs text-gray-600">
-                          <span className="font-semibold">Status:</span> {b.status}
+                          <span className="font-semibold">{L.statusLabel}</span> {b.status}
                           <span className="mx-1">·</span>
-                          <span className="font-semibold">Total:</span> JOD {safeMoney(b.totalPrice)}
+                          <span className="font-semibold">{L.totalLabel}</span>{' '}
+                          {formatPrice(safeMoney(b.totalPrice))}
                           <span className="mx-1">·</span>
-                          <span className="font-semibold">Add-ons:</span> JOD{' '}
-                          {safeMoney(
-                            (b.addOns?.insuranceFee ?? 0) + (b.addOns?.packingFee ?? 0) + (b.addOns?.deliveryFee ?? 0)
+                          <span className="font-semibold">{L.addOnsLabel}</span>{' '}
+                          {formatPrice(
+                            safeMoney(
+                              (b.addOns?.insuranceFee ?? 0) +
+                                (b.addOns?.packingFee ?? 0) +
+                                (b.addOns?.deliveryFee ?? 0)
+                            )
                           )}
                         </div>
                       </div>
@@ -882,7 +895,7 @@ const DashboardPage = () => {
                         to={`/account/chats/booking/${b._id}`}
                         className="rounded-xl border bg-gray-100 px-3 py-2 text-sm font-semibold"
                       >
-                        Chat
+                        {L.chat}
                       </Link>
 
                       {b.status === 'pending' ? (
@@ -892,14 +905,14 @@ const DashboardPage = () => {
                             onClick={() => updateBookingStatus(b._id, 'approved')}
                             className="rounded-xl border border-green-600 bg-green-600 px-3 py-2 text-sm font-semibold text-white"
                           >
-                            Approve
+                            {L.approve}
                           </button>
                           <button
                             type="button"
                             onClick={() => updateBookingStatus(b._id, 'declined')}
                             className="rounded-xl border border-red-600 bg-red-600 px-3 py-2 text-sm font-semibold text-white"
                           >
-                            Decline
+                            {L.decline}
                           </button>
                         </>
                       ) : null}
@@ -910,7 +923,7 @@ const DashboardPage = () => {
                           onClick={() => updateBookingStatus(b._id, 'completed')}
                           className="rounded-xl border bg-gray-900 px-3 py-2 text-sm font-semibold text-white"
                         >
-                          Mark completed
+                          {L.markCompleted}
                         </button>
                       ) : null}
 
@@ -918,7 +931,7 @@ const DashboardPage = () => {
                         to={`/account/owner/bookings`}
                         className="rounded-xl border bg-gray-100 px-3 py-2 text-sm font-semibold"
                       >
-                        Owner requests
+                        {L.ownerRequests}
                       </Link>
                     </div>
                   </div>
