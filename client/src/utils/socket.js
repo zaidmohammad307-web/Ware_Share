@@ -16,10 +16,12 @@ const applyTokenToSocket = (token) => {
   currentToken = token || null;
   socket.auth = token ? { token } : {};
 
-  // Reconnect to apply new auth
+  // Reconnect to apply new auth. Never reconnect without a token: the
+  // server rejects anonymous handshakes, and that rejection would trigger
+  // another auth:logout, looping forever.
   try {
     if (socket.connected) socket.disconnect();
-    socket.connect();
+    if (token) socket.connect();
   } catch (_) {
     // ignore
   }
@@ -45,7 +47,12 @@ export const getSocket = () => {
 
     socket.on('connect_error', (err) => {
       const msg = String(err?.message || '');
-      if (/unauthorized/i.test(msg) || /token/i.test(msg)) {
+      // Only act on auth errors while we actually believe we are logged in;
+      // otherwise a rejected anonymous handshake would re-trigger logout.
+      if (
+        (/unauthorized/i.test(msg) || /token/i.test(msg)) &&
+        getItemFromLocalStorage('token')
+      ) {
         try {
           if (typeof window !== 'undefined') {
             window.localStorage.removeItem('token');

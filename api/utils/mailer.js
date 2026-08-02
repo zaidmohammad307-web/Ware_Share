@@ -47,6 +47,21 @@ const sendMail = async ({ to, subject, html }) => {
   }
 };
 
+// Escape user-supplied values before interpolating them into email HTML,
+// so a report or listing title cannot inject links into our own emails.
+const escapeHtml = (value) =>
+  String(value ?? '').replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[c]
+  );
+
 const emailWrap = (body) => `
   <div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
     <h2 style="color: #1976D2; margin-bottom: 16px;">WareShare</h2>
@@ -57,4 +72,4 @@ const emailWrap = (body) => `
   </div>
 `;
 
-module.exports = { sendMail, emailWrap };
+module.exports = { sendMail, emailWrap, escapeHtml };

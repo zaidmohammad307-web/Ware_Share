@@ -257,11 +257,14 @@ const AdminDashboardPage = () => {
   const { lang, formatPrice } = usePrefs();
   const L = STR[lang] || STR.EN;
 
+  // NOTE: these are computed as flags, not early returns. Returning before
+  // the hooks below would change the hook count between renders once auth
+  // resolves, which React rejects ("rendered fewer hooks than expected").
   const isLoggedIn = Boolean(user);
-  if (!loading && !isLoggedIn) return <Navigate to="/login" replace />;
-
-  const isAdmin = user?.email && String(user.email).toLowerCase() === ADMIN_EMAIL.toLowerCase();
-  if (!loading && user && !isAdmin) return <NotAuthorized />;
+  const isAdmin =
+    user?.email && String(user.email).toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const mustRedirectToLogin = !loading && !isLoggedIn;
+  const isNotAuthorized = !loading && user && !isAdmin;
 
   const [preset, setPreset] = useState('30');
   const [useCustom, setUseCustom] = useState(false);
@@ -341,6 +344,8 @@ const AdminDashboardPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user?._id, isAdmin, paramsBase.from, paramsBase.to, paramsBase.status, paramsBase.q]);
 
+  if (mustRedirectToLogin) return <Navigate to="/login" replace />;
+  if (isNotAuthorized) return <NotAuthorized />;
   if (notAuthorized) return <NotAuthorized />;
 
   const k = summary?.kpis || null;

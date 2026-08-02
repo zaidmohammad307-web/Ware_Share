@@ -71,7 +71,9 @@ const SearchMap = ({ places = [], userLocation, priceLabel }) => {
       mapRef.current = null;
       markersLayerRef.current = null;
     };
-  }, [userLocation]);
+    // Init once — re-centering on userLocation is handled by the marker effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Update markers when places or userLocation change
   useEffect(() => {
@@ -154,7 +156,7 @@ const SearchMap = ({ places = [], userLocation, priceLabel }) => {
     } else if (userLocation) {
       map.setView([userLocation.lat, userLocation.lng], 11);
     }
-  }, [places, userLocation, navigate]);
+  }, [places, userLocation, navigate, priceLabel]);
 
   return (
     <div className="h-[400px] w-full overflow-hidden rounded-2xl border">

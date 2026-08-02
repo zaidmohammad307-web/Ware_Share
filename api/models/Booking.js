@@ -119,6 +119,11 @@ const bookingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Hot paths: the overlap scan on every booking creation, and the
+// renter's own bookings list.
+bookingSchema.index({ place: 1, status: 1, checkIn: 1, checkOut: 1 });
+bookingSchema.index({ user: 1, createdAt: -1 });
+
 const Booking = mongoose.model('Booking', bookingSchema);
 module.exports = Booking;
 

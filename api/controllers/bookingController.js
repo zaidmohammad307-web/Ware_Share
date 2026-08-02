@@ -4,7 +4,7 @@ const Booking = require('../models/Booking');
 const Place = require('../models/Place');
 const User = require('../models/User');
 const RenterReview = require('../models/RenterReview');
-const { sendMail, emailWrap } = require('../utils/mailer');
+const { sendMail, emailWrap, escapeHtml } = require('../utils/mailer');
 
 const {
   INSURANCE_CONSTANTS,
@@ -111,8 +111,23 @@ exports.createBookings = async (req, res) => {
       });
     }
 
+    const guests = Number(noOfGuests);
+    if (!Number.isFinite(guests) || guests <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Units requested must be a positive number',
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(place)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid warehouse id',
+      });
+    }
+
     const placeDoc = await Place.findById(place).select(
-      'price pricePerDay city title owner blockedDates availableArea'
+      'price pricePerDay city title owner blockedDates availableArea status'
     );
     if (!placeDoc) {
       return res.status(404).json({
@@ -121,11 +136,32 @@ exports.createBookings = async (req, res) => {
       });
     }
 
+    // Hidden listings must not be bookable — this is also what enforces the
+    // host-verification gate, since unverified hosts' listings stay hidden.
+    if (placeDoc.status === 'hidden') {
+      return res.status(404).json({
+        success: false,
+        message: 'This warehouse is not currently available for booking.',
+      });
+    }
+
     const days = daysBetween(checkIn, checkOut);
     if (!days) {
       return res.status(400).json({
         success: false,
         message: 'Invalid booking dates',
+      });
+    }
+
+    // Bookings in the past would permanently consume capacity for those days
+    const now = new Date();
+    const todayUTC = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
+    if (new Date(checkIn) < todayUTC) {
+      return res.status(400).json({
+        success: false,
+        message: 'Check-in date cannot be in the past',
       });
     }
 
@@ -426,7 +462,7 @@ exports.createBookings = async (req, res) => {
       place,
       checkIn,
       checkOut,
-      noOfGuests,
+      noOfGuests: guests,
       areaM2: requestedArea,
       name,
       phone,
@@ -468,9 +504,9 @@ exports.createBookings = async (req, res) => {
           to: host.email,
           subject: `New booking request for ${placeDoc.title || 'your warehouse'}`,
           html: emailWrap(`
-            <p>Hi ${host.name || 'there'},</p>
-            <p><strong>${name}</strong> requested to book
-            <strong>${placeDoc.title || 'your warehouse'}</strong>.</p>
+            <p>Hi ${escapeHtml(host.name || 'there')},</p>
+            <p><strong>${escapeHtml(name)}</strong> requested to book
+            <strong>${escapeHtml(placeDoc.title || 'your warehouse')}</strong>.</p>
             <ul>
               <li>Check-in: ${toYMDUTC(new Date(checkIn))}</li>
               <li>Check-out: ${toYMDUTC(new Date(checkOut))}</li>
@@ -745,8 +781,8 @@ exports.updateBookingStatus = async (req, res) => {
             to: renter.email,
             subject: `Your booking was ${status}`,
             html: emailWrap(`
-              <p>Hi ${renter.name || 'there'},</p>
-              <p>Your booking request for <strong>${placeTitle}</strong> was
+              <p>Hi ${escapeHtml(renter.name || 'there')},</p>
+              <p>Your booking request for <strong>${escapeHtml(placeTitle)}</strong> was
               <strong>${status}</strong> by the host.</p>
               ${
                 status === 'approved'

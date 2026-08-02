@@ -156,7 +156,7 @@ const SingleBookedPlace = () => {
 
   const { id } = useParams();
   const [booking, setBooking] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Review (renter -> warehouse)
   const [rating, setRating] = useState(5);
@@ -224,7 +224,7 @@ const SingleBookedPlace = () => {
         `/bookings/${booking._id}/payment`,
         { paymentMethod }
       );
-      setBooking(data.booking);
+      setBooking(data.booking || booking);
       toast.success(L.paymentSaved);
     } catch (error) {
       toast.error(error?.response?.data?.message || L.paymentFailed);

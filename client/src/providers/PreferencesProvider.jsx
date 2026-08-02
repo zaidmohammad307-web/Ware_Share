@@ -260,9 +260,11 @@ const FALLBACK_RATES = {
 const PreferencesContext = createContext(null);
 
 export const PreferencesProvider = ({ children }) => {
-  const [lang, setLangState] = useState(
-    () => localStorage.getItem('wareshare_lang') || 'EN'
-  );
+  const [lang, setLangState] = useState(() => {
+    // Guard against a stale or hand-edited value for a locale we don't ship
+    const stored = localStorage.getItem('wareshare_lang');
+    return STRINGS[stored] ? stored : 'EN';
+  });
   const [currency, setCurrencyState] = useState(
     () => localStorage.getItem('wareshare_currency') || 'JOD'
   );
@@ -334,7 +336,9 @@ export const PreferencesProvider = ({ children }) => {
 
       // Mark converted prices as approximate (settlement stays JOD)
       if (currency !== 'JOD' && approx) {
-        return `${STRINGS[lang]['common.approx']}${formatted}`;
+        const approxSign =
+          STRINGS[lang]?.['common.approx'] ?? STRINGS.EN['common.approx'];
+        return `${approxSign}${formatted}`;
       }
       return formatted;
     },

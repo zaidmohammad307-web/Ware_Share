@@ -1,5 +1,5 @@
 // client/src/pages/IndexPage.jsx
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import axiosInstance from '@/utils/axios';
@@ -114,6 +114,8 @@ const distanceKm = (coord1, coord2) => {
 const IndexPage = () => {
   usePageTitle('Find storage');
   const { t, lang, formatPrice } = usePrefs();
+  // Stable identity so SearchMap's marker effect re-runs only on real changes
+  const mapPriceLabel = useCallback((v) => formatPrice(v), [formatPrice]);
   const LM = labelMaps[lang] || labelMaps.EN;
 
   const [places, setPlaces] = useState([]);
@@ -1314,7 +1316,7 @@ const IndexPage = () => {
         </div>
       ) : (
         <div className="mt-4">
-          <SearchMap places={filteredPlaces} userLocation={userLocation} priceLabel={(v) => formatPrice(v)} />
+          <SearchMap places={filteredPlaces} userLocation={userLocation} priceLabel={mapPriceLabel} />
         </div>
       )}
     </div>

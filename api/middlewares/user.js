@@ -48,7 +48,7 @@ exports.isLoggedIn = async (req, res, next) => {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
-      role: user.role || 'user',
+      role: user.role || 'renter',
       wantsToHost: !!user.wantsToHost,
       isHostVerified: !!user.isHostVerified,
       hostVerificationStatus: user.hostVerificationStatus || 'not_submitted',

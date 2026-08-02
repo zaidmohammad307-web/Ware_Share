@@ -1,5 +1,5 @@
 // client/src/pages/ReportIssuePage.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
@@ -67,6 +67,16 @@ const ReportIssuePage = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+
+  // `user` resolves asynchronously, so prefill once it arrives
+  useEffect(() => {
+    if (!user) return;
+    setForm((prev) => ({
+      ...prev,
+      name: prev.name || user.name || '',
+      email: prev.email || user.email || '',
+    }));
+  }, [user]);
 
   const setField = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));

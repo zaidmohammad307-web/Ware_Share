@@ -2,9 +2,23 @@
 const mongoose = require('mongoose');
 const WaitlistEntry = require('../models/WaitlistEntry');
 const SupportTicket = require('../models/SupportTicket');
-const { sendMail, emailWrap } = require('../utils/mailer');
+const { sendMail, emailWrap, escapeHtml } = require('../utils/mailer');
 
 // Loose on purpose: some accounts use non-standard emails (no TLD).
+const ALLOWED_TICKET_CATEGORIES = [
+  'bug',
+  'booking',
+  'payment',
+  'safety',
+  'listing',
+  'claim',
+  'help',
+  'partnership',
+  'press',
+  'careers',
+  'other',
+];
+
 const EMAIL_RE = /^\S+@\S+$/;
 const PHONE_RE = /^\+?[0-9\s\-()]{7,20}$/;
 
@@ -90,20 +104,9 @@ exports.reportIssue = async (req, res) => {
     const message = String(req.body.message || '').trim();
     const rawCategory = String(req.body.category || 'other').trim();
 
-    const ALLOWED = [
-      'bug',
-      'booking',
-      'payment',
-      'safety',
-      'listing',
-      'claim',
-      'help',
-      'partnership',
-      'press',
-      'careers',
-      'other',
-    ];
-    const category = ALLOWED.includes(rawCategory) ? rawCategory : 'other';
+    const category = ALLOWED_TICKET_CATEGORIES.includes(rawCategory)
+      ? rawCategory
+      : 'other';
 
     if (!EMAIL_RE.test(email)) {
       return res.status(400).json({
@@ -136,9 +139,9 @@ exports.reportIssue = async (req, res) => {
         to: process.env.ADMIN_EMAIL,
         subject: `[WareShare support] New ${category} report`,
         html: emailWrap(`
-          <p><strong>From:</strong> ${name || 'Anonymous'} (${email})</p>
-          <p><strong>Category:</strong> ${category}</p>
-          <p style="white-space: pre-line;">${message.slice(0, 2000)}</p>
+          <p><strong>From:</strong> ${escapeHtml(name || 'Anonymous')} (${escapeHtml(email)})</p>
+          <p><strong>Category:</strong> ${escapeHtml(category)}</p>
+          <p style="white-space: pre-line;">${escapeHtml(message.slice(0, 2000))}</p>
         `),
       }).catch(() => {});
     }
@@ -168,7 +171,9 @@ exports.listTickets = async (req, res) => {
     if (status && ['open', 'in_progress', 'resolved'].includes(status)) {
       filter.status = status;
     }
-    if (category) filter.category = category;
+    if (category && ALLOWED_TICKET_CATEGORIES.includes(String(category))) {
+      filter.category = String(category);
+    }
 
     const tickets = await SupportTicket.find(filter)
       .sort({ createdAt: -1 })

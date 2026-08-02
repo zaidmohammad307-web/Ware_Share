@@ -24,16 +24,32 @@ async function uploadHostVerificationFile(file, label) {
   }
 }
 
+// The admin account is identified purely by email, so that address is
+// reserved: nobody may register or sign in with it via Google.
+const isReservedAdminEmail = (email) => {
+  const admin = String(process.env.ADMIN_EMAIL || 'admin@123456').toLowerCase();
+  return String(email || '').trim().toLowerCase() === admin;
+};
+
 /* ------------------------------------------------
    REGISTER / SIGNUP
 -------------------------------------------------*/
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name } = req.body;
+    // Coerce to strings so objects like {$ne: null} cannot reach the query
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
 
     if (!name || !email || !password) {
       return res.status(400).json({
         message: 'Name, email and password are required',
+      });
+    }
+
+    if (isReservedAdminEmail(email)) {
+      return res.status(403).json({
+        message: 'This email address is reserved.',
       });
     }
 
@@ -65,7 +81,9 @@ exports.register = async (req, res) => {
 -------------------------------------------------*/
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    // Coerce to strings so operator objects cannot reach the query
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
 
     if (!email || !password) {
       return res.status(400).json({
@@ -138,6 +156,11 @@ exports.googleLogin = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
+      if (isReservedAdminEmail(email)) {
+        return res.status(403).json({
+          message: 'This email address is reserved.',
+        });
+      }
       const randomPassword = require('crypto').randomBytes(16).toString('hex');
       user = await User.create({
         name,
@@ -223,8 +246,24 @@ exports.updateUserDetails = async (req, res) => {
     if (name) user.name = name;
     if (picture) user.picture = picture;
 
-    // IMPORTANT: Do not hash here; the User model will hash on save.
-    if (password) user.password = password;
+    // Changing a password requires proving knowledge of the current one,
+    // so a stolen token cannot be turned into account takeover.
+    if (password) {
+      const currentPassword = String(req.body.currentPassword || '');
+      if (!currentPassword) {
+        return res.status(400).json({
+          message: 'Your current password is required to set a new one.',
+        });
+      }
+      const ok = await user.isValidatedPassword(currentPassword);
+      if (!ok) {
+        return res.status(401).json({
+          message: 'Current password is incorrect.',
+        });
+      }
+      // IMPORTANT: Do not hash here; the User model will hash on save.
+      user.password = password;
+    }
 
     const updatedUser = await user.save();
     cookieToken(updatedUser, res);
@@ -256,7 +295,7 @@ exports.updateHostSettings = async (req, res) => {
     // Accept both 'wantsToHost' and 'isHost' (frontend compat)
     const hostValue = wantsToHost !== undefined ? wantsToHost : isHost;
     if (typeof hostValue === 'boolean') user.wantsToHost = hostValue;
-    const ALLOWED_ROLES = ['user', 'host'];
+    const ALLOWED_ROLES = ['renter', 'host', 'both'];
     if (role && ALLOWED_ROLES.includes(role)) user.role = role;
 
     await user.save();

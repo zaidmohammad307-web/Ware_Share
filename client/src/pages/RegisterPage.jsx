@@ -9,6 +9,7 @@ import { useAuth } from '../hooks';
 
 const RegisterPage = () => {
   const { t } = usePrefs();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,13 +25,19 @@ const RegisterPage = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
 
-    const response = await auth.register(formData);
-    if (response.success) {
-      toast.success(response.message);
-      setRedirect(true);
-    } else {
-      toast.error(response.message);
+    try {
+      setSubmitting(true);
+      const response = await auth.register(formData);
+      if (response.success) {
+        toast.success(response.message);
+        setRedirect(true);
+      } else {
+        toast.error(response.message);
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -74,7 +81,7 @@ const RegisterPage = () => {
             value={formData.password}
             onChange={handleFormData}
           />
-          <button className="primary my-2">{t('auth.register')}</button>
+          <button disabled={submitting} className="primary my-2">{t('auth.register')}</button>
         </form>
 
         <div className="mb-4 flex w-full items-center gap-4">
@@ -98,7 +105,7 @@ const RegisterPage = () => {
         </div>
 
         <div className="py-2 text-center text-gray-500">
-          {t('auth.alreadyMember')}
+          {t('auth.alreadyMember')}{' '}
           <Link className="text-black underline" to={'/login'}>
             {t('auth.login')}
           </Link>

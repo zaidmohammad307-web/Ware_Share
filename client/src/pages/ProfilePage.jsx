@@ -98,7 +98,7 @@ const ProfilePage = () => {
   const auth = useAuth();
   const { lang } = usePrefs();
   const L = STR[lang] || STR.EN;
-  const { user, logout } = auth;
+  const { user, logout, loading: authLoading } = auth;
   const [redirect, setRedirect] = useState(null);
 
   const { subpage: rawSubpage } = useParams();
@@ -139,6 +139,13 @@ const ProfilePage = () => {
       toast.error(response.message);
     }
   };
+
+  // Auth is restored from localStorage inside an effect, so `user` is null
+  // on the first render. Redirecting here would bounce a logged-in user off
+  // their own profile on every hard refresh.
+  if (authLoading) {
+    return <div className="mt-24 px-4 text-sm text-gray-500">…</div>;
+  }
 
   if (!user && !redirect) {
     return <Navigate to="/login" />;

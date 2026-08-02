@@ -27,18 +27,30 @@ export const useFavorites = () => {
 
   const [favorites, setFavorites] = useState(readLocal);
 
-  // Keep device copy so favorites survive logout
+  // Only mirror to the device while logged out. Writing an account's
+  // favorites to this shared key would leak them into the next account
+  // that logs in on the same device.
   useEffect(() => {
+    if (user) return;
     try {
       localStorage.setItem('wareshare_favorites', JSON.stringify(favorites));
     } catch {
       // ignore
     }
-  }, [favorites]);
+  }, [favorites, user]);
 
-  // When logged in: merge device favorites into the account, then use server list
+  // When logged in: merge device favorites into the account, then use server
+  // list. On logout, drop everything so the next user starts clean.
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setFavorites([]);
+      try {
+        localStorage.removeItem('wareshare_favorites');
+      } catch {
+        // ignore
+      }
+      return;
+    }
 
     let active = true;
 
@@ -50,6 +62,12 @@ export const useFavorites = () => {
           : await axiosInstance.get('/users/favorites');
         if (active && Array.isArray(merged.data?.ids)) {
           setFavorites(merged.data.ids);
+          // Consumed: don't re-merge these into another account later
+          try {
+            localStorage.removeItem('wareshare_favorites');
+          } catch {
+            // ignore
+          }
         }
       } catch {
         // stay on device copy
@@ -64,12 +82,15 @@ export const useFavorites = () => {
 
   const toggleFavorite = useCallback(
     (placeId) => {
-      // Optimistic flip locally
-      setFavorites((prev) =>
-        prev.includes(placeId)
+      // Optimistic flip locally, capturing the pre-toggle list so a failure
+      // restores exactly that state instead of blindly toggling again.
+      let before = null;
+      setFavorites((prev) => {
+        before = prev;
+        return prev.includes(placeId)
           ? prev.filter((id) => id !== placeId)
-          : [...prev, placeId]
-      );
+          : [...prev, placeId];
+      });
 
       if (user) {
         axiosInstance
@@ -78,12 +99,7 @@ export const useFavorites = () => {
             if (Array.isArray(data?.ids)) setFavorites(data.ids);
           })
           .catch(() => {
-            // revert on failure
-            setFavorites((prev) =>
-              prev.includes(placeId)
-                ? prev.filter((id) => id !== placeId)
-                : [...prev, placeId]
-            );
+            if (before) setFavorites(before);
           });
       }
     },
@@ -359,12 +375,13 @@ export const useProvideAuth = () => {
   };
 
   const updateUser = async (userDetails) => {
-    const { name, password, picture } = userDetails;
+    const { name, password, currentPassword, picture } = userDetails;
 
     try {
       const { data } = await axiosInstance.put('/users/update-user', {
         name,
         password,
+        currentPassword,
         picture,
       });
 

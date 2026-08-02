@@ -26,5 +26,8 @@ const messageSchema = new mongoose.Schema(
 messageSchema.index({ host: 1, read: 1 });
 messageSchema.index({ renter: 1, read: 1 });
 
+messageSchema.index({ booking: 1, createdAt: 1 });
+messageSchema.index({ place: 1, host: 1, renter: 1, createdAt: 1 });
+
 module.exports = mongoose.model('Message', messageSchema);
 

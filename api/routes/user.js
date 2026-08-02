@@ -3,7 +3,23 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 
-const upload = multer({ dest: '/tmp' });
+// Verification docs may be images or PDFs; cap size and count so an
+// authenticated user cannot exhaust disk or push arbitrary blobs.
+const ALLOWED_UPLOAD_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+]);
+
+const upload = multer({
+  dest: '/tmp',
+  limits: { fileSize: 5 * 1024 * 1024, files: 4 },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_UPLOAD_TYPES.has(file.mimetype)) return cb(null, true);
+    cb(new Error(`File type ${file.mimetype} is not allowed.`));
+  },
+});
 
 const { isLoggedIn, isAdmin } = require('../middlewares/user');
 

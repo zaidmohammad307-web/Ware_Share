@@ -22,6 +22,7 @@ const EditProfileDialog = () => {
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState({
     name: user.name,
+    currentPassword: '',
     password: '',
     confirm_password: '',
   });
@@ -42,7 +43,7 @@ const EditProfileDialog = () => {
 
   const handleSaveChanges = async () => {
     setLoading(true);
-    const { name, password, confirm_password } = userData;
+    const { name, password, confirm_password, currentPassword } = userData;
 
     // Validation
     if (name.trim() === '') {
@@ -51,6 +52,9 @@ const EditProfileDialog = () => {
     } else if (password !== confirm_password) {
       setLoading(false);
       return toast.error("Passwords don't match");
+    } else if (password && !currentPassword) {
+      setLoading(false);
+      return toast.error('Enter your current password to set a new one');
     }
 
     try {
@@ -58,12 +62,19 @@ const EditProfileDialog = () => {
       let pictureUrl = '';
       if (picture) {
         // upload picture and save the image url
-        pictureUrl = await uploadPicture(picture);
+        const uploaded = await uploadPicture(picture);
+        // uploadPicture returns { success: false, message } when it fails
+        if (uploaded && uploaded.success === false) {
+          setLoading(false);
+          return toast.error(uploaded.message || 'Could not upload the picture');
+        }
+        pictureUrl = uploaded;
       }
 
       const userDetails = {
         name: userData.name,
         password: userData.password,
+        currentPassword: userData.currentPassword,
         picture: pictureUrl,
       };
 
@@ -128,6 +139,20 @@ const EditProfileDialog = () => {
               name="name"
               value={userData.name}
               className="col-span-3"
+              onChange={handleUserData}
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="currentPassword" className="text-right">
+              Current Password
+            </Label>
+            <Input
+              id="currentPassword"
+              name="currentPassword"
+              value={userData.currentPassword}
+              className="col-span-3"
+              type="password"
+              autoComplete="current-password"
               onChange={handleUserData}
             />
           </div>

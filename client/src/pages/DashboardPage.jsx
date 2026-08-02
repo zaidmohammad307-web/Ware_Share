@@ -313,8 +313,10 @@ const DashboardPage = () => {
     return getPresetRange(preset);
   }, [preset, useCustom, customFrom, customTo]);
 
+  // Computed as a flag rather than an early return: bailing out here would
+  // skip the hooks below and change the hook count between renders.
   const isLoggedIn = Boolean(user);
-  if (!loading && !isLoggedIn) return <Navigate to="/login" replace />;
+  const mustRedirectToLogin = !loading && !isLoggedIn;
 
   const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
   const isAdmin = user?.email && String(user.email).toLowerCase() === ADMIN_EMAIL.toLowerCase();
@@ -559,6 +561,9 @@ const DashboardPage = () => {
   const statusBreakdownData = Array.isArray(summary?.charts?.statusBreakdown)
     ? summary.charts.statusBreakdown
     : [];
+
+  // Safe to bail out now that every hook above has run
+  if (mustRedirectToLogin) return <Navigate to="/login" replace />;
 
   return (
     <div className="mt-24 space-y-6">

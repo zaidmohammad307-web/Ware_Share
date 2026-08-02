@@ -9,6 +9,7 @@ import { useAuth } from '../hooks';
 
 const LoginPage = () => {
   const { t } = usePrefs();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [redirect, setRedirect] = useState(false);
   const auth = useAuth();
@@ -20,13 +21,19 @@ const LoginPage = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
 
-    const response = await auth.login(formData);
-    if (response.success) {
-      toast.success(response.message);
-      setRedirect(true);
-    } else {
-      toast.error(response.message);
+    try {
+      setSubmitting(true);
+      const response = await auth.login(formData);
+      if (response.success) {
+        toast.success(response.message);
+        setRedirect(true);
+      } else {
+        toast.error(response.message);
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -67,7 +74,7 @@ const LoginPage = () => {
             value={formData.password}
             onChange={handleFormData}
           />
-          <button className="primary my-4">{t('auth.login')}</button>
+          <button disabled={submitting} className="primary my-4">{t('auth.login')}</button>
         </form>
 
         <div className="mb-4 flex w-full items-center gap-4">

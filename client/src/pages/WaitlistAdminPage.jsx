@@ -38,7 +38,12 @@ const WaitlistAdminPage = () => {
 
   const copyAll = async () => {
     const lines = entries.map((e) =>
-      [e.name || '', e.email || '', e.phone || '', new Date(e.createdAt).toISOString()].join(',')
+      [
+        e.name || '',
+        e.email || '',
+        e.phone || '',
+        e.createdAt ? new Date(e.createdAt).toISOString() : '',
+      ].join(',')
     );
     const csv = ['name,email,phone,signed_up_at', ...lines].join('\n');
     try {

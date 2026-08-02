@@ -25,6 +25,7 @@ const connectWithDB = require('./config/db');
 const cookieSession = require('cookie-session');
 const cookieParser = require('cookie-parser');
 const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
 
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
@@ -49,8 +50,9 @@ const allowedOrigins = (() => {
     .map(normalizeOrigin)
     .filter(Boolean);
 
-  const renderExternalUrl = normalizeOrigin(process.env.RENDER_EXTERNAL_URL);
-  if (renderExternalUrl) list.push(renderExternalUrl);
+  // NOTE: RENDER_EXTERNAL_URL is this API's own origin, never the browser
+  // origin of the frontend, so it is deliberately not trusted here — adding
+  // it would only mask a missing CORS_ORIGINS/CLIENT_URL configuration.
 
   if (!isProd) {
     list.push('http://localhost:5173', 'http://127.0.0.1:5173');
@@ -59,9 +61,19 @@ const allowedOrigins = (() => {
   return Array.from(new Set(list));
 })();
 
+if (isProd && allowedOrigins.length === 0) {
+  console.error(
+    'WARNING: no CORS origins configured. Set CORS_ORIGINS (or CLIENT_URL) ' +
+      'to your frontend URL, e.g. https://wareshare.app — browser requests ' +
+      'will be blocked until you do.'
+  );
+}
+
 const corsOrigin = (origin, cb) => {
   if (!origin) return cb(null, true);
-  if (allowedOrigins.length === 0) return cb(null, true);
+  // Never fall open in production: with credentials:true an empty allow-list
+  // would let any website read authenticated responses.
+  if (allowedOrigins.length === 0) return cb(null, !isProd);
 
   const norm = normalizeOrigin(origin);
   const ok = allowedOrigins.includes(norm);
@@ -158,6 +170,21 @@ app.use('/', require('./routes'));
 // ── GLOBAL ERROR HANDLER ──
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message || err);
+
+  // Upload rejections are client errors — surface a useful message
+  if (
+    err instanceof multer.MulterError ||
+    /is not allowed/i.test(err.message || '')
+  ) {
+    return res.status(400).json({
+      success: false,
+      message:
+        err.code === 'LIMIT_FILE_SIZE'
+          ? 'File is too large (max 5 MB).'
+          : err.message || 'Invalid upload.',
+    });
+  }
+
   const status = err.status || err.statusCode || 500;
   res.status(status).json({
     success: false,
@@ -179,6 +206,9 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+
+// Chat messages are persisted and re-sent on every history fetch, so cap size.
+const MAX_MESSAGE_LENGTH = 2000;
 
 // Rooms
 const bookingRoom = (bookingId) => `booking:${bookingId}`;
@@ -234,6 +264,7 @@ io.on('connection', (socket) => {
   socket.on('send_message', async ({ bookingId, text }) => {
     try {
       if (!bookingId || !mongoose.Types.ObjectId.isValid(bookingId) || !text || !text.trim()) return;
+      if (text.length > MAX_MESSAGE_LENGTH) return;
 
       const booking = await Booking.findById(bookingId).populate('place');
       if (!booking || !booking.place) return;
@@ -271,7 +302,7 @@ io.on('connection', (socket) => {
 
       let renterToUse = me;
       if (isHost) {
-        if (!renterId) return;
+        if (!renterId || !mongoose.Types.ObjectId.isValid(renterId)) return;
         renterToUse = String(renterId);
       }
 
@@ -287,17 +318,35 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('leave_place', ({ placeId, renterId }) => {
-    if (placeId && mongoose.Types.ObjectId.isValid(placeId)) {
+  socket.on('leave_place', async ({ placeId, renterId }) => {
+    try {
+      if (!placeId || !mongoose.Types.ObjectId.isValid(placeId)) return;
+
+      // Mirror join_place: a host's room is keyed by the renter they are
+      // talking to, so leaving must resolve the same key or the socket
+      // stays subscribed and leaks messages into the next thread.
+      const place = await Place.findById(placeId).select('owner');
+      if (!place) return;
+
       const me = String(socket.userId);
-      const renterToUse = renterId ? String(renterId) : me;
+      const isHost = String(place.owner) === me;
+
+      let renterToUse = me;
+      if (isHost) {
+        if (!renterId || !mongoose.Types.ObjectId.isValid(renterId)) return;
+        renterToUse = String(renterId);
+      }
+
       socket.leave(placeRoom(placeId, renterToUse));
+    } catch (e) {
+      console.error('leave_place error:', e);
     }
   });
 
   socket.on('send_place_message', async ({ placeId, renterId, text }) => {
     try {
       if (!placeId || !mongoose.Types.ObjectId.isValid(placeId) || !text || !text.trim()) return;
+      if (text.length > MAX_MESSAGE_LENGTH) return;
 
       const place = await Place.findById(placeId);
       if (!place) return;
@@ -307,8 +356,18 @@ io.on('connection', (socket) => {
 
       let renterToUse = me;
       if (isHost) {
-        if (!renterId) return;
+        if (!renterId || !mongoose.Types.ObjectId.isValid(renterId)) return;
         renterToUse = String(renterId);
+
+        // A host may only reply inside a thread the renter already opened,
+        // otherwise they could inject messages into any user's inbox.
+        const existing = await Message.findOne({
+          booking: null,
+          place: place._id,
+          host: place.owner,
+          renter: renterToUse,
+        }).select('_id');
+        if (!existing) return;
       }
 
       const msg = await Message.create({
