@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Slide, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Analytics } from '@vercel/analytics/react';
 
 import Layout from './components/ui/Layout';
 import IndexPage from './pages/IndexPage';
@@ -48,70 +49,108 @@ function App() {
   useEffect(() => {
     const token = getItemFromLocalStorage('token');
     if (token) {
-      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      axiosInstance.defaults.headers.common['Authorization'] =
+        `Bearer ${token}`;
     }
   }, []);
 
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <PreferencesProvider>
-      <UserProvider>
-        <PlaceProvider>
-          <Routes>
-            <Route path="/launch" element={<LaunchPage />} />
-            <Route path="/" element={<Layout />}>
-              <Route index element={<IndexPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+        <UserProvider>
+          <PlaceProvider>
+            <Routes>
+              <Route path="/launch" element={<LaunchPage />} />
+              <Route path="/" element={<Layout />}>
+                <Route index element={<IndexPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
 
-              <Route path="/account" element={<ProfilePage />} />
-              <Route path="/account/places" element={<PlacesPage />} />
-              <Route path="/account/places/new" element={<PlacesFormPage />} />
-              <Route path="/account/places/:id" element={<PlacesFormPage />} />
-              <Route path="/account/places/:id/availability" element={<ManageAvailabilityPage />} />
+                <Route path="/account" element={<ProfilePage />} />
+                <Route path="/account/places" element={<PlacesPage />} />
+                <Route
+                  path="/account/places/new"
+                  element={<PlacesFormPage />}
+                />
+                <Route
+                  path="/account/places/:id"
+                  element={<PlacesFormPage />}
+                />
+                <Route
+                  path="/account/places/:id/availability"
+                  element={<ManageAvailabilityPage />}
+                />
 
-              <Route path="/place/:id" element={<PlacePage />} />
+                <Route path="/place/:id" element={<PlacePage />} />
 
-              {/* Footer content + support */}
-              <Route path="/info/:slug" element={<InfoPage />} />
-              <Route path="/support/report" element={<ReportIssuePage />} />
-              <Route path="/sitemap" element={<SitemapPage />} />
-              <Route path="/admin/waitlist" element={<WaitlistAdminPage />} />
-              <Route path="/admin/support" element={<AdminSupportPage />} />
+                {/* Footer content + support */}
+                <Route path="/info/:slug" element={<InfoPage />} />
+                <Route path="/support/report" element={<ReportIssuePage />} />
+                <Route path="/sitemap" element={<SitemapPage />} />
+                <Route path="/admin/waitlist" element={<WaitlistAdminPage />} />
+                <Route path="/admin/support" element={<AdminSupportPage />} />
 
-              <Route path="/account/bookings" element={<BookingsPage />} />
-              <Route path="/account/bookings/:id" element={<SingleBookedPlace />} />
+                <Route path="/account/bookings" element={<BookingsPage />} />
+                <Route
+                  path="/account/bookings/:id"
+                  element={<SingleBookedPlace />}
+                />
 
-              {/* ✅ Legacy booking chat route (fixes 404 from booking details button) */}
-              <Route path="/account/bookings/:id/chat" element={<BookingChatPage />} />
+                {/* ✅ Legacy booking chat route (fixes 404 from booking details button) */}
+                <Route
+                  path="/account/bookings/:id/chat"
+                  element={<BookingChatPage />}
+                />
 
-              {/* Owner requests */}
-              <Route path="/account/owner/bookings" element={<OwnerBookingsPage />} />
+                {/* Owner requests */}
+                <Route
+                  path="/account/owner/bookings"
+                  element={<OwnerBookingsPage />}
+                />
 
-              {/* ✅ Chats Inbox + Place/Booking chats */}
-              <Route path="/account/chats" element={<ChatInboxPage />} />
-              <Route path="/account/chats/place/:placeId" element={<PlaceChatPage />} />
-              <Route path="/account/chats/booking/:bookingId" element={<BookingChatPage />} />
-              <Route path="/place/:placeId/chat" element={<PlaceChatPage />} />
+                {/* ✅ Chats Inbox + Place/Booking chats */}
+                <Route path="/account/chats" element={<ChatInboxPage />} />
+                <Route
+                  path="/account/chats/place/:placeId"
+                  element={<PlaceChatPage />}
+                />
+                <Route
+                  path="/account/chats/booking/:bookingId"
+                  element={<BookingChatPage />}
+                />
+                <Route
+                  path="/place/:placeId/chat"
+                  element={<PlaceChatPage />}
+                />
 
-              {/* ✅ Dashboards */}
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+                {/* ✅ Dashboards */}
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route
+                  path="/admin/dashboard"
+                  element={<AdminDashboardPage />}
+                />
 
-              {/* Admin */}
-              <Route path="/account/admin/hosts" element={<AdminHostVerificationPage />} />
+                {/* Admin */}
+                <Route
+                  path="/account/admin/hosts"
+                  element={<AdminHostVerificationPage />}
+                />
 
-              {/* Public profiles */}
-              <Route path="/host/:hostId" element={<HostProfilePage />} />
-              <Route path="/renter/:renterId" element={<RenterProfilePage />} />
+                {/* Public profiles */}
+                <Route path="/host/:hostId" element={<HostProfilePage />} />
+                <Route
+                  path="/renter/:renterId"
+                  element={<RenterProfilePage />}
+                />
 
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
 
-          <ToastContainer autoClose={2000} transition={Slide} />
-        </PlaceProvider>
-      </UserProvider>
+            <ToastContainer autoClose={2000} transition={Slide} />
+            <Analytics />
+          </PlaceProvider>
+        </UserProvider>
       </PreferencesProvider>
     </GoogleOAuthProvider>
   );
