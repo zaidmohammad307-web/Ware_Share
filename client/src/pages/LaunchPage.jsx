@@ -4,7 +4,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import axiosInstance from '@/utils/axios';
+import { supportApi } from '@/api';
 import { usePageTitle } from '@/hooks';
 
 const EMAIL_RE = /^\S+@\S+$/;
@@ -348,7 +348,7 @@ const LaunchPage = () => {
 
     try {
       setSubmitting(true);
-      await axiosInstance.post('/waitlist', {
+      await supportApi.joinWaitlist({
         email: isEmail ? value : null,
         phone: isPhone ? value : null,
         name: name.trim() || null,

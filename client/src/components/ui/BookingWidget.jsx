@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 
 import { useAuth } from '../../hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
-import axiosInstance from '@/utils/axios';
+import { bookingsApi } from '@/api';
 import DatePickerWithRange from './DatePickerWithRange';
 
 // ---- Insurance defaults (frontend preview only; backend is source of truth) ----
@@ -291,7 +291,7 @@ const BookingWidget = ({ place }) => {
     let mounted = true;
     (async () => {
       try {
-        const { data } = await axiosInstance.get('/bookings/insurance-config');
+        const { data } = await bookingsApi.insuranceConfig();
         if (!mounted) return;
         if (data?.constants) {
           setInsuranceConstants({
@@ -508,7 +508,7 @@ const BookingWidget = ({ place }) => {
     }
 
     try {
-      const response = await axiosInstance.post('/bookings', {
+      const response = await bookingsApi.create({
         checkIn: dateRange.from,
         checkOut: dateRange.to,
         noOfGuests,

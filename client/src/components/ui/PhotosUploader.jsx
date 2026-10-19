@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 
 import Image from './Image';
-import axiosInstance from '../../utils/axios';
+import { uploadsApi } from '@/api';
 
 const PhotosUploader = ({ addedPhotos, setAddedPhotos }) => {
   const [photoLink, setPhotoLink] = useState('');
@@ -10,7 +10,7 @@ const PhotosUploader = ({ addedPhotos, setAddedPhotos }) => {
   const addPhotoByLink = async (e) => {
     e.preventDefault();
     try {
-      const { data: filename } = await axiosInstance.post('/upload-by-link', {
+      const { data: filename } = await uploadsApi.byLink({
         link: photoLink,
       });
       setAddedPhotos((prev) => [...prev, filename]);
@@ -27,9 +27,7 @@ const PhotosUploader = ({ addedPhotos, setAddedPhotos }) => {
       data.append('photos', files[i]);
     }
     try {
-      const { data: filenames } = await axiosInstance.post('/upload', data, {
-        headers: { 'Content-type': 'multipart/form-data' },
-      });
+      const { data: filenames } = await uploadsApi.photos(data);
       setAddedPhotos((prev) => [...prev, ...filenames]);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to upload photo(s).');

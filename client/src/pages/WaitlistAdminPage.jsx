@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import axiosInstance from '@/utils/axios';
+import { supportApi } from '@/api';
 import AccountNav from '@/components/ui/AccountNav';
 import Spinner from '@/components/ui/Spinner';
 import { usePageTitle } from '@/hooks';
@@ -19,7 +19,7 @@ const WaitlistAdminPage = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const { data } = await axiosInstance.get('/waitlist');
+        const { data } = await supportApi.waitlist();
         setEntries(data.entries || []);
       } catch (err) {
         const status = err?.response?.status;

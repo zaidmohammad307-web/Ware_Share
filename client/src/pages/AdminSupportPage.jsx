@@ -4,7 +4,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import axiosInstance from '@/utils/axios';
+import { supportApi } from '@/api';
 import AccountNav from '@/components/ui/AccountNav';
 import Spinner from '@/components/ui/Spinner';
 import { usePageTitle } from '@/hooks';
@@ -118,7 +118,7 @@ const AdminSupportPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const { data } = await axiosInstance.get('/support/tickets');
+      const { data } = await supportApi.tickets();
       setTickets(data.tickets || []);
       setCounts(data.counts || {});
       const initialNotes = {};
@@ -146,7 +146,7 @@ const AdminSupportPage = () => {
   const updateTicket = async (id, payload, successMsg) => {
     try {
       setBusyId(id);
-      const { data } = await axiosInstance.patch(`/support/tickets/${id}`, payload);
+      const { data } = await supportApi.updateTicket(id, payload);
       setTickets((prev) =>
         prev.map((tk) => (tk._id === id ? { ...tk, ...data.ticket } : tk))
       );

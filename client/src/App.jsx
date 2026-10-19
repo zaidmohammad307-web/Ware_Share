@@ -1,48 +1,45 @@
 // client/src/App.jsx
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Slide, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import Layout from './components/ui/Layout';
 import IndexPage from './pages/IndexPage';
-import RegisterPage from './pages/RegisterPage';
-import LoginPage from './pages/LoginPage';
-import ProfilePage from './pages/ProfilePage';
-import PlacesPage from './pages/PlacesPage';
-import BookingsPage from './pages/BookingsPage';
-import PlacesFormPage from './pages/PlacesFormPage';
-import ManageAvailabilityPage from './pages/ManageAvailabilityPage';
-import InfoPage from './pages/InfoPage';
-import ReportIssuePage from './pages/ReportIssuePage';
 import LaunchPage from './pages/LaunchPage';
-import WaitlistAdminPage from './pages/WaitlistAdminPage';
-import SitemapPage from './pages/SitemapPage';
-import AdminSupportPage from './pages/AdminSupportPage';
 import { PreferencesProvider } from './providers/PreferencesProvider';
-import PlacePage from './pages/PlacePage';
-import SingleBookedPlace from './pages/SingleBookedPlace';
-import NotFoundPage from './pages/NotFoundPage';
-
-// ✅ Dashboards
-import DashboardPage from './pages/DashboardPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-
-import OwnerBookingsPage from './pages/OwnerBookingsPage';
-import HostProfilePage from './pages/HostProfilePage';
-import RenterProfilePage from './pages/RenterProfilePage';
-import AdminHostVerificationPage from './pages/AdminHostVerificationPage';
-
-// ✅ Chats
-import ChatInboxPage from './pages/ChatInboxPage';
-import PlaceChatPage from './pages/PlaceChatPage';
-import BookingChatPage from './pages/BookingChatPage';
-
 import axiosInstance from './utils/axios';
 import { UserProvider } from './providers/UserProvider';
 import { PlaceProvider } from './providers/PlaceProvider';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { getItemFromLocalStorage } from './utils';
+import Spinner from './components/ui/Spinner';
+
+// Pages are code-split so each one downloads only when first visited.
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const PlacesPage = lazy(() => import('./pages/PlacesPage'));
+const BookingsPage = lazy(() => import('./pages/BookingsPage'));
+const PlacesFormPage = lazy(() => import('./pages/PlacesFormPage'));
+const ManageAvailabilityPage = lazy(() => import('./pages/ManageAvailabilityPage'));
+const InfoPage = lazy(() => import('./pages/InfoPage'));
+const ReportIssuePage = lazy(() => import('./pages/ReportIssuePage'));
+const WaitlistAdminPage = lazy(() => import('./pages/WaitlistAdminPage'));
+const SitemapPage = lazy(() => import('./pages/SitemapPage'));
+const AdminSupportPage = lazy(() => import('./pages/AdminSupportPage'));
+const PlacePage = lazy(() => import('./pages/PlacePage'));
+const SingleBookedPlace = lazy(() => import('./pages/SingleBookedPlace'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const OwnerBookingsPage = lazy(() => import('./pages/OwnerBookingsPage'));
+const HostProfilePage = lazy(() => import('./pages/HostProfilePage'));
+const RenterProfilePage = lazy(() => import('./pages/RenterProfilePage'));
+const AdminHostVerificationPage = lazy(() => import('./pages/AdminHostVerificationPage'));
+const ChatInboxPage = lazy(() => import('./pages/ChatInboxPage'));
+const PlaceChatPage = lazy(() => import('./pages/PlaceChatPage'));
+const BookingChatPage = lazy(() => import('./pages/BookingChatPage'));
 
 function App() {
   useEffect(() => {
@@ -57,6 +54,7 @@ function App() {
       <PreferencesProvider>
       <UserProvider>
         <PlaceProvider>
+          <Suspense fallback={<Spinner />}>
           <Routes>
             <Route path="/launch" element={<LaunchPage />} />
             <Route path="/" element={<Layout />}>
@@ -108,6 +106,7 @@ function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
+          </Suspense>
 
           <ToastContainer autoClose={2000} transition={Slide} />
         </PlaceProvider>

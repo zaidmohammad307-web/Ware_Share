@@ -14,7 +14,7 @@ import {
 
 import { toast } from 'react-toastify';
 
-import axiosInstance from '@/utils/axios';
+import { bookingsApi, placesApi, reviewsApi } from '@/api';
 import BookingWidget from '../components/ui/BookingWidget';
 import PlaceMap from '../components/ui/PlaceMap';
 import PhotoLightbox from '../components/ui/PhotoLightbox';
@@ -567,7 +567,7 @@ const PlacePage = () => {
       try {
         setLoading(true);
         setPlaceError(null);
-        const { data } = await axiosInstance.get(`/places/${id}`);
+        const { data } = await placesApi.get(id);
         setPlace(data.place || data);
       } catch (err) {
         const status = err?.response?.status;
@@ -580,7 +580,7 @@ const PlacePage = () => {
     const loadReviews = async () => {
       try {
         setReviewsLoading(true);
-        const { data } = await axiosInstance.get(`/reviews/place/${id}`);
+        const { data } = await reviewsApi.forPlace(id);
         setReviews(data.reviews || []);
       } catch (_) {
         // silently fail; reviews stay empty
@@ -592,7 +592,7 @@ const PlacePage = () => {
     const loadAvailability = async () => {
       try {
         setAvailabilityLoading(true);
-        const { data } = await axiosInstance.get(`/bookings/availability/${id}`);
+        const { data } = await bookingsApi.availability(id);
         setUnavailableDates(data.unavailableDates || []);
       } catch (_) {
         // silently fail; all dates treated as available

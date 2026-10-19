@@ -14,7 +14,7 @@ import {
   startOfWeek,
 } from 'date-fns';
 
-import axiosInstance from '@/utils/axios';
+import { placesApi } from '@/api';
 import AccountNav from '@/components/ui/AccountNav';
 import Spinner from '@/components/ui/Spinner';
 import { usePageTitle } from '@/hooks';
@@ -82,7 +82,7 @@ const ManageAvailabilityPage = () => {
       try {
         setLoading(true);
         setLoadError(null);
-        const { data } = await axiosInstance.get(`/places/${id}/blocked-dates`);
+        const { data } = await placesApi.blockedDates(id);
         setTitle(data.title || '');
         setBlocked(new Set(data.blockedDates || []));
         setBooked(new Set(data.bookedDates || []));
@@ -124,7 +124,7 @@ const ManageAvailabilityPage = () => {
   const save = async () => {
     try {
       setSaving(true);
-      await axiosInstance.put(`/places/${id}/blocked-dates`, {
+      await placesApi.updateBlockedDates(id, {
         dates: Array.from(blocked),
       });
       toast.success(L.saved);

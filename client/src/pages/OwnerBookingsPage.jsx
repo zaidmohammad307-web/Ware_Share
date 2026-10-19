@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 
-import axiosInstance from '@/utils/axios';
+import { bookingsApi, reviewsApi } from '@/api';
 import AccountNav from '../components/ui/AccountNav';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
@@ -146,7 +146,7 @@ const OwnerBookingsPage = () => {
   const loadBookings = async () => {
     try {
       setLoading(true);
-      const { data } = await axiosInstance.get('/bookings/owner');
+      const { data } = await bookingsApi.owner();
       setBookings(data.bookings || []);
     } catch (error) {
       toast.error(L.loadFailed);
@@ -161,7 +161,7 @@ const OwnerBookingsPage = () => {
 
   const updateStatus = async (bookingId, status) => {
     try {
-      const { data } = await axiosInstance.put(`/bookings/${bookingId}/status`, { status });
+      const { data } = await bookingsApi.updateStatus(bookingId, { status });
       toast.success(
         lang === 'AR'
           ? L.updatedSuffix(status)
@@ -226,7 +226,7 @@ const OwnerBookingsPage = () => {
     const form = renterReviewForm[bookingId] || { rating: 5, comment: '', submitted: false };
 
     try {
-      await axiosInstance.post('/reviews/renter', {
+      await reviewsApi.createRenterReview({
         bookingId,
         rating: form.rating,
         comment: form.comment,

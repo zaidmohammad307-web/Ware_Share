@@ -10,6 +10,7 @@ import {
   removeItemFromLocalStorage,
 } from '@/utils';
 import axiosInstance from '@/utils/axios';
+import { authApi, chatApi, placesApi, usersApi } from '@/api';
 
 // Saved places: synced to the account when logged in, device-local otherwise.
 // On first load after login, device favorites merge into the account once.
@@ -58,8 +59,8 @@ export const useFavorites = () => {
       try {
         const local = readLocal();
         const merged = local.length
-          ? await axiosInstance.post('/users/favorites/merge', { ids: local })
-          : await axiosInstance.get('/users/favorites');
+          ? await usersApi.mergeFavorites({ ids: local })
+          : await usersApi.favorites();
         if (active && Array.isArray(merged.data?.ids)) {
           setFavorites(merged.data.ids);
           // Consumed: don't re-merge these into another account later
@@ -93,8 +94,8 @@ export const useFavorites = () => {
       });
 
       if (user) {
-        axiosInstance
-          .put(`/users/favorites/${placeId}`)
+        usersApi
+          .toggleFavorite(placeId)
           .then(({ data }) => {
             if (Array.isArray(data?.ids)) setFavorites(data.ids);
           })
@@ -124,7 +125,7 @@ export const useUnreadMessages = () => {
 
     const fetchCount = async () => {
       try {
-        const { data } = await axiosInstance.get('/chat/unread');
+        const { data } = await chatApi.unread();
         if (active) setCount(data?.count || 0);
       } catch (_) {
         // keep last known count
@@ -299,7 +300,7 @@ export const useProvideAuth = () => {
     const { name, email, password } = formData;
 
     try {
-      const { data } = await axiosInstance.post('/users/register', {
+      const { data } = await authApi.register({
         name,
         email,
         password,
@@ -317,7 +318,7 @@ export const useProvideAuth = () => {
     const { email, password } = formData;
 
     try {
-      const { data } = await axiosInstance.post('/users/login', {
+      const { data } = await authApi.login({
         email,
         password,
       });
@@ -332,7 +333,7 @@ export const useProvideAuth = () => {
 
   const googleLogin = async (credential) => {
     try {
-      const { data } = await axiosInstance.post('/users/google/login', {
+      const { data } = await authApi.googleLogin({
         credential,
       });
 
@@ -346,7 +347,7 @@ export const useProvideAuth = () => {
 
   const logout = async () => {
     try {
-      const { data } = await axiosInstance.get('/users/logout');
+      const { data } = await authApi.logout();
 
       if (data.success) {
         clearAuth();
@@ -363,9 +364,7 @@ export const useProvideAuth = () => {
       const formData = new FormData();
       formData.append('picture', picture);
 
-      const { data } = await axiosInstance.post('/users/upload-picture', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const { data } = await usersApi.uploadPicture(formData);
 
       return data;
     } catch (error) {
@@ -378,7 +377,7 @@ export const useProvideAuth = () => {
     const { name, password, currentPassword, picture } = userDetails;
 
     try {
-      const { data } = await axiosInstance.put('/users/update-user', {
+      const { data } = await usersApi.update({
         name,
         password,
         currentPassword,
@@ -418,7 +417,7 @@ export const useProvidePlaces = () => {
 
   const getPlaces = async () => {
     try {
-      const { data } = await axiosInstance.get('/places');
+      const { data } = await placesApi.list();
       setPlaces(data.places || []);
     } catch (_) {
       setPlaces([]);

@@ -17,15 +17,13 @@ import {
   Cell,
 } from 'recharts';
 
-import axiosInstance from '@/utils/axios';
+import { bookingsApi, dashboardApi } from '@/api';
 import { useAuth } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
+import { isAdminUser } from '@/utils/admin';
 
 const STR = {
   EN: {
-    notAuthorized: 'Not authorized',
-    notAuthorizedBody: 'You are not authorized to view this.',
-    goToDashboard: 'Go to dashboard',
     title: 'Dashboard',
     subtitle: 'Renter + Host insights with filters and charts.',
     openAdmin: 'Open Admin Dashboard',
@@ -110,9 +108,6 @@ const STR = {
     ownerRequests: 'Owner requests',
   },
   AR: {
-    notAuthorized: 'غير مصرّح',
-    notAuthorizedBody: 'لا تملك صلاحية لعرض هذا المحتوى.',
-    goToDashboard: 'الذهاب إلى لوحة التحكم',
     title: 'لوحة التحكم',
     subtitle: 'مؤشرات الاستئجار والاستضافة مع الفلاتر والرسوم البيانية.',
     openAdmin: 'فتح لوحة الإدارة',
@@ -276,22 +271,6 @@ function Card({ title, subtitle, right, children }) {
   );
 }
 
-function NotAuthorized({ message }) {
-  const { lang } = usePrefs();
-  const L = STR[lang] || STR.EN;
-  return (
-    <div className="mt-24 rounded-2xl border bg-white p-6 text-sm text-gray-700 shadow-sm">
-      <div className="text-lg font-semibold text-gray-900">{L.notAuthorized}</div>
-      <div className="mt-2">{message || L.notAuthorizedBody}</div>
-      <div className="mt-4">
-        <Link className="font-semibold text-primary underline" to="/dashboard">
-          {L.goToDashboard}
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 const DashboardPage = () => {
   const { user, loading } = useAuth();
   const { lang, formatPrice } = usePrefs();
@@ -318,8 +297,7 @@ const DashboardPage = () => {
   const isLoggedIn = Boolean(user);
   const mustRedirectToLogin = !loading && !isLoggedIn;
 
-  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
-  const isAdmin = user?.email && String(user.email).toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAdmin = isAdminUser(user);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -341,7 +319,7 @@ const DashboardPage = () => {
     setBusy(true);
     setError('');
     try {
-      const { data } = await axiosInstance.get('/dashboard/summary', { params: paramsBase });
+      const { data } = await dashboardApi.summary({ params: paramsBase });
       if (!data?.success) throw new Error('Failed');
       setSummary(data);
     } catch (e) {
@@ -357,7 +335,7 @@ const DashboardPage = () => {
     setBusy(true);
     setError('');
     try {
-      const { data } = await axiosInstance.get('/dashboard/renter', { params: paramsBase });
+      const { data } = await dashboardApi.renter({ params: paramsBase });
       if (!data?.success) throw new Error('Failed');
       setRenter(data);
     } catch (e) {
@@ -377,7 +355,7 @@ const DashboardPage = () => {
         ...paramsBase,
         placeId: ownerPlaceId && ownerPlaceId !== 'all' ? ownerPlaceId : undefined,
       };
-      const { data } = await axiosInstance.get('/dashboard/owner', { params });
+      const { data } = await dashboardApi.owner({ params });
       if (!data?.success) throw new Error('Failed');
       setOwner(data);
     } catch (e) {
@@ -408,7 +386,7 @@ const DashboardPage = () => {
 
   const updateBookingStatus = async (bookingId, nextStatus) => {
     try {
-      const { data } = await axiosInstance.put(`/bookings/${bookingId}/status`, {
+      const { data } = await bookingsApi.updateStatus(bookingId, {
         status: nextStatus,
       });
       if (data?.success) toast.success(data.message || L.statusUpdated(nextStatus));

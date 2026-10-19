@@ -1,7 +1,7 @@
 // client/src/pages/RenterProfilePage.jsx
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axiosInstance from '@/utils/axios';
+import { reviewsApi } from '@/api';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
 const STR = {
@@ -67,7 +67,7 @@ const RenterProfilePage = () => {
           return;
         }
 
-        const { data } = await axiosInstance.get(`/reviews/renter/${renterId}`);
+        const { data } = await reviewsApi.forRenter(renterId);
         setReviews(data.reviews || []);
       } catch (e) {
         setReviews([]);

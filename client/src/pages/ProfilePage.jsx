@@ -18,7 +18,7 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import EditProfileDialog from '@/components/ui/EditProfileDialog';
-import axiosInstance from '@/utils/axios';
+import { usersApi } from '@/api';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
 const STR = {
@@ -198,7 +198,7 @@ const ProfilePage = () => {
         isHost: hostForm.isHost, // backend maps this to wantsToHost
       };
 
-      const { data } = await axiosInstance.put('/users/host/settings', payload);
+      const { data } = await usersApi.updateHostSettings(payload);
 
       if (data.user && typeof auth.setUser === 'function') {
         auth.setUser(data.user);
@@ -234,15 +234,7 @@ const ProfilePage = () => {
       formData.append('companyName', hostForm.companyName);
       formData.append('phone', hostForm.phone);
 
-      const { data } = await axiosInstance.post(
-        '/users/host/verify',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      const { data } = await usersApi.submitHostVerification(formData);
 
       if (data.user && typeof auth.setUser === 'function') {
         auth.setUser(data.user);

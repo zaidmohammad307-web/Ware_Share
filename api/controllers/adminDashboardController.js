@@ -365,12 +365,17 @@ exports.getUtilization = async (req, res) => {
   try {
     const { from, to, toExclusive } = parseRange(req);
 
-    const places = await Place.find({}).select('palletCapacity availableArea totalArea');
+    const places = await Place.find({})
+      .select('palletCapacity availableArea totalArea')
+      .lean();
     const totalListedCapacity = safeMoney(places.reduce((sum, p) => sum + placeCapacity(p), 0));
 
     // Current utilization snapshot
-    const activeBookings = await Booking.find({ status: 'approved' }).select('noOfGuests');
-    const usedCapacity = safeMoney(activeBookings.reduce((sum, b) => sum + safeNumber(b.noOfGuests, 0), 0));
+    const [usedAgg] = await Booking.aggregate([
+      { $match: { status: 'approved' } },
+      { $group: { _id: null, used: { $sum: '$noOfGuests' } } },
+    ]);
+    const usedCapacity = safeMoney(safeNumber(usedAgg && usedAgg.used, 0));
 
     const utilizationPercentage =
       totalListedCapacity > 0 ? safeMoney((usedCapacity / totalListedCapacity) * 100) : 0;

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import axiosInstance from '@/utils/axios';
+import { placesApi } from '@/api';
 import SearchMap from '@/components/ui/SearchMap';
 import { usePageTitle, useFavorites } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
@@ -189,7 +189,7 @@ const IndexPage = () => {
       try {
         setLoading(true);
         setLoadError(false);
-        const { data } = await axiosInstance.get('/places');
+        const { data } = await placesApi.list();
         const all = data.places || [];
         const visible = all.filter(
           (p) => !p.status || p.status === 'live'

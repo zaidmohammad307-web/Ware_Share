@@ -8,7 +8,7 @@ import AddressLink from '../components/ui/AddressLink';
 import BookingDates from '../components/ui/BookingDates';
 import PlaceGallery from '../components/ui/PlaceGallery';
 import Spinner from '../components/ui/Spinner';
-import axiosInstance from '../utils/axios';
+import { bookingsApi, reviewsApi } from '@/api';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
 const STR = {
@@ -169,7 +169,7 @@ const SingleBookedPlace = () => {
   const loadBooking = async () => {
     try {
       setLoading(true);
-      const { data } = await axiosInstance.get('/bookings');
+      const { data } = await bookingsApi.mine();
       const found = (data.booking || []).find((b) => b._id === id);
       setBooking(found || null);
     } catch (error) {
@@ -203,7 +203,7 @@ const SingleBookedPlace = () => {
       }
 
       setSubmittingReview(true);
-      await axiosInstance.post('/reviews/place', {
+      await reviewsApi.createPlaceReview({
         bookingId: booking._id,
         rating: Number(rating),
         comment,
@@ -220,10 +220,7 @@ const SingleBookedPlace = () => {
   const pay = async (paymentMethod) => {
     try {
       setPaying(true);
-      const { data } = await axiosInstance.put(
-        `/bookings/${booking._id}/payment`,
-        { paymentMethod }
-      );
+      const { data } = await bookingsApi.pay(booking._id, { paymentMethod });
       setBooking(data.booking || booking);
       toast.success(L.paymentSaved);
     } catch (error) {

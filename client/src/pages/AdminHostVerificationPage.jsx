@@ -2,11 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
-import axiosInstance from '@/utils/axios';
+import { adminApi } from '@/api';
 import { useAuth } from '@/hooks';
 import { ShieldCheck, AlertTriangle, Mail, Phone, Check, X } from 'lucide-react';
 import AccountNav from '@/components/ui/AccountNav';
 import { usePrefs } from '@/providers/PreferencesProvider';
+import { isAdminUser } from '@/utils/admin';
 
 const STR = {
   EN: {
@@ -56,7 +57,7 @@ const AdminHostVerificationPage = () => {
   const loadPendingHosts = async () => {
     try {
       setLoading(true);
-      const { data } = await axiosInstance.get('/users/admin/hosts/pending');
+      const { data } = await adminApi.pendingHosts();
       setHosts(data.hosts || []);
     } catch (err) {
       toast.error(err?.response?.data?.message || L.loadFailed);
@@ -72,9 +73,7 @@ const AdminHostVerificationPage = () => {
   // Approve / Reject handler
   const handleDecision = async (hostId, decision) => {
     try {
-      const { data } = await axiosInstance.put(
-        `/users/admin/hosts/${hostId}/verify`,
-        {
+      const { data } = await adminApi.verifyHost(hostId, {
           status: decision, // 'approved' or 'rejected'
         }
       );
@@ -93,10 +92,8 @@ const AdminHostVerificationPage = () => {
     }
   };
 
-  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
-
-  // If not logged in or not admin email, show nothing / simple message
-  if (!user || user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+  // If not logged in or not admin, show a simple message
+  if (!isAdminUser(user)) {
     return (
       <div>
         <AccountNav />

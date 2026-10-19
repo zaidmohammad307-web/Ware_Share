@@ -8,7 +8,6 @@ const REQUIRED_ENV = [
   'CLOUDINARY_NAME',
   'CLOUDINARY_API_KEY',
   'CLOUDINARY_API_SECRET',
-  'SESSION_SECRET',
 ];
 for (const key of REQUIRED_ENV) {
   if (!process.env[key] || !String(process.env[key]).trim()) {
@@ -17,12 +16,15 @@ for (const key of REQUIRED_ENV) {
   }
 }
 
+if (!String(process.env.ADMIN_EMAIL || '').trim()) {
+  console.warn('WARNING: ADMIN_EMAIL is not set — admin pages are disabled.');
+}
+
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const connectWithDB = require('./config/db');
-const cookieSession = require('cookie-session');
 const cookieParser = require('cookie-parser');
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
@@ -109,17 +111,6 @@ app.use(helmet());
 
 app.use(cookieParser());
 
-app.use(
-  cookieSession({
-    name: 'session',
-    maxAge: (Number(process.env.COOKIE_TIME) || 7) * 24 * 60 * 60 * 1000,
-    keys: [process.env.SESSION_SECRET],
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    httpOnly: true,
-  })
-);
-
 // ── BODY SIZE LIMIT ──
 app.use(express.json({ limit: '2mb' }));
 
@@ -164,6 +155,23 @@ const formLimiter = rateLimit({
   },
 });
 app.use(['/waitlist', '/support/report'], formLimiter);
+
+// Uploads push files into Cloudinary (paid storage), so cap how often one
+// client can do it.
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many uploads. Please try again later.',
+  },
+});
+app.use(
+  ['/upload', '/upload-by-link', '/users/upload-picture', '/users/host/verify'],
+  uploadLimiter
+);
 
 app.use('/', require('./routes'));
 

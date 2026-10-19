@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import axiosInstance from '@/utils/axios';
+import { placesApi } from '@/api';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
 import AccountNav from '@/components/ui/AccountNav';
@@ -969,8 +969,8 @@ const PlacesFormPage = () => {
     if (!id) return;
 
     setLoading(true);
-    axiosInstance
-      .get(`/places/${id}`)
+    placesApi
+      .get(id)
       .then((response) => {
         const { place } = response.data;
 
@@ -1055,9 +1055,9 @@ const PlacesFormPage = () => {
     try {
       const payload = buildPayload();
       if (id) {
-        await axiosInstance.put('/places/update-place', { id, ...payload });
+        await placesApi.update({ id, ...payload });
       } else {
-        await axiosInstance.post('/places/add-places', payload);
+        await placesApi.create(payload);
       }
       toast.success(L.toastSaved);
       setRedirect(true);

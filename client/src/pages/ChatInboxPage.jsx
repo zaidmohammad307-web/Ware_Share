@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axiosInstance from '@/utils/axios';
+import { chatApi } from '@/api';
 import AccountNav from '@/components/ui/AccountNav';
 import Spinner from '@/components/ui/Spinner';
 import { useAuth } from '@/hooks';
@@ -37,7 +37,7 @@ const ChatInboxPage = () => {
   const loadInbox = async () => {
     try {
       setLoading(true);
-      const { data } = await axiosInstance.get('/chat/inbox');
+      const { data } = await chatApi.inbox();
       setThreads(data.threads || []);
     } catch (e) {
       setThreads([]);

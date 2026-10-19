@@ -74,8 +74,9 @@ router.get('/admin/hosts/pending', isLoggedIn, isAdmin, getPendingHosts);
 // ADMIN: APPROVE / REJECT HOST (admin enforced)
 router.put('/admin/hosts/:userId/verify', isLoggedIn, isAdmin, adminVerifyHost);
 
-// LOGOUT (inline handler to avoid undefined controller export issues)
-router.get('/logout', (req, res) => {
+// LOGOUT. POST is the supported method; GET is kept only so an older
+// cached frontend can still log out during a deploy.
+const logout = (req, res) => {
   const isProd = process.env.NODE_ENV === 'production';
 
   res.cookie('token', null, {
@@ -89,7 +90,9 @@ router.get('/logout', (req, res) => {
     success: true,
     message: 'Logged out',
   });
-});
+};
+router.post('/logout', logout);
+router.get('/logout', logout);
 
 module.exports = router;
 

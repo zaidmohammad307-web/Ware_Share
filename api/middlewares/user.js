@@ -1,6 +1,7 @@
 // api/middlewares/user.js
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { isAdminEmail } = require('../utils/admin');
 
 // ✅ Simple "must be logged in" check
 exports.isLoggedIn = async (req, res, next) => {
@@ -88,12 +89,31 @@ exports.isLoggedIn = async (req, res, next) => {
   }
 };
 
+// Optional auth: sets req.user.id when a valid token is present, otherwise
+// continues as an anonymous request. Used by public routes that show a bit
+// more to the owner (e.g. their own hidden listing).
+exports.optionalUser = (req, res, next) => {
+  try {
+    let token = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && String(authHeader).startsWith('Bearer ')) {
+      token = String(authHeader).split(' ')[1];
+    }
+    if (!token && req.cookies && req.cookies.token) token = req.cookies.token;
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded && decoded.id) req.user = { id: String(decoded.id) };
+    }
+  } catch (_) {
+    // invalid/expired token: treat as anonymous
+  }
+  return next();
+};
+
 // ✅ Admin-only middleware (identified ONLY by email)
 exports.isAdmin = (req, res, next) => {
   try {
-    const email = String(req.user?.email || '').toLowerCase();
-    const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@123456').toLowerCase();
-    if (email !== ADMIN_EMAIL) {
+    if (!isAdminEmail(req.user?.email)) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: admin access required.',

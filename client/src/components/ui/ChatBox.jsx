@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import axiosInstance from '@/utils/axios';
+import { chatApi } from '@/api';
 import { getSocket } from '@/utils/socket';
 import { useAuth } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
@@ -104,7 +104,7 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
         }
 
         if (mode === 'booking') {
-          const { data } = await axiosInstance.get(`/chat/booking/${bookingId}`);
+          const { data } = await chatApi.bookingThread(bookingId);
           setMessages(data.messages || []);
           setHostId(normalizeId(data.hostId));
           setRenterIdResolved(normalizeId(data.renterId));
@@ -113,11 +113,7 @@ const ChatBox = ({ bookingId = null, placeId = null, renterId = null }) => {
 
         // place inquiry chat
         const rid = normalizeId(renterId);
-        const url = rid
-          ? `/chat/place/${placeId}?renterId=${rid}`
-          : `/chat/place/${placeId}`;
-
-        const { data } = await axiosInstance.get(url);
+        const { data } = await chatApi.placeThread(placeId, rid);
         setMessages(data.messages || []);
         setHostId(normalizeId(data.hostId));
         setRenterIdResolved(normalizeId(data.renterId) || rid || null);

@@ -2,6 +2,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth, useUnreadMessages } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
+import { isAdminUser } from '@/utils/admin';
 
 const AccountNav = () => {
   const { pathname } = useLocation();
@@ -27,9 +28,7 @@ const AccountNav = () => {
     return classes;
   };
 
-  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
-  const isAdmin =
-    user && user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAdmin = isAdminUser(user);
 
   return (
     <nav className="mt-24 mb-8 flex flex-wrap justify-center gap-4">

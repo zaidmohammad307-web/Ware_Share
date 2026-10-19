@@ -62,7 +62,7 @@ function daysBetween(checkIn, checkOut) {
   return Math.max(1, days);
 }
 
-// PUBLIC â insurance constants (for frontend pricing display)
+// PUBLIC: insurance constants (for frontend pricing display)
 exports.getInsuranceConfig = async (req, res) => {
   return res.status(200).json({
     success: true,
@@ -493,7 +493,7 @@ exports.createBookings = async (req, res) => {
       paymentMethod: null,
     });
 
-    const populated = await Booking.findById(booking._id).populate('place');
+    const populated = await booking.populate('place');
 
     // Notify the host by email (fire-and-forget; never blocks the response)
     User.findById(placeDoc.owner)
@@ -528,7 +528,6 @@ exports.createBookings = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while creating booking',
-      error: err.message,
     });
   }
 };
@@ -551,7 +550,6 @@ exports.getBookings = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching bookings',
-      error: err.message,
     });
   }
 };
@@ -591,7 +589,6 @@ exports.getBookingById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching booking',
-      error: err.message,
     });
   }
 };
@@ -665,7 +662,6 @@ exports.getOwnerBookings = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching owner bookings',
-      error: err.message,
     });
   }
 };
@@ -768,7 +764,8 @@ exports.updateBookingStatus = async (req, res) => {
 
     await booking.save();
 
-    const populated = await Booking.findById(id).populate('place');
+    // Already populated with 'place' above; no need to reload
+    const populated = booking;
 
     // Notify the renter by email (fire-and-forget)
     if (status === 'approved' || status === 'declined') {
@@ -805,7 +802,6 @@ exports.updateBookingStatus = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while updating booking status',
-      error: err.message,
     });
   }
 };
@@ -851,7 +847,7 @@ exports.updateBookingPayment = async (req, res) => {
     booking.paymentStatus = 'paid';
     await booking.save();
 
-    const populated = await Booking.findById(id).populate('place');
+    const populated = booking; // already populated above
 
     return res.status(200).json({
       success: true,
@@ -863,7 +859,6 @@ exports.updateBookingPayment = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while updating payment',
-      error: err.message,
     });
   }
 };
@@ -959,7 +954,6 @@ exports.getPlaceAvailability = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching availability',
-      error: err.message,
     });
   }
 };

@@ -1,5 +1,6 @@
 // api/utils/cookieToken.js
 const jwt = require('jsonwebtoken');
+const { isAdminEmail } = require('./admin');
 
 // Keep the response shape stable for the frontend.
 // This intentionally returns a *subset* of the User document (never password).
@@ -10,6 +11,8 @@ function buildSafeUser(user) {
     email: user.email,
     picture: user.picture,
 
+    isAdmin: isAdminEmail(user.email),
+
     // Hosting + verification
     role: user.role,
     wantsToHost: !!user.wantsToHost,
@@ -17,8 +20,13 @@ function buildSafeUser(user) {
     isHostVerified: !!user.isHostVerified,
     hostVerificationStatus: user.hostVerificationStatus || 'not_submitted',
     hostVerificationNotes: user.hostVerificationNotes || '',
+    // Only labels/dates: the documents themselves are private (admin-only).
     hostVerificationFiles: Array.isArray(user.hostVerificationFiles)
-      ? user.hostVerificationFiles
+      ? user.hostVerificationFiles.map((f) => ({
+          _id: f._id,
+          label: f.label,
+          uploadedAt: f.uploadedAt,
+        }))
       : [],
 
     // Backward-compat aliases (old frontend prototypes)

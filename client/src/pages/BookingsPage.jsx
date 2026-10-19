@@ -4,7 +4,7 @@ import { format, differenceInCalendarDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import axiosInstance from '@/utils/axios';
+import { bookingsApi } from '@/api';
 import AccountNav from '../components/ui/AccountNav';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
@@ -59,7 +59,7 @@ const BookingsPage = () => {
   const loadBookings = async () => {
     try {
       setLoading(true);
-      const { data } = await axiosInstance.get('/bookings');
+      const { data } = await bookingsApi.mine();
       // backend returns { success, booking: [...] }
       setBookings(data.booking || []);
     } catch (error) {

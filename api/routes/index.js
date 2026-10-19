@@ -5,6 +5,7 @@ const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const fs = require('fs/promises');
 const { isLoggedIn } = require('../middlewares/user');
+const { assertFileSignature } = require('../utils/fileSignature');
 
 // ── FILE UPLOAD CONFIG (secure) ──
 const ALLOWED_MIME_TYPES = new Set([
@@ -52,7 +53,7 @@ router.post('/upload-by-link', isLoggedIn, async (req, res) => {
     }
 
     const result = await cloudinary.uploader.upload(link, {
-      folder: 'Airbnb/Places',
+      folder: 'WareShare/Places',
       resource_type: 'image',
     });
 
@@ -71,11 +72,14 @@ router.post('/upload', isLoggedIn, upload.array('photos', 10), async (req, res) 
       return res.status(400).json({ message: 'No files provided' });
     }
 
+    // Track every temp file up front so all are removed even if one fails
+    uploadedPaths.push(...req.files.map((f) => f.path));
+
     const imageArray = [];
     for (const file of req.files) {
-      uploadedPaths.push(file.path);
+      await assertFileSignature(file.path, file.mimetype);
       const result = await cloudinary.uploader.upload(file.path, {
-        folder: 'Airbnb/Places',
+        folder: 'WareShare/Places',
         resource_type: 'image',
       });
       imageArray.push(result.secure_url);
@@ -83,6 +87,9 @@ router.post('/upload', isLoggedIn, upload.array('photos', 10), async (req, res) 
 
     res.status(200).json(imageArray);
   } catch (error) {
+    if (error.status === 400) {
+      return res.status(400).json({ message: error.message });
+    }
     console.error('upload error:', error.message);
     res.status(500).json({ message: 'Internal server error' });
   } finally {

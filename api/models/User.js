@@ -94,6 +94,12 @@ const userSchema = new mongoose.Schema(
       {
         url: { type: String, required: true },
         label: { type: String, trim: true }, // e.g. "ID card", "Commercial registry"
+        // Cloudinary details for private ("authenticated") documents
+        publicId: { type: String },
+        resourceType: { type: String },
+        format: { type: String },
+        version: { type: Number },
+        deliveryType: { type: String },
         uploadedAt: { type: Date, default: Date.now },
       },
     ],
@@ -101,7 +107,10 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ð Encrypt password before saving it into the DB
+// Admin queue of pending host verifications
+userSchema.index({ hostVerificationStatus: 1 });
+
+// Encrypt password before saving it into the DB
 userSchema.pre('save', async function (next) {
   // Only hash if password was created/changed
   if (!this.isModified('password')) {
@@ -112,14 +121,14 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// ð Create and return JWT token
+// Create and return JWT token
 userSchema.methods.getJwtToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRY,
   });
 };
 
-// â Validate the password
+// Validate the password
 userSchema.methods.isValidatedPassword = async function (userSentPassword) {
   return await bcrypt.compare(userSentPassword, this.password);
 };

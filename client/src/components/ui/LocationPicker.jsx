@@ -8,7 +8,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-import axiosInstance from '@/utils/axios';
+import { geoApi } from '@/api';
 import { formatGps, parseGpsFlexible } from '@/utils/gps';
 
 // Ensure Leaflet icons render correctly under Vite
@@ -33,7 +33,7 @@ const isValidLatLng = (lat, lng) =>
 
 // Geocoding is proxied via backend to avoid browser CORS + Nominatim 403.
 const geoReverse = async ({ lat, lng }, signal) => {
-  const res = await axiosInstance.get('/geo/reverse', {
+  const res = await geoApi.reverse({
     params: { lat, lng },
     signal,
   });
@@ -41,7 +41,7 @@ const geoReverse = async ({ lat, lng }, signal) => {
 };
 
 const geoForward = async (query, signal) => {
-  const res = await axiosInstance.get('/geo/search', {
+  const res = await geoApi.search({
     params: { q: query },
     signal,
   });

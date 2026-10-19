@@ -1,7 +1,7 @@
 // api/routes/place.js
 const express = require('express');
 const router = express.Router();
-const { isLoggedIn } = require('../middlewares/user');
+const { isLoggedIn, optionalUser } = require('../middlewares/user');
 
 const {
   addPlace,
@@ -43,7 +43,7 @@ router
 // ✅ Get single place (public) + delete place (protected, owner only)
 router
   .route('/:id')
-  .get(singlePlace)
+  .get(optionalUser, singlePlace)
   .delete(isLoggedIn, deletePlace);
 
 module.exports = router;

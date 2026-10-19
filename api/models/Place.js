@@ -129,7 +129,7 @@ const placeSchema = new mongoose.Schema(
     loadingFee: { type: Number },
     tempControlFee: { type: Number },
 
-    // â NEW: negotiable price flag
+    // NEW: negotiable price flag
     negotiablePrice: { type: Boolean, default: false },
 
     // SERVICES
@@ -169,6 +169,10 @@ const placeSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Owner listings, public "live" listing queries, newest-first host pages
+placeSchema.index({ owner: 1, createdAt: -1 });
+placeSchema.index({ status: 1 });
 
 const Place = mongoose.model('Place', placeSchema);
 module.exports = Place;

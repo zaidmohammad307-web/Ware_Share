@@ -14,9 +14,10 @@ import {
   Legend,
 } from 'recharts';
 
-import axiosInstance from '@/utils/axios';
+import { adminApi } from '@/api';
 import { useAuth } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
+import { isAdminUser } from '@/utils/admin';
 
 const STR = {
   EN: {
@@ -234,7 +235,6 @@ function Card({ title, subtitle, right, children }) {
   );
 }
 
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@123456';
 
 function NotAuthorized() {
   const { lang } = usePrefs();
@@ -261,8 +261,7 @@ const AdminDashboardPage = () => {
   // the hooks below would change the hook count between renders once auth
   // resolves, which React rejects ("rendered fewer hooks than expected").
   const isLoggedIn = Boolean(user);
-  const isAdmin =
-    user?.email && String(user.email).toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAdmin = isAdminUser(user);
   const mustRedirectToLogin = !loading && !isLoggedIn;
   const isNotAuthorized = !loading && user && !isAdmin;
 
@@ -303,10 +302,10 @@ const AdminDashboardPage = () => {
 
     try {
       const [s, b, u, r] = await Promise.all([
-        axiosInstance.get('/admin/dashboard/summary', { params: paramsBase }),
-        axiosInstance.get('/admin/dashboard/bookings', { params: paramsBase }),
-        axiosInstance.get('/admin/dashboard/utilization', { params: paramsBase }),
-        axiosInstance.get('/admin/dashboard/risk', { params: { from: paramsBase.from, to: paramsBase.to } }),
+        adminApi.summary({ params: paramsBase }),
+        adminApi.bookings({ params: paramsBase }),
+        adminApi.utilization({ params: paramsBase }),
+        adminApi.risk({ params: { from: paramsBase.from, to: paramsBase.to } }),
       ]);
 
       if (!s.data?.success) throw new Error('Summary failed');

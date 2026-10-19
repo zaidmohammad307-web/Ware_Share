@@ -4,16 +4,32 @@ const cookieToken = require('../utils/cookieToken');
 const { buildSafeUser } = cookieToken;
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs/promises');
+const { isAdminEmail } = require('../utils/admin');
+const { assertFileSignature } = require('../utils/fileSignature');
 
-// Upload any file type (image/pdf) to Cloudinary and remove temp file
+const MIN_PASSWORD_LENGTH = 8;
+
+// ID / company documents are personal data, so they are stored as
+// "authenticated" Cloudinary assets: the plain URL does not work, and only
+// the admin endpoint hands out signed links.
 async function uploadHostVerificationFile(file, label) {
   if (!file || !file.path) return null;
   try {
+    await assertFileSignature(file.path, file.mimetype);
     const uploadRes = await cloudinary.uploader.upload(file.path, {
-      folder: 'Airbnb/HostVerification',
+      folder: 'WareShare/HostVerification',
       resource_type: 'auto',
+      type: 'authenticated',
     });
-    return { url: uploadRes.secure_url, label };
+    return {
+      url: uploadRes.secure_url,
+      publicId: uploadRes.public_id,
+      resourceType: uploadRes.resource_type,
+      format: uploadRes.format,
+      version: uploadRes.version,
+      deliveryType: 'authenticated',
+      label,
+    };
   } finally {
     // Best-effort cleanup of temp upload
     try {
@@ -26,9 +42,19 @@ async function uploadHostVerificationFile(file, label) {
 
 // The admin account is identified purely by email, so that address is
 // reserved: nobody may register or sign in with it via Google.
-const isReservedAdminEmail = (email) => {
-  const admin = String(process.env.ADMIN_EMAIL || 'admin@123456').toLowerCase();
-  return String(email || '').trim().toLowerCase() === admin;
+const isReservedAdminEmail = isAdminEmail;
+
+// Signed, non-guessable link to a private verification document.
+const signedVerificationUrl = (f) => {
+  if (!f || f.deliveryType !== 'authenticated' || !f.publicId) return f && f.url;
+  return cloudinary.url(f.publicId, {
+    type: 'authenticated',
+    resource_type: f.resourceType || 'image',
+    format: f.format,
+    version: f.version,
+    sign_url: true,
+    secure: true,
+  });
 };
 
 /* ------------------------------------------------
@@ -36,7 +62,7 @@ const isReservedAdminEmail = (email) => {
 -------------------------------------------------*/
 exports.register = async (req, res) => {
   try {
-    const { name } = req.body;
+    const name = String(req.body.name || '').trim();
     // Coerce to strings so objects like {$ne: null} cannot reach the query
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
@@ -44,6 +70,16 @@ exports.register = async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({
         message: 'Name, email and password are required',
+      });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address' });
+    }
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
       });
     }
 
@@ -71,7 +107,6 @@ exports.register = async (req, res) => {
     console.error('register error:', err);
     res.status(500).json({
       message: 'Internal server Error',
-      error: err.message,
     });
   }
 };
@@ -91,14 +126,12 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Same response for unknown email and wrong password, so the endpoint
+    // cannot be used to discover which emails have accounts.
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({
-        message: 'User does not exist!',
-      });
-    }
-
-    const isPasswordCorrect = await user.isValidatedPassword(password);
+    const isPasswordCorrect = user
+      ? await user.isValidatedPassword(password)
+      : false;
     if (!isPasswordCorrect) {
       return res.status(401).json({
         message: 'Email or password is incorrect!',
@@ -110,7 +143,6 @@ exports.login = async (req, res) => {
     console.error('login error:', err);
     res.status(500).json({
       message: 'Internal server Error',
-      error: err.message,
     });
   }
 };
@@ -174,7 +206,6 @@ exports.googleLogin = async (req, res) => {
     console.error('googleLogin error:', err);
     res.status(500).json({
       message: 'Internal server error',
-      error: err.message,
     });
   }
 };
@@ -190,16 +221,20 @@ exports.uploadPicture = async (req, res) => {
       return res.status(400).json({ message: 'No file provided' });
     }
 
+    await assertFileSignature(filePath, req.file.mimetype);
+
     const result = await cloudinary.uploader.upload(filePath, {
-      folder: 'Airbnb/Users',
+      folder: 'WareShare/Users',
       resource_type: 'image',
     });
 
     return res.status(200).json(result.secure_url);
   } catch (error) {
+    if (error && error.status === 400) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
     console.error('uploadPicture error:', error);
     return res.status(500).json({
-      error: error.message,
       message: 'Internal server error',
     });
   } finally {
@@ -243,12 +278,23 @@ exports.updateUserDetails = async (req, res) => {
       });
     }
 
-    if (name) user.name = name;
-    if (picture) user.picture = picture;
+    if (name) user.name = String(name).trim();
+    if (picture) {
+      // Only accept https image URLs (normally our own Cloudinary uploads)
+      if (!/^https:\/\//i.test(String(picture))) {
+        return res.status(400).json({ message: 'Invalid picture URL' });
+      }
+      user.picture = String(picture);
+    }
 
     // Changing a password requires proving knowledge of the current one,
     // so a stolen token cannot be turned into account takeover.
     if (password) {
+      if (String(password).length < MIN_PASSWORD_LENGTH) {
+        return res.status(400).json({
+          message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+        });
+      }
       const currentPassword = String(req.body.currentPassword || '');
       if (!currentPassword) {
         return res.status(400).json({
@@ -262,7 +308,7 @@ exports.updateUserDetails = async (req, res) => {
         });
       }
       // IMPORTANT: Do not hash here; the User model will hash on save.
-      user.password = password;
+      user.password = String(password);
     }
 
     const updatedUser = await user.save();
@@ -271,7 +317,6 @@ exports.updateUserDetails = async (req, res) => {
     console.error('updateUserDetails error:', error);
     res.status(500).json({
       message: 'Internal server error',
-      error: error.message,
     });
   }
 };
@@ -310,7 +355,6 @@ exports.updateHostSettings = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while updating host settings',
-      error: err.message,
     });
   }
 };
@@ -410,11 +454,13 @@ exports.submitHostVerification = async (req, res) => {
       user: buildSafeUser(user),
     });
   } catch (err) {
+    if (err && err.status === 400) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
     console.error('submitHostVerification error:', err);
     return res.status(500).json({
       success: false,
       message: 'Internal server error while submitting verification',
-      error: err.message,
     });
   }
 };
@@ -426,20 +472,31 @@ exports.getPendingHosts = async (req, res) => {
   try {
     const pendingHosts = await User.find({
       hostVerificationStatus: 'pending',
-    }).select(
-      'name email hostProfile hostVerificationStatus hostVerificationNotes hostVerificationFiles wantsToHost createdAt updatedAt'
-    );
+    })
+      .select(
+        'name email hostProfile hostVerificationStatus hostVerificationNotes hostVerificationFiles wantsToHost createdAt updatedAt'
+      )
+      .lean();
+
+    const hosts = pendingHosts.map((h) => ({
+      ...h,
+      hostVerificationFiles: (h.hostVerificationFiles || []).map((f) => ({
+        _id: f._id,
+        label: f.label,
+        uploadedAt: f.uploadedAt,
+        url: signedVerificationUrl(f),
+      })),
+    }));
 
     return res.status(200).json({
       success: true,
-      hosts: pendingHosts,
+      hosts,
     });
   } catch (err) {
     console.error('getPendingHosts error:', err);
     return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching pending hosts',
-      error: err.message,
     });
   }
 };
@@ -473,7 +530,7 @@ exports.adminVerifyHost = async (req, res) => {
 
     user.hostVerificationStatus = newStatus;
     user.isHostVerified = newStatus === 'approved';
-    if (note) user.hostVerificationNotes = note;
+    if (note) user.hostVerificationNotes = String(note).slice(0, 2000);
 
     await user.save();
 
@@ -487,7 +544,6 @@ exports.adminVerifyHost = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while verifying host',
-      error: err.message,
     });
   }
 };

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import axiosInstance from '@/utils/axios';
+import { supportApi } from '@/api';
 import { useAuth, usePageTitle } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
@@ -86,7 +86,7 @@ const ReportIssuePage = () => {
 
     try {
       setSubmitting(true);
-      const { data } = await axiosInstance.post('/support/report', { ...form, source });
+      const { data } = await supportApi.reportIssue({ ...form, source });
       toast.success(data.message || L.sent);
       setDone(true);
     } catch (err) {

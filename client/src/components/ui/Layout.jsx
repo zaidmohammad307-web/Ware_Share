@@ -1,9 +1,10 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 
 import Header from "./Header";
 import Footer from "./Footer";
 import ScrollToTop from "./ScrollToTop";
+import Spinner from "./Spinner";
 
 const Layout = () => {
   return (
@@ -15,7 +16,10 @@ const Layout = () => {
 
       {/* Page container */}
       <main className="flex-1 mx-auto w-full max-w-screen-xl px-4 py-6">
-        <Outlet />
+        {/* Pages load on demand; keep header/footer visible meanwhile */}
+        <Suspense fallback={<Spinner />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       {/* Branded Footer */}

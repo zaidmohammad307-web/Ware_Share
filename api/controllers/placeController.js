@@ -4,6 +4,7 @@ const Place = require('../models/Place');
 const Booking = require('../models/Booking');
 const HostReview = require('../models/HostReview');
 const User = require('../models/User');
+const { PUBLIC_HOST_FIELDS } = require('../utils/publicFields');
 
 const isValidLatLng = (lat, lng) =>
   typeof lat === 'number' &&
@@ -54,6 +55,26 @@ const parseGpsFlexible = (input) => {
 const formatGps = ({ lat, lng }) =>
   `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
 
+// Listing endpoints accept optional ?page=&limit= paging. Without them the
+// response keeps its old shape but is capped at MAX_PLACES so it can never
+// grow without bound.
+const MAX_PLACES = 1000;
+const parsePaging = (query = {}) => {
+  const paged = query.page !== undefined || query.limit !== undefined;
+  const limit = Math.min(
+    Math.max(parseInt(query.limit, 10) || 24, 1),
+    100
+  );
+  const page = Math.max(parseInt(query.page, 10) || 1, 1);
+  return paged
+    ? { paged, limit, page, skip: (page - 1) * limit }
+    : { paged, limit: MAX_PLACES, page: 1, skip: 0 };
+};
+
+const LIVE_FILTER = {
+  $or: [{ status: 'live' }, { status: { $exists: false } }],
+};
+
 const sanitizePlaceInput = (input) => {
   const out = { ...(input || {}) };
 
@@ -99,7 +120,7 @@ const getHostFlags = async (userId, reqUser) => {
 };
 
 /* ----------------------------------------
-   â ADD PLACE
+    ADD PLACE
 ---------------------------------------- */
 exports.addPlace = async (req, res) => {
   try {
@@ -155,19 +176,18 @@ exports.addPlace = async (req, res) => {
     console.error('addPlace error:', err);
     return res.status(500).json({
       message: 'Internal server error',
-      error: err,
     });
   }
 };
 
 /* ----------------------------------------
-   ð USER PLACES (all, live + hidden)
+    USER PLACES (all, live + hidden)
 ---------------------------------------- */
 exports.userPlaces = async (req, res) => {
   try {
     const userData = req.user;
     const id = userData.id;
-    const places = await Place.find({ owner: id });
+    const places = await Place.find({ owner: id }).lean();
     return res.status(200).json(places);
   } catch (err) {
     console.error('userPlaces error:', err);
@@ -178,7 +198,7 @@ exports.userPlaces = async (req, res) => {
 };
 
 /* ----------------------------------------
-   âï¸ UPDATE PLACE
+    UPDATE PLACE
 ---------------------------------------- */
 exports.updatePlace = async (req, res) => {
   try {
@@ -232,20 +252,22 @@ exports.updatePlace = async (req, res) => {
     console.error('updatePlace error:', err);
     return res.status(500).json({
       message: 'Internal server error',
-      error: err,
     });
   }
 };
 
 /* ----------------------------------------
-   ð PUBLIC PLACES (only LIVE / no-status)
+    PUBLIC PLACES (only LIVE / no-status)
 ---------------------------------------- */
 exports.getPlaces = async (req, res) => {
   try {
     // Only get places that are live OR have no status (old data)
-    let places = await Place.find({
-      $or: [{ status: 'live' }, { status: { $exists: false } }],
-    }).lean();
+    const paging = parsePaging(req.query);
+    let places = await Place.find(LIVE_FILTER)
+      .sort({ _id: 1 }) // same order as before; stable across pages
+      .skip(paging.skip)
+      .limit(paging.limit)
+      .lean();
 
     const ownerIds = [
       ...new Set(
@@ -305,6 +327,17 @@ exports.getPlaces = async (req, res) => {
       };
     });
 
+    if (paging.paged) {
+      const total = await Place.countDocuments(LIVE_FILTER);
+      return res.status(200).json({
+        places,
+        page: paging.page,
+        limit: paging.limit,
+        total,
+        hasMore: paging.skip + places.length < total,
+      });
+    }
+
     return res.status(200).json({
       places,
     });
@@ -317,11 +350,14 @@ exports.getPlaces = async (req, res) => {
 };
 
 /* ----------------------------------------
-   ð SINGLE PLACE (with host rating)
+    SINGLE PLACE (with host rating)
 ---------------------------------------- */
 exports.singlePlace = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ message: 'Place not found' });
+    }
     const place = await Place.findById(id);
 
     if (!place) {
@@ -330,8 +366,10 @@ exports.singlePlace = async (req, res) => {
       });
     }
 
-    // Prevent public access to hidden listings
-    if (place.status === 'hidden') {
+    // Hidden listings are visible only to their owner (e.g. the edit form)
+    const isOwner =
+      !!req.user && String(req.user.id) === String(place.owner);
+    if (place.status === 'hidden' && !isOwner) {
       return res.status(404).json({
         message: 'Place not found',
       });
@@ -375,19 +413,20 @@ exports.singlePlace = async (req, res) => {
 };
 
 /* ----------------------------------------
-   ð SEARCH PLACES (only LIVE / no-status)
+    SEARCH PLACES (only LIVE / no-status)
 ---------------------------------------- */
 exports.searchPlaces = async (req, res) => {
   try {
     const searchword = req.params.key;
+    const paging = parsePaging(req.query);
 
-    const statusFilter = {
-      $or: [{ status: 'live' }, { status: { $exists: false } }],
-    };
-
-    // If empty search â return all live places
+    // If empty search, return all live places
     if (!searchword || searchword.trim() === '') {
-      const places = await Place.find(statusFilter);
+      const places = await Place.find(LIVE_FILTER)
+        .sort({ _id: 1 })
+        .skip(paging.skip)
+        .limit(paging.limit)
+        .lean();
       return res.status(200).json(places);
     }
 
@@ -395,9 +434,13 @@ exports.searchPlaces = async (req, res) => {
     const escaped = searchword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     const searchMatches = await Place.find({
-      ...statusFilter,
+      ...LIVE_FILTER,
       address: { $regex: escaped, $options: 'i' },
-    });
+    })
+      .sort({ _id: 1 }) // same order as before; stable across pages
+      .skip(paging.skip)
+      .limit(paging.limit)
+      .lean();
 
     return res.status(200).json(searchMatches);
   } catch (err) {
@@ -409,21 +452,21 @@ exports.searchPlaces = async (req, res) => {
 };
 
 /* ----------------------------------------
-   ð§âð¼ PLACES BY HOST (PUBLIC: only LIVE / no-status)
+    PLACES BY HOST (PUBLIC: only LIVE / no-status)
 ---------------------------------------- */
 exports.getPlacesByHost = async (req, res) => {
   try {
     const { hostId } = req.params;
 
-    const places = await Place.find({
-      owner: hostId,
-      $or: [{ status: 'live' }, { status: { $exists: false } }],
-    })
-      .populate(
-        'owner',
-        'name picture hostProfile hostVerificationStatus isHostVerified role createdAt'
-      )
-      .sort({ createdAt: -1 });
+    if (!mongoose.Types.ObjectId.isValid(hostId)) {
+      return res.status(400).json({ success: false, message: 'Invalid hostId' });
+    }
+
+    const places = await Place.find({ owner: hostId, ...LIVE_FILTER })
+      .populate('owner', PUBLIC_HOST_FIELDS)
+      .sort({ createdAt: -1 })
+      .limit(MAX_PLACES)
+      .lean();
 
     return res.status(200).json({
       success: true,
@@ -434,13 +477,12 @@ exports.getPlacesByHost = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal server error while fetching host's places",
-      error: err.message,
     });
   }
 };
 
 /* ----------------------------------------
-   ð TOGGLE PLACE STATUS (live / hidden)
+    TOGGLE PLACE STATUS (live / hidden)
 ---------------------------------------- */
 exports.updatePlaceStatus = async (req, res) => {
   try {
@@ -458,7 +500,7 @@ exports.updatePlaceStatus = async (req, res) => {
       });
     }
 
-    // Toggle status on the server â ignore body for simplicity
+    // Toggle status on the server; ignore body for simplicity
     const current = place.status || 'live';
     const next = current === 'hidden' ? 'live' : 'hidden';
 
@@ -495,13 +537,12 @@ exports.updatePlaceStatus = async (req, res) => {
     console.error('updatePlaceStatus error:', err);
     return res.status(500).json({
       message: 'Internal server error while updating place status',
-      error: err.message,
     });
   }
 };
 
 /* ----------------------------------------
-   ðï¸ DELETE PLACE
+    DELETE PLACE
 ---------------------------------------- */
 exports.deletePlace = async (req, res) => {
   try {
@@ -529,7 +570,6 @@ exports.deletePlace = async (req, res) => {
     console.error('deletePlace error:', err);
     return res.status(500).json({
       message: 'Internal server error while deleting place',
-      error: err.message,
     });
   }
 };
@@ -619,3 +659,6 @@ exports.updateBlockedDates = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+// Pure helpers exposed for unit tests only
+exports._test = { parseGpsFlexible, parsePaging };

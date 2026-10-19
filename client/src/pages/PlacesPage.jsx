@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import axiosInstance from '@/utils/axios';
+import { placesApi } from '@/api';
 import AccountNav from '@/components/ui/AccountNav';
 import Spinner from '@/components/ui/Spinner';
 import { usePageTitle } from '@/hooks';
@@ -51,7 +51,7 @@ const PlacesPage = () => {
   useEffect(() => {
     const getPlaces = async () => {
       try {
-        const { data } = await axiosInstance.get('/places/user-places');
+        const { data } = await placesApi.mine();
         setPlaces(data || []);
       } catch (error) {
         toast.error(L.loadFailed);
@@ -67,10 +67,7 @@ const PlacesPage = () => {
 
     try {
       setActionLoadingId(place._id);
-      const { data } = await axiosInstance.patch(
-        `/places/${place._id}/status`,
-        { status: newStatus }
-      );
+      const { data } = await placesApi.updateStatus(place._id, { status: newStatus });
 
       const serverStatus = data?.status || newStatus;
       setPlaces((prev) =>
@@ -95,7 +92,7 @@ const PlacesPage = () => {
 
     try {
       setActionLoadingId(place._id);
-      await axiosInstance.delete(`/places/${place._id}`);
+      await placesApi.remove(place._id);
 
       setPlaces((prev) => prev.filter((p) => p._id !== place._id));
     } catch (err) {

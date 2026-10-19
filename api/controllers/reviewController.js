@@ -4,6 +4,7 @@ const Booking = require('../models/Booking');
 const PlaceReview = require('../models/PlaceReview');
 const HostReview = require('../models/HostReview');
 const RenterReview = require('../models/RenterReview');
+const { PUBLIC_HOST_FIELDS } = require('../utils/publicFields');
 
 /**
  * PLACE REVIEWS – RENTER -> WAREHOUSE
@@ -88,7 +89,6 @@ exports.createPlaceReview = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while creating place review',
-      error: err.message,
     });
   }
 };
@@ -106,7 +106,6 @@ exports.getPlaceReviews = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching place reviews',
-      error: err.message,
     });
   }
 };
@@ -169,8 +168,7 @@ exports.createHostReview = async (req, res) => {
       { path: 'reviewer', select: 'name' },
       {
         path: 'host',
-        select:
-          'name picture hostProfile hostVerificationStatus isHostVerified createdAt',
+        select: PUBLIC_HOST_FIELDS,
       },
     ]);
 
@@ -180,7 +178,6 @@ exports.createHostReview = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while creating host review',
-      error: err.message,
     });
   }
 };
@@ -190,10 +187,7 @@ exports.getHostReviews = async (req, res) => {
     const { hostId } = req.params;
     const reviews = await HostReview.find({ host: hostId })
       .populate('reviewer', 'name')
-      .populate(
-        'host',
-        'name picture hostProfile hostVerificationStatus isHostVerified createdAt'
-      )
+      .populate('host', PUBLIC_HOST_FIELDS)
       .sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, reviews });
@@ -202,7 +196,6 @@ exports.getHostReviews = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching host reviews',
-      error: err.message,
     });
   }
 };
@@ -278,7 +271,6 @@ exports.createRenterReview = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while creating renter review',
-      error: err.message,
     });
   }
 };
@@ -312,7 +304,6 @@ exports.getRenterReviews = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while fetching renter reviews',
-      error: err.message,
     });
   }
 };

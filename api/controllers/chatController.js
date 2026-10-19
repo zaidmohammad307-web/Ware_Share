@@ -3,6 +3,28 @@ const Booking = require('../models/Booking');
 const Place = require('../models/Place');
 const Message = require('../models/Message');
 
+// Long threads are paged: return the newest CHAT_PAGE_SIZE messages
+// (oldest first), and older ones via ?before=<ISO date of oldest shown>.
+const CHAT_PAGE_SIZE = 200;
+
+const loadThread = async (filter, before) => {
+  const q = { ...filter };
+  const beforeDate = before ? new Date(String(before)) : null;
+  if (beforeDate && !Number.isNaN(beforeDate.getTime())) {
+    q.createdAt = { $lt: beforeDate };
+  }
+  const newestFirst = await Message.find(q)
+    .populate('sender', 'name')
+    .sort({ createdAt: -1 })
+    .limit(CHAT_PAGE_SIZE + 1)
+    .lean();
+  const hasMore = newestFirst.length > CHAT_PAGE_SIZE;
+  return {
+    messages: newestFirst.slice(0, CHAT_PAGE_SIZE).reverse(),
+    hasMore,
+  };
+};
+
 // -----------------------------
 // Booking chat history
 // -----------------------------
@@ -29,9 +51,10 @@ exports.getBookingChat = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not allowed' });
     }
 
-    const messages = await Message.find({ booking: booking._id })
-      .populate('sender', 'name')
-      .sort({ createdAt: 1 });
+    const { messages, hasMore } = await loadThread(
+      { booking: booking._id },
+      req.query.before
+    );
 
     // Opening the chat marks messages sent TO me as read
     Message.updateMany(
@@ -42,6 +65,7 @@ exports.getBookingChat = async (req, res) => {
     return res.status(200).json({
       success: true,
       messages,
+      hasMore,
       hostId,
       renterId,
       placeId: String(booking.place._id),
@@ -49,7 +73,7 @@ exports.getBookingChat = async (req, res) => {
     });
   } catch (err) {
     console.error('getBookingChat error:', err);
-    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -91,14 +115,15 @@ exports.getPlaceChat = async (req, res) => {
       renterIdToUse = renterIdQuery;
     }
 
-    const messages = await Message.find({
-      booking: null,
-      place: place._id,
-      host: place.owner,
-      renter: renterIdToUse,
-    })
-      .populate('sender', 'name')
-      .sort({ createdAt: 1 });
+    const { messages, hasMore } = await loadThread(
+      {
+        booking: null,
+        place: place._id,
+        host: place.owner,
+        renter: renterIdToUse,
+      },
+      req.query.before
+    );
 
     // Opening the chat marks messages sent TO me as read
     Message.updateMany(
@@ -116,13 +141,14 @@ exports.getPlaceChat = async (req, res) => {
     return res.status(200).json({
       success: true,
       messages,
+      hasMore,
       hostId,
       renterId: String(renterIdToUse),
       placeId: String(place._id),
     });
   } catch (err) {
     console.error('getPlaceChat error:', err);
-    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -237,7 +263,7 @@ exports.getChatInbox = async (req, res) => {
     return res.status(200).json({ success: true, threads: result });
   } catch (err) {
     console.error('getChatInbox error:', err);
-    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 

@@ -2,7 +2,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import axiosInstance from '@/utils/axios';
+import { placesApi, reviewsApi } from '@/api';
 import { useAuth } from '@/hooks';
 import { usePrefs } from '@/providers/PreferencesProvider';
 
@@ -23,9 +23,6 @@ const STR = {
     chatWithHost: 'Chat with host',
     loginToChat: 'Login to start an inquiry chat.',
     company: 'Company: ',
-    taxId: 'Tax / VAT ID: ',
-    businessReg: 'Business registration: ',
-    contactPhone: 'Contact phone: ',
     aboutHost: 'About this host',
     warehousesBy: (name) => `Warehouses by ${name}`,
     noWarehouses: 'This host has no warehouses listed yet.',
@@ -50,9 +47,6 @@ const STR = {
     chatWithHost: 'تواصل مع المضيف',
     loginToChat: 'سجّل الدخول لبدء محادثة استفسار.',
     company: 'الشركة: ',
-    taxId: 'الرقم الضريبي: ',
-    businessReg: 'السجل التجاري: ',
-    contactPhone: 'هاتف التواصل: ',
     aboutHost: 'عن هذا المضيف',
     warehousesBy: (name) => `مستودعات ${name}`,
     noWarehouses: 'لا توجد مستودعات معروضة لهذا المضيف بعد.',
@@ -80,8 +74,8 @@ const HostProfilePage = () => {
         setLoading(true);
 
         const [reviewRes, placeRes] = await Promise.all([
-          axiosInstance.get(`/reviews/host/${hostId}`),
-          axiosInstance.get(`/places/host/${hostId}`),
+          reviewsApi.forHost(hostId),
+          placesApi.byHost(hostId),
         ]);
 
         const reviews = reviewRes?.data?.reviews || [];
@@ -127,9 +121,6 @@ const HostProfilePage = () => {
 
   const hostCity = hostProfile?.city || host?.city || null;
   const hostCompany = hostProfile?.companyName || null;
-  const hostTaxId = hostProfile?.taxId || null;
-  const hostBusinessRegNumber = hostProfile?.businessRegNumber || null;
-  const hostPhone = hostProfile?.phone || null;
   const hostAbout = hostProfile?.about || null;
   const hostRole = host?.role || null;
 
@@ -255,39 +246,10 @@ const HostProfilePage = () => {
           </div>
         </div>
 
-        {(hostCompany || hostPhone || hostTaxId || hostBusinessRegNumber) && (
-          <div className="mt-4 grid gap-3 text-sm text-gray-700 md:grid-cols-2">
-            <div>
-              {hostCompany && (
-                <div>
-                  <span className="font-medium">{L.company}</span>
-                  {hostCompany}
-                </div>
-              )}
-
-              {hostTaxId && (
-                <div>
-                  <span className="font-medium">{L.taxId}</span>
-                  {hostTaxId}
-                </div>
-              )}
-
-              {hostBusinessRegNumber && (
-                <div>
-                  <span className="font-medium">{L.businessReg}</span>
-                  {hostBusinessRegNumber}
-                </div>
-              )}
-            </div>
-
-            <div>
-              {hostPhone && (
-                <div>
-                  <span className="font-medium">{L.contactPhone}</span>
-                  {hostPhone}
-                </div>
-              )}
-            </div>
+        {hostCompany && (
+          <div className="mt-4 text-sm text-gray-700">
+            <span className="font-medium">{L.company}</span>
+            {hostCompany}
           </div>
         )}
 
